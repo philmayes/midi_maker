@@ -27,6 +27,7 @@ from midiutil import MIDIFile
 
 from midi_channels import Channel
 from midi_chords import chord_to_intervals, chord_to_pitches
+from midi_items import *
 import midi_parse
 from midi_percussion import percussion as p
 from midi_voice import Voice
@@ -99,103 +100,6 @@ durations2 = [minim, crotchet, quaver, quaver, quaver, quaver, quaver, quaver, -
 
 # Voices are created by midi_parse from a configuration file.
 voices: list[Voice] = []
-
-class Item:
-    """Abstract class constituent of a composition."""
-    pass
-
-class Tempo(Item):
-    """Change the tempo of a composition."""
-    def __init__(self, tempo: int):
-        self.tempo = tempo
-
-class TimeSig(Item):
-    """Change the time signature of a composition."""
-    def __init__(self, time_sig_top: int, time_sig_bottom: int):
-        self.time_sig_top = time_sig_top
-        self.time_sig_bottom = time_sig_top
-        self.ticks_per_beat = semibreve // time_sig_bottom
-        self.ticks_per_bar = self.ticks_per_beat * time_sig_top
-
-class Volume(Item):
-    """Adjust volume for channel(s)."""
-    def __init__(self,
-                 delta: int,
-                 channel0: Channel,
-                 channel1: Channel=Channel.none,
-                 channel2: Channel=Channel.none,
-                 channel3: Channel=Channel.none,
-                 channel4: Channel=Channel.none,
-                 channel5: Channel=Channel.none,
-                 ):
-        self.delta = delta
-        self.channels = [channel0, channel1, channel2, channel3, channel4, channel5]
-
-class Mute(Item):
-    """Mute channel(s)."""
-    def __init__(self,
-                 channel0: Channel,
-                 channel1: Channel=Channel.none,
-                 channel2: Channel=Channel.none,
-                 channel3: Channel=Channel.none,
-                 channel4: Channel=Channel.none,
-                 channel5: Channel=Channel.none,
-                 ):
-        self.channels = [channel0, channel1, channel2, channel3, channel4, channel5]
-
-class Play(Item):
-    """Play (unmute) channel(s)."""
-    def __init__(self,
-                 channel0: Channel,
-                 channel1: Channel=Channel.none,
-                 channel2: Channel=Channel.none,
-                 channel3: Channel=Channel.none,
-                 channel4: Channel=Channel.none,
-                 channel5: Channel=Channel.none,
-                 ):
-        self.channels = [channel0, channel1, channel2, channel3, channel4, channel5]
-
-class Bar(Item):
-    """Bar description of a composition."""
-    def __init__(self, chord: str,
-                 repeat: int=1,
-                 ):
-        self.chord = chord
-        self.repeat = repeat
-        self.clip = False
-
-class Loop(Item):
-    """Start a loop."""
-    def __init__(self):
-        pass
-
-class Repeat(Item):
-    start = -1
-    """Repeat a loop one or more times."""
-    def __init__(self, repeat: int=2):
-        # <repeat> is the number of times that control is returned to a Loop()
-        # instance, so Repeat() or Repeat(2) means play the passage twice, and
-        # we should only jump back once.
-        assert repeat >= 2, 'Bad repeat count'
-        self.repeat = repeat - 1
-
-class LoopItem:
-    """Item that is pushed onto the loop stack."""
-    def __init__(self, item_no: int, count: int):
-        self.item_no = item_no
-        self.count = count
-
-class Composition:
-    """Collection of items that will generate a MIDI file."""
-    def __init__(self) -> None:
-        self.items: list[Item] = []
-
-    def __iadd__(self, thing: Item | list[Item]):
-        if isinstance(thing, Item):
-            self.items.append(thing)
-        else:
-            self.items.extend(thing)
-        return self
 
 Note = namedtuple('Note', 'pitch time duration volume',
                   defaults=(40, 0, crotchet, volume_default))
@@ -410,33 +314,33 @@ def make_composition() -> Composition:
     """Construct the musical composition."""
     composition = Composition()
     composition += Tempo(100)
-    composition += Play(Channel.perc0)
+    composition += Play([Channel.perc0, Channel.perc1])
     composition += Bar('Cmaj')
-    composition += Volume(+20, Channel.perc0)
-    composition += Play(Channel.perc1)
-    composition += Play(Channel.bass)
+    composition += Volume(+20, [Channel.perc0])
+    # composition += Play([Channel.perc1])
+    composition += Play([Channel.bass])
     composition += Bar('Cmaj')
-    composition += Play(Channel.perc2)
-    composition += Play(Channel.rhythm)
+    composition += Play([Channel.perc2])
+    composition += Play([Channel.rhythm])
     composition += Bar('Cmaj')
-    composition += Play(Channel.arpeggio)
+    composition += Play([Channel.arpeggio])
     composition += Bar('Cmaj')
-    composition += Volume(-20, Channel.perc0)
-    composition += Play(Channel.lead1)
+    composition += Volume(-20, [Channel.perc0])
+    composition += Play([Channel.lead1])
     composition += Loop()
     composition += Bar('Cmaj')
     composition += Bar('Fmaj')
-    composition += Mute(Channel.rhythm)
+    composition += Mute([Channel.rhythm])
     composition += Bar('Fmaj')
-    composition += Mute(Channel.perc1)
+    composition += Mute([Channel.perc1])
     composition += Bar('Fmaj')
     composition += Repeat()
     composition += Bar('Fmaj')
     composition += Bar('Cmaj')
     composition += Bar('Cmaj')
-    composition += Mute(Channel.perc2)
+    composition += Mute([Channel.perc2])
     composition += Bar('Cmaj')
-    composition += Mute(Channel.lead1)
+    composition += Mute([Channel.lead1])
     composition += Bar('Cmaj')
     return composition
 
