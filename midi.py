@@ -310,51 +310,6 @@ def make_rhythm_bar(midi_file: MIDIFile,
                     )
         start += note_length
 
-def make_composition() -> Composition:
-    """Construct the musical composition."""
-    composition = Composition()
-    composition += Tempo(100)
-    composition += Play([Channel.perc0, Channel.perc1])
-    composition += Bar('Cmaj')
-    composition += Volume(+20, [Channel.perc0])
-    # composition += Play([Channel.perc1])
-    composition += Play([Channel.bass])
-    composition += Bar('Cmaj')
-    composition += Play([Channel.perc2])
-    composition += Play([Channel.rhythm])
-    composition += Bar('Cmaj')
-    composition += Play([Channel.arpeggio])
-    composition += Bar('Cmaj')
-    composition += Volume(-20, [Channel.perc0])
-    composition += Play([Channel.lead1])
-    composition += Loop()
-    composition += Bar('Cmaj')
-    composition += Bar('Fmaj')
-    composition += Mute([Channel.rhythm])
-    composition += Bar('Fmaj')
-    composition += Mute([Channel.perc1])
-    composition += Bar('Fmaj')
-    composition += Repeat()
-    composition += Bar('Fmaj')
-    composition += Bar('Cmaj')
-    composition += Bar('Cmaj')
-    composition += Mute([Channel.perc2])
-    composition += Bar('Cmaj')
-    composition += Mute([Channel.lead1])
-    composition += Bar('Cmaj')
-    return composition
-
-def section_12bar() -> list[Item]:
-    items: list[Item] = []
-    items.append(Bar('Emaj', 4))
-    items.append(Bar('Amaj', 2))
-    items.append(Bar('Emaj', 2))
-    items.append(Bar('Bmaj7'))
-    items.append(Bar('Amaj'))
-    items.append(Bar('Emaj'))
-    items.append(Bar('Bmaj'))
-    return items
-
 def run() -> None:
     commands = midi_parse.Commands(in_dir, in_file)
     voices = commands.get_voices()
@@ -372,7 +327,7 @@ def run() -> None:
         assert voice.channel == n, 'Voice index must match channel'
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
-    composition = make_composition()
+    composition = commands.get_composition()
     bar_start = 0
     loop_stack: list[LoopItem] = []
     timesig = TimeSig(4, 4) # default

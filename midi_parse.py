@@ -1,10 +1,17 @@
 import os
 import re
+from typing import TypeAlias
 
 from midi_channels import Channel
+from midi_items import *
 from midi_percussion import percussion as p
 from midi_voice import Voice
 import midi_voices
+
+Verb: TypeAlias = str
+Param: TypeAlias = list[str]
+Params: TypeAlias = list[Param]
+Command: TypeAlias = tuple[Verb, Params]
 
 re_text = re.compile('[a-zA-Z_]')
 
@@ -17,6 +24,32 @@ volumes = {
     'default': 100,
 }
 
+def clean_line(line: str) -> str:
+    # Remove possible comment
+    c = line.find('#')
+    if c >= 0:
+        line = line[:c]
+    # Remove leading & trailing whitespace
+    line = line.strip()
+    return line
+
+def get_channels(params: Params) -> list[Channel]:
+    """Returns a list of all the channels suppied in params."""
+    return [str_to_channel(kv[1]) for kv in params if kv[0] == 'channel']
+
+def get_number(text: str) -> int | None:
+    """Returns possibly signed number as int or None."""
+    assert text != ''
+    neg = False
+    if not text.isdigit():
+        neg = text == '-'
+        text = text[1:]
+    if text.isdigit():
+        delta = int(text)
+        if neg:
+            delta = -delta
+        return delta
+
 def get_parameter(text: str, prefix: str) -> str:
     if not text.startswith(prefix):
         return ''
@@ -28,14 +61,44 @@ def get_parameter(text: str, prefix: str) -> str:
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
 
-def clean_line(line: str) -> str:
-    # Remove possible comment
-    c = line.find('#')
-    if c >= 0:
-        line = line[:c]
-    # Remove leading & trailing whitespace
-    line = line.strip()
-    return line
+def parse_command(command: str) -> Command:
+    command = clean_line(command)
+    item: Verb = ''
+    params: Params = []
+    if not command:
+        return item, params
+    words = command.split()
+
+    # parse parameters into the default values
+    for index, word in enumerate(words):
+        if index == 0:
+            # First word is the command aka Item
+            if word.isalpha():
+                item = word
+            else:
+                print(f'Bad verb in {command}')
+                break
+        else:
+            if '=' not in word:
+                # Subsequent words should be of the form key=value
+                print(f'Missing "=" in {command}')
+                break
+            key, value = word.split('=', 1)
+            if not value:
+                print(f'Missing value in {command}')
+                break
+            params.append([key, value])
+    else:
+        # Weird python syntax: the loop finished without a break
+        return item, params
+    return '', []
+
+def str_to_channel(name: str) -> Channel:
+    """Returns the Channel described by the string."""
+    for ch in Channel:
+        if ch.name == name:
+            return ch
+    return Channel.none
 
 class Commands:
     def __init__(self, in_dir: str, in_file: str):
@@ -71,12 +134,7 @@ class Commands:
                     continue
 
                 if key == 'channel':
-                    for ch in Channel:
-                        if ch.name == value:
-                            channel = ch
-                            break
-                    else:
-                        continue
+                    channel = str_to_channel(value)
 
                 elif key == 'voice':
                     if value not in midi_voices.voices:
@@ -108,8 +166,52 @@ class Commands:
             voices.append(Voice(channel, voice, volume, min_pitch, max_pitch))
         return voices
 
-# in_dir = "E:\\tmp"
-# in_file = "phil.txt"
-# commands = Commands(in_dir, in_file)
-# commands.get_voices()
+    def get_composition(self) -> Composition:
+        composition: Composition = Composition()
+        for command in self.commands:
+            # item, params = parse_command(command)
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+            if not item:
+                continue
 
+            if item == 'tempo':
+                if params:
+                    key, value = params[0]
+                    if key == 'bpm':
+                        if value.isdigit():
+                            composition += Tempo(int(value))
+                            continue
+                print(f'Bad tempo in {command}')
+
+            elif item == 'play':
+                channels = get_channels(params)
+                composition += Play(channels)
+
+            elif item == 'bar':
+                if params:
+                    key, value = params[0]
+                    if key == 'key':
+                        composition += Bar(value)
+
+            elif item == 'volume':
+                if params:
+                    key, value = params[0]
+                    if key == 'delta':
+                        delta = get_number(value)
+                        if delta is not None:
+                            channels = get_channels(params)
+                            composition += Volume(delta, channels)
+
+            elif item == 'loop':
+                composition += Loop()
+                pass
+            elif item == 'mute':
+                channels = get_channels(params)
+                composition += Mute(channels)
+
+            elif item == 'repeat':
+                composition += Repeat()
+
+        return composition
