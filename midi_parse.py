@@ -106,8 +106,8 @@ class Commands:
         with open(path, "r") as input_file:
             self.commands = input_file.readlines()
 
-    def get_voices(self) -> list[Voice]:
-        voices: list[Voice] = []
+    def get_voices(self) -> dict[Channel, Voice]:
+        voices: dict[Channel, Voice] = {}
         for command in self.commands:
             command = clean_line(command)
             if not command:
@@ -163,7 +163,7 @@ class Commands:
             if channel == Channel.none:
                 print(f'No channel in {command}')
                 continue
-            voices.append(Voice(channel, voice, volume, min_pitch, max_pitch))
+            voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
         return voices
 
     def get_composition(self) -> Composition:

@@ -99,7 +99,7 @@ durations1 = [minim, crotchet, quaver, -quaver]
 durations2 = [minim, crotchet, quaver, quaver, quaver, quaver, quaver, quaver, -quaver]
 
 # Voices are created by midi_parse from a configuration file.
-voices: list[Voice] = []
+voices: dict[Channel, Voice] = {}
 
 Note = namedtuple('Note', 'pitch time duration volume',
                   defaults=(40, 0, crotchet, volume_default))
@@ -323,8 +323,8 @@ def run() -> None:
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, tempo)
 
-    for n, voice in enumerate(voices):
-        assert voice.channel == n, 'Voice index must match channel'
+    for channel, voice in voices.items():
+        assert voice.channel == channel, 'Voice index must match channel'
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
     composition = commands.get_composition()
