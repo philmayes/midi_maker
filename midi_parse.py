@@ -107,6 +107,7 @@ class Commands:
             self.commands = input_file.readlines()
 
     def get_voices(self) -> dict[Channel, Voice]:
+        """Constructs Voice() instances from the list of commands."""
         voices: dict[Channel, Voice] = {}
         for command in self.commands:
             command = clean_line(command)
@@ -166,14 +167,26 @@ class Commands:
             voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
         return voices
 
-    def get_composition(self) -> Composition:
+    def get_composition(self, name: str) -> Composition:
         composition: Composition = Composition()
+        in_composition = False
         for command in self.commands:
-            # item, params = parse_command(command)
             cmd = parse_command(command)
             item: Verb = cmd[0]
             params: Params = cmd[1]
             if not item:
+                continue
+
+            if item == 'composition':
+                if in_composition:
+                    break
+                if params:
+                    key, value = params[0]
+                    if key == 'name' and value == name:
+                        in_composition = True
+                continue
+
+            if not in_composition:
                 continue
 
             if item == 'tempo':

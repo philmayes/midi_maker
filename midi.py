@@ -327,7 +327,7 @@ def run() -> None:
         assert voice.channel == channel, 'Voice index must match channel'
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
-    composition = commands.get_composition()
+    composition = commands.get_composition('one')
     bar_start = 0
     loop_stack: list[LoopItem] = []
     timesig = TimeSig(4, 4) # default
