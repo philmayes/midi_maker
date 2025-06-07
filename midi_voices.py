@@ -1,4 +1,4 @@
-voices = {
+voices: dict[str, int] = {
     # General MIDI (GM 1) voices
     #_Piano
     'acoustic_grand_piano': 0,

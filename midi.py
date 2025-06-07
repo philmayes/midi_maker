@@ -19,16 +19,20 @@ The top one tells how many of them there will be (or equivalent).
 e.g. for 6/8, each bar contains 6 quavers
 """
 from collections import namedtuple
-from enum import IntEnum
-from midiutil import MIDIFile
 import os
 import random
 import subprocess
 
-from midi_percussion import percussion as p
-from midi_voices import voices as v
-from midi_chords import chord_to_intervals, chord_to_pitches
+from midiutil import MIDIFile
 
+from midi_channels import Channel
+from midi_chords import chord_to_intervals, chord_to_pitches
+import midi_parse
+from midi_percussion import percussion as p
+from midi_voice import Voice
+from midi_voices import voices as v
+
+in_dir = "E:\\tmp"
 out_dir = "E:\\tmp"
 in_file = "phil.txt"
 out_file = "phil.mid"
@@ -93,62 +97,9 @@ rhythm5: Rhythm = [d_crotchet, t_crotchet, d_crotchet, t_crotchet, d_crotchet, t
 durations1 = [minim, crotchet, quaver, -quaver]
 durations2 = [minim, crotchet, quaver, quaver, quaver, quaver, quaver, quaver, -quaver]
 
-class Channel(IntEnum):
-    bass = 0
-    rhythm = 1
-    arpeggio = 2
-    lead1 = 3
-    lead2 = 4
-    percussion = 9
-    # Above are real MIDI channels;
-    # below are pseudo-channels used as percussion tracks.
-    perc0 = 16
-    perc1 = 17
-    perc2 = 18
-    perc3 = 19
-    perc4 = 20
-    perc5 = 21
-    perc6 = 22
-    perc7 = 23
-    perc8 = 24
-    perc9 = 25
-    max_channels = 26   # Can be extended if more percussion tracks needed.
-    none = 99
+# Voices are created by midi_parse from a configuration file.
+voices: list[Voice] = []
 
-class Voice:
-    def __init__(self, channel: Channel,
-                 voice: int,
-                 volume: int,
-                 min_pitch:int=0,
-                 max_pitch:int=127,
-                 ) -> None:
-        self.channel = channel
-        self.voice = voice
-        self.volume = volume
-        self.min_pitch = min_pitch
-        self.max_pitch = max_pitch
-        # The following 3 are used by improv to improve the melody lines.
-        self.prev_pitch = -1    # pitch of the last note played
-        self.prev_duration = 0  # duration of the last note played
-        self.overlap = 0        # amount by which last note extends into next bar
-
-    def constrain_pitch(self, pitch: int) -> int:
-        """Limit the pitch to that described in the voice."""
-        if not 0 <= pitch <= 127:
-            print(f'Pitch {pitch} is out of range')
-        while pitch < self.min_pitch:
-            pitch += 12
-        while pitch > self.max_pitch:
-            pitch -= 12
-        return pitch
-
-voices: list[Voice] = [
-    Voice(Channel.bass, v['electric_bass_picked'], volume_bass),
-    Voice(Channel.rhythm, v['acoustic_grand_piano'], volume_chord),
-    Voice(Channel.arpeggio, v['electric_guitar_clean'], volume_arpeggio),
-    Voice(Channel.lead1, v['alto_sax'], volume_lead, min_pitch=40, max_pitch=60),
-    Voice(Channel.lead2, v['acoustic_guitar_steel'], volume_lead, min_pitch=50, max_pitch=70),
-]
 class Item:
     """Abstract class constituent of a composition."""
     pass
@@ -501,6 +452,8 @@ def section_12bar() -> list[Item]:
     return items
 
 def run() -> None:
+    commands = midi_parse.Commands(in_dir, in_file)
+    voices = commands.get_voices()
     random.seed(1)
     global start_error
     start_error = make_error_table(10)
