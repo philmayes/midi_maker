@@ -28,6 +28,7 @@ from midiutil import MIDIFile
 from midi_channels import Channel
 from midi_chords import chord_to_intervals, chord_to_pitches
 from midi_items import *
+from midi_notes import Note as n
 import midi_parse
 from midi_percussion import percussion as p
 from midi_voice import Voice
@@ -44,31 +45,6 @@ sound_file = "E:\\devtools\\MIDISoundFiles\\FluidR3 GM.sf2"
 major_ints = [0, 2, 4, 5, 7, 9, 11,]
 #             A  B  C  D  E  F  G
 minor_ints = [0, 2, 3, 5, 7, 8, 10,]
-
-# note durations
-demisemiquaver = 120    # thirtysecond note
-semiquaver = 2 * demisemiquaver # sixteenth note
-quaver = 2 * semiquaver # eighth note
-crotchet = 2 * quaver   # quarter note
-minim = 2 * crotchet    # half note
-semibreve = 2 * minim   # whole note
-breve = 2 * semibreve   # double whole note
-# triplets
-t_demisemiquaver = demisemiquaver // 3
-t_semiquaver = 2 * t_demisemiquaver
-t_quaver = 2 * t_semiquaver
-t_crotchet = 2 * t_quaver
-t_minim = 2 * t_crotchet
-t_semibreve = 2 * t_minim
-t_breve = 2 * t_semibreve
-# doublets, i.e. 2 x triplets, so triplet + doublet = note
-d_demisemiquaver = 2 * t_demisemiquaver
-d_semiquaver = 2 * d_demisemiquaver
-d_quaver = 2 * d_semiquaver
-d_crotchet = 2 * d_quaver
-d_minim = 2 * d_crotchet
-d_semibreve = 2 * d_minim
-d_breve = 2 * d_semibreve
 
 tempo = 120   # In BPM
 # volumes are 0-127, as per the MIDI standard
@@ -88,22 +64,22 @@ Rhythm = list[int]
 # Negative values represent a silence.
 # A zero value extends the event to the end of the bar.
 rhythms: dict[str, Rhythm] = {
-    'rhythm1': [-crotchet, quaver, quaver, crotchet, quaver, quaver,],
-    'rhythm2': [t_quaver, d_quaver, quaver, crotchet, quaver, quaver, crotchet,],
+    'rhythm1': [-n.crotchet, n.quaver, n.quaver, n.crotchet, n.quaver, n.quaver,],
+    'rhythm2': [n.t_quaver, n.d_quaver, n.quaver, n.crotchet, n.quaver, n.quaver, n.crotchet,],
     'rhythm3': [0,],
-    'rhythm4': [crotchet, crotchet, crotchet, crotchet,],
-    'rhythm5': [d_crotchet, t_crotchet, d_crotchet, t_crotchet, d_crotchet, t_crotchet, crotchet,],
+    'rhythm4': [n.crotchet, n.crotchet, n.crotchet, n.crotchet,],
+    'rhythm5': [n.d_crotchet, n.t_crotchet, n.d_crotchet, n.t_crotchet, n.d_crotchet, n.t_crotchet, n.crotchet,],
 }
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
-durations1 = [minim, crotchet, quaver, -quaver]
-durations2 = [minim, crotchet, quaver, quaver, quaver, quaver, quaver, quaver, -quaver]
+durations1 = [n.minim, n.crotchet, n.quaver, -n.quaver]
+durations2 = [n.minim, n.crotchet, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, -n.quaver]
 
 # Voices are created by midi_parse from a configuration file.
 voices: dict[Channel, Voice] = {}
 
 Note = namedtuple('Note', 'pitch time duration volume',
-                  defaults=(40, 0, crotchet, volume_default))
+                  defaults=(40, 0, n.crotchet, volume_default))
 
 def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
@@ -115,7 +91,7 @@ def make_arpeggio_bar(midi_file: MIDIFile,
                     bar: Bar,
                     start: int):
     bar_end = start + timesig.ticks_per_bar
-    duration = crotchet
+    duration = n.crotchet
     for pitch in chord_to_pitches(bar.chord, 4):
         if start >= bar_end:
             break
@@ -179,8 +155,8 @@ def make_error_table(amount: int) -> list[int]:
     """
     table = []
     for err in range(amount + 1):
-        for n in range(-err, err + 1):
-            table.append(n)
+        for no in range(-err, err + 1):
+            table.append(no)
     amount //= 2
     if amount > 0:
         table.extend(make_error_table(amount))
@@ -320,7 +296,7 @@ def run() -> None:
     global error7
     error7 = make_error_table(7)
     midi_file = MIDIFile(len(voices),
-                         ticks_per_quarternote=crotchet,
+                         ticks_per_quarternote=n.crotchet,
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, tempo)
 
