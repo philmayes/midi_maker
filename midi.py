@@ -87,12 +87,13 @@ Rhythm = list[int]
 # Rhythms represent the timing of events within a bar.
 # Negative values represent a silence.
 # A zero value extends the event to the end of the bar.
-rhythm1: Rhythm = [-crotchet, quaver, quaver, crotchet, quaver, quaver,]
-rhythm2: Rhythm = [t_quaver, d_quaver, quaver, crotchet, quaver, quaver, crotchet,]
-rhythm3: Rhythm = [0,]
-rhythm4: Rhythm = [crotchet, crotchet, crotchet, crotchet,]
-rhythm5: Rhythm = [d_crotchet, t_crotchet, d_crotchet, t_crotchet, d_crotchet, t_crotchet, crotchet,]
-
+rhythms: dict[str, Rhythm] = {
+    'rhythm1': [-crotchet, quaver, quaver, crotchet, quaver, quaver,],
+    'rhythm2': [t_quaver, d_quaver, quaver, crotchet, quaver, quaver, crotchet,],
+    'rhythm3': [0,],
+    'rhythm4': [crotchet, crotchet, crotchet, crotchet,],
+    'rhythm5': [d_crotchet, t_crotchet, d_crotchet, t_crotchet, d_crotchet, t_crotchet, crotchet,],
+}
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
 durations1 = [minim, crotchet, quaver, -quaver]
@@ -348,15 +349,15 @@ def run() -> None:
             for _ in range(item.repeat):
                 # print(item.chord)
                 if active[Channel.perc0]:
-                    make_percussion_bar(midi_file, rhythm1, volume[Channel.perc0], p['high_tom'], timesig, bar_start)
+                    make_percussion_bar(midi_file, rhythms['rhythm1'], volume[Channel.perc0], p['high_tom'], timesig, bar_start)
                 if active[Channel.perc1]:
-                    make_percussion_bar(midi_file, rhythm2, volume[Channel.perc1], p['cowbell'], timesig, bar_start)
+                    make_percussion_bar(midi_file, rhythms['rhythm2'], volume[Channel.perc1], p['cowbell'], timesig, bar_start)
                 if active[Channel.perc2]:
-                    make_percussion_bar(midi_file, rhythm3, volume[Channel.perc2], p['acoustic_bass_drum'], timesig, bar_start)
+                    make_percussion_bar(midi_file, rhythms['rhythm3'], volume[Channel.perc2], p['acoustic_bass_drum'], timesig, bar_start)
                 if active[Channel.bass]:
-                    make_bass_bar(midi_file, voices[Channel.bass], rhythm3, timesig, item, bar_start)
+                    make_bass_bar(midi_file, voices[Channel.bass], rhythms['rhythm3'], timesig, item, bar_start)
                 if active[Channel.rhythm]:
-                    make_rhythm_bar(midi_file, voices[Channel.rhythm], rhythm4, 200, timesig, item, bar_start)
+                    make_rhythm_bar(midi_file, voices[Channel.rhythm], rhythms['rhythm4'], 200, timesig, item, bar_start)
                 if active[Channel.arpeggio]:
                     make_arpeggio_bar(midi_file, voices[Channel.arpeggio], timesig, item, bar_start)
                 if active[Channel.lead1]:
