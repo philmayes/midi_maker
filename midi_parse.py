@@ -8,17 +8,9 @@ from midi_percussion import percussion as p
 from midi_voice import Voice
 from midi_types import *
 import midi_voices
+from midi_volumes import volumes
 
 re_text = re.compile('[a-zA-Z_]')
-
-volumes = {
-    'arpeggio': 60,
-    'bass': 100,
-    'chord': 60,
-    'improv': 120,
-    'percussion': 60,
-    'default': 100,
-}
 
 def clean_line(line: str) -> str:
     # Remove possible comment

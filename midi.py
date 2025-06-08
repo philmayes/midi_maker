@@ -36,6 +36,7 @@ from midi_percussion import percussion as p
 from midi_types import *
 from midi_voice import Voice
 from midi_voices import voices as v
+from midi_volumes import volumes
 
 player = "E:\\devtools\\FluidSynth\\bin\\fluidsynth.exe"
 sound_file = "E:\\devtools\\MIDISoundFiles\\FluidR3 GM.sf2"
@@ -47,13 +48,6 @@ major_ints = [0, 2, 4, 5, 7, 9, 11,]
 minor_ints = [0, 2, 3, 5, 7, 8, 10,]
 
 tempo = 120   # In BPM
-# volumes are 0-127, as per the MIDI standard
-volume_arpeggio = 60
-volume_bass = 100
-volume_chord = 60
-volume_improv = 120
-volume_percussion = 60
-volume_default = 100
 
 # Rhythms represent the timing of events within a bar.
 # Negative values represent a silence.
@@ -70,12 +64,12 @@ durations2 = [n.minim, n.crotchet, n.quaver, n.quaver, n.quaver, n.quaver, n.qua
 voices: dict[Channel, Voice] = {}
 
 Note = namedtuple('Note', 'pitch time duration volume',
-                  defaults=(40, 0, n.crotchet, volume_default))
+                  defaults=(40, 0, n.crotchet, volumes['default']))
 
 class ChannelInfo:
     def __init__(self):
         self.active = False
-        self.volume = 60
+        self.volume = volumes['default']
         self.rhythm = default_rhythm
 
 def add_start_error(value: int) -> int:
@@ -356,6 +350,8 @@ def run(args:argparse.Namespace):
                     make_arpeggio_bar(midi_file, voices[Channel.arpeggio], timesig, item, bar_start)
                 if channel_info[Channel.improv1].active:
                     make_improv_bar(midi_file, voices[Channel.improv1], timesig, item, bar_start)
+                if channel_info[Channel.improv2].active:
+                    make_improv_bar(midi_file, voices[Channel.improv2], timesig, item, bar_start)
                 bar_start += timesig.ticks_per_bar
 
         elif isinstance(item, Loop):
