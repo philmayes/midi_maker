@@ -31,6 +31,7 @@ from midi_items import *
 from midi_notes import Note as n
 import midi_parse
 from midi_percussion import percussion as p
+from midi_types import *
 from midi_voice import Voice
 from midi_voices import voices as v
 
@@ -55,21 +56,11 @@ volume_lead = 120
 volume_percussion = 60
 volume_default = 100
 
-# Type aliases
-Notes = list[str]
-Pitches = list[int]
-Rhythm = list[int]
-
 # Rhythms represent the timing of events within a bar.
 # Negative values represent a silence.
 # A zero value extends the event to the end of the bar.
-rhythms: dict[str, Rhythm] = {
-    'rhythm1': [-n.crotchet, n.quaver, n.quaver, n.crotchet, n.quaver, n.quaver,],
-    'rhythm2': [n.t_quaver, n.d_quaver, n.quaver, n.crotchet, n.quaver, n.quaver, n.crotchet,],
-    'rhythm3': [0,],
-    'rhythm4': [n.crotchet, n.crotchet, n.crotchet, n.crotchet,],
-    'rhythm5': [n.d_crotchet, n.t_crotchet, n.d_crotchet, n.t_crotchet, n.d_crotchet, n.t_crotchet, n.crotchet,],
-}
+rhythms: dict[str, Rhythm] = {}
+
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
 durations1 = [n.minim, n.crotchet, n.quaver, -n.quaver]
@@ -290,6 +281,8 @@ def make_rhythm_bar(midi_file: MIDIFile,
 def run() -> None:
     commands = midi_parse.Commands(in_dir, in_file)
     voices = commands.get_voices()
+    rhythms = commands.get_rhythms()
+
     random.seed(1)
     global start_error
     start_error = make_error_table(10)

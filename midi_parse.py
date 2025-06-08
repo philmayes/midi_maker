@@ -4,14 +4,11 @@ from typing import TypeAlias
 
 from midi_channels import Channel
 from midi_items import *
+from midi_notes import *
 from midi_percussion import percussion as p
 from midi_voice import Voice
+from midi_types import *
 import midi_voices
-
-Verb: TypeAlias = str
-Param: TypeAlias = list[str]
-Params: TypeAlias = list[Param]
-Command: TypeAlias = tuple[Verb, Params]
 
 re_text = re.compile('[a-zA-Z_]')
 
@@ -106,67 +103,6 @@ class Commands:
         with open(path, "r") as input_file:
             self.commands = input_file.readlines()
 
-    def get_voices(self) -> dict[Channel, Voice]:
-        """Constructs Voice() instances from the list of commands."""
-        voices: dict[Channel, Voice] = {}
-        for command in self.commands:
-            command = clean_line(command)
-            if not command:
-                continue
-            words = command.split()
-            if words[0] != 'voice':
-                continue
-
-            # Set up default values
-            channel: Channel = Channel.none
-            voice: int = 0
-            volume: int = 0
-            min_pitch = 0
-            max_pitch = 127
-
-            # parse parameters into the default values
-            for word in words[1:]:
-                if '=' not in word:
-                    print(f'Missing "=" in {command}')
-                    continue
-                key, value = word.split('=', 1)
-                if not value:
-                    print(f'Missing value in {command}')
-                    continue
-
-                if key == 'channel':
-                    channel = str_to_channel(value)
-
-                elif key == 'voice':
-                    if value not in midi_voices.voices:
-                        print(f'Bad voice in {command}')
-                        continue
-                    voice = midi_voices.voices[value]
-
-                elif key == 'volume':
-                    if value not in volumes:
-                        print(f'Bad volume in {command}')
-                        continue
-                    volume = volumes[value]
-
-                elif key == 'min_pitch':
-                    if not value.isdigit() or not 0 <= int(value) <= 127:
-                        print(f'Bad min_pitch in {command}')
-                        continue
-                    min_pitch = int(value)
-
-                elif key == 'max_pitch':
-                    if not value.isdigit() or not 0 <= int(value) <= 127:
-                        print(f'Bad max_pitch in {command}')
-                        continue
-                    max_pitch = int(value)
-
-            if channel == Channel.none:
-                print(f'No channel in {command}')
-                continue
-            voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
-        return voices
-
     def get_composition(self, name: str) -> Composition:
         composition: Composition = Composition()
         in_composition = False
@@ -228,3 +164,92 @@ class Commands:
                 composition += Repeat()
 
         return composition
+
+    def get_voices(self) -> dict[Channel, Voice]:
+        """Constructs Voice() instances from the list of commands."""
+        voices: dict[Channel, Voice] = {}
+        for command in self.commands:
+            command = clean_line(command)
+            if not command:
+                continue
+            words = command.split()
+            if words[0] != 'voice':
+                continue
+
+            # Set up default values
+            channel: Channel = Channel.none
+            voice: int = 0
+            volume: int = 0
+            min_pitch = 0
+            max_pitch = 127
+
+            # parse parameters into the default values
+            for word in words[1:]:
+                if '=' not in word:
+                    print(f'Missing "=" in {command}')
+                    continue
+                key, value = word.split('=', 1)
+                if not value:
+                    print(f'Missing value in {command}')
+                    continue
+
+                if key == 'channel':
+                    channel = str_to_channel(value)
+
+                elif key == 'voice':
+                    if value not in midi_voices.voices:
+                        print(f'Bad voice in {command}')
+                        continue
+                    voice = midi_voices.voices[value]
+
+                elif key == 'volume':
+                    if value not in volumes:
+                        print(f'Bad volume in {command}')
+                        continue
+                    volume = volumes[value]
+
+                elif key == 'min_pitch':
+                    if not value.isdigit() or not 0 <= int(value) <= 127:
+                        print(f'Bad min_pitch in {command}')
+                        continue
+                    min_pitch = int(value)
+
+                elif key == 'max_pitch':
+                    if not value.isdigit() or not 0 <= int(value) <= 127:
+                        print(f'Bad max_pitch in {command}')
+                        continue
+                    max_pitch = int(value)
+
+            if channel == Channel.none:
+                print(f'No channel in {command}')
+                continue
+            voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
+        return voices
+
+    def get_rhythms(self) -> Rhythms:
+        """Constructs Voice() instances from the list of commands."""
+        rhythms: Rhythms = {}
+        for command in self.commands:
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+
+            if item == 'rhythm':
+                name: str = ''
+                values: str = ''
+                rhythm: Rhythm = []
+                for param in params:
+                    if param[0] == 'name':
+                        name = param[1]
+                    elif param[0] == 'values':
+                        values = param[1]
+
+                if name and values:
+                    notes = values.split(',')
+                    for note in notes:
+                        duration: int = str_to_note(note)
+                        # TODO: error handling?
+                        rhythm.append(duration)
+                    rhythms[name] = rhythm
+
+        return rhythms

@@ -27,7 +27,20 @@ class Note:
 
 def str_to_note(name: str) -> int:
     """Returns the note duration described by the string."""
+    assert len(name) > 0
+    # A leading minus sign inverts the value of the note
+    neg = name[0] == '-'
+    if neg:
+        name = name[1:]
+    # Direct numbers are accepted.
+    if name.isdigit():
+        return int(name)
+    # Look up the name and return its value
     d = Note.__dict__
     if name in d:
-        return d[name]
+        duration =  d[name]
+        if neg:
+            duration = -duration
+        return duration
+    print(f'Note "{name}" not recognized')
     return 0
