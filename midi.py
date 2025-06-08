@@ -20,6 +20,7 @@ e.g. for 6/8, each bar contains 6 quavers
 """
 import argparse
 from collections import namedtuple
+import logging
 import os
 import random
 import subprocess
@@ -38,6 +39,7 @@ from midi_voices import voices as v
 
 player = "E:\\devtools\\FluidSynth\\bin\\fluidsynth.exe"
 sound_file = "E:\\devtools\\MIDISoundFiles\\FluidR3 GM.sf2"
+default_log_level = 'WARNING'
 
 #             C  D  E  F  G  A  B
 major_ints = [0, 2, 4, 5, 7, 9, 11,]
@@ -80,6 +82,16 @@ def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
     return max(err, 0)
 
+def get_logging_level(args:argparse.Namespace) -> str:
+    # get the logging level: can be partial word, case-insensitive
+    short_level = args.log.upper()
+    log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+    for log_level in log_levels:
+        if log_level.startswith(short_level):
+            return log_level
+    print(f"Invalid log level '{short_level}'. Defaulting to '{default_log_level}'.")
+    return default_log_level
+
 def make_arpeggio_bar(midi_file: MIDIFile,
                     voice: Voice,
                     timesig: TimeSig,
@@ -120,7 +132,7 @@ def make_bass_bar(midi_file: MIDIFile,
         # Don't allow notes to extend beyond the bar.
         if note_length > remaining:
             note_length = remaining
-        # print(f'Bass {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord}, duration {note_length}')
+        # logging.debug(f'Bass {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord}, duration {note_length}')
         midi_file.addNote(0,
                           voice.channel,
                           pitch,
@@ -186,7 +198,7 @@ def make_improv_bar(midi_file: MIDIFile,
             index = pitches.index(voice.prev_pitch)
         else:
             # This error message also fires for the initial prev_pitch == -1
-            # print(f'{voice.prev_pitch} not in {pitches}')
+            logging.warning(f'{voice.prev_pitch} not in {pitches}')
             index = tonic_pitch + 36
         pick = random.choice(error7)
         pitch = pitches[index + pick]
@@ -216,7 +228,7 @@ def make_improv_bar(midi_file: MIDIFile,
             else:
                 # Make a note for the next bar
                 voice.overlap = duration - remaining
-        # print(f'Playing {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord} = {chord}, duration {duration}')
+        # logging.debug(f'Playing {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord} = {chord}, duration {duration}')
         midi_file.addNote(0,
                           voice.channel,
                           pitch,
@@ -285,10 +297,10 @@ def make_rhythm_bar(midi_file: MIDIFile,
 def run(args:argparse.Namespace):
     in_file = args.ini
     if not os.path.exists(in_file):
-        print(f'Input file "{in_file}" does not exist')
+        logging.critical(f'Input file "{in_file}" does not exist')
         return
     fname, _ = os.path.splitext(in_file)
-    out_file = os.path.join(fname, 'mid')
+    out_file =fname + '.mid'
     commands = midi_parse.Commands(in_file)
     voices = commands.get_voices()
     rhythms = commands.get_rhythms()
@@ -329,7 +341,7 @@ def run(args:argparse.Namespace):
             midi_file.addTempo(0, bar_start, item.tempo)
         elif isinstance(item, Bar):
             for _ in range(item.repeat):
-                # print(item.chord)
+                logging.debug(item.chord)
                 if channel_info[Channel.perc0].active:
                     make_percussion_bar(midi_file, channel_info[Channel.perc0], p['high_tom'], timesig, bar_start)
                 if channel_info[Channel.perc1].active:
@@ -353,17 +365,17 @@ def run(args:argparse.Namespace):
 
         elif isinstance(item, Repeat):
             if not loop_stack:
-                print('Loop stack underflow')
+                logging.warning('Loop stack underflow')
             else:
                 loop_item: LoopItem = loop_stack[-1]
                 if loop_item.count == 0:
                     loop_stack.pop()
-                    # print('repeat done')
+                    logging.debug('repeat done')
                 else:
                     if loop_item.count < 0:
                         # We're looping for the 1st time
                         loop_item.count = item.repeat
-                    # print(f'repeating {loop_item.count}')
+                    logging.debug(f'repeating {loop_item.count}')
                     loop_item.count -= 1
                     item_number = loop_item.item_no
 
@@ -407,19 +419,21 @@ def run(args:argparse.Namespace):
                         # rhythms2[channel] = rhythms[item.rhythm]
                         channel_info[channel].rhythm = rhythms[item.rhythm]
             else:
-                print(f'Rhythm {item.rhythm} does not exist.')
+                logging.warning(f'Rhythm {item.rhythm} does not exist.')
         else:
             assert 0, f'Unrecognized item {item}'
         item_number += 1
 
     with open(out_file, "wb") as f_out:
-        midi_file.writeFile(out_file)
+        midi_file.writeFile(f_out)
 
     subprocess.run([player, '-n', '-i', sound_file, out_file])
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Create MIDI file')
     parser.add_argument('ini', help=f'Data to create MIDI file (default: test.ini)')
+    parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
     args = parser.parse_args()
+    logging.basicConfig(level=get_logging_level(args))
 
     run(args)

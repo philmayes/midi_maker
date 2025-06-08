@@ -1,3 +1,4 @@
+import logging
 import re
 
 from midi_channels import Channel
@@ -71,16 +72,16 @@ def parse_command(command: str) -> Command:
             if word.isalpha():
                 item = word
             else:
-                print(f'Bad verb in {command}')
+                logging.warning(f'Bad verb in {command}')
                 break
         else:
             if '=' not in word:
                 # Subsequent words should be of the form key=value
-                print(f'Missing "=" in {command}')
+                logging.warning(f'Missing "=" in {command}')
                 break
             key, value = word.split('=', 1)
             if not value:
-                print(f'Missing value in {command}')
+                logging.warning(f'Missing value in {command}')
                 break
             params.append([key, value])
     else:
@@ -129,7 +130,7 @@ class Commands:
                         if value.isdigit():
                             composition += Tempo(int(value))
                             continue
-                print(f'Bad tempo in {command}')
+                logging.warning(f'Bad tempo in {command}')
 
             elif item == 'play':
                 channels = get_channels(params)
@@ -190,11 +191,11 @@ class Commands:
             # parse parameters into the default values
             for word in words[1:]:
                 if '=' not in word:
-                    print(f'Missing "=" in {command}')
+                    logging.warning(f'Missing "=" in {command}')
                     continue
                 key, value = word.split('=', 1)
                 if not value:
-                    print(f'Missing value in {command}')
+                    logging.warning(f'Missing value in {command}')
                     continue
 
                 if key == 'channel':
@@ -202,30 +203,30 @@ class Commands:
 
                 elif key == 'voice':
                     if value not in midi_voices.voices:
-                        print(f'Bad voice in {command}')
+                        logging.warning(f'Bad voice in {command}')
                         continue
                     voice = midi_voices.voices[value]
 
                 elif key == 'volume':
                     if value not in volumes:
-                        print(f'Bad volume in {command}')
+                        logging.warning(f'Bad volume in {command}')
                         continue
                     volume = volumes[value]
 
                 elif key == 'min_pitch':
                     if not value.isdigit() or not 0 <= int(value) <= 127:
-                        print(f'Bad min_pitch in {command}')
+                        logging.warning(f'Bad min_pitch in {command}')
                         continue
                     min_pitch = int(value)
 
                 elif key == 'max_pitch':
                     if not value.isdigit() or not 0 <= int(value) <= 127:
-                        print(f'Bad max_pitch in {command}')
+                        logging.warning(f'Bad max_pitch in {command}')
                         continue
                     max_pitch = int(value)
 
             if channel == Channel.none:
-                print(f'No channel in {command}')
+                logging.warning(f'No channel in {command}')
                 continue
             voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
         return voices

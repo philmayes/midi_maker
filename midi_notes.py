@@ -1,3 +1,4 @@
+import logging
 
 class Note:
     # note durations
@@ -42,5 +43,5 @@ def str_to_note(name: str) -> int:
         if neg:
             duration = -duration
         return duration
-    print(f'Note "{name}" not recognized')
+    logging.warning(f'Note "{name}" not recognized')
     return 0

@@ -1,3 +1,5 @@
+import logging
+
 from midi_channels import Channel
 
 class Voice:
@@ -20,7 +22,7 @@ class Voice:
     def constrain_pitch(self, pitch: int) -> int:
         """Limit the pitch to that described in the voice."""
         if not 0 <= pitch <= 127:
-            print(f'Pitch {pitch} is out of range')
+            logging.warning(f'Pitch {pitch} is out of range')
         while pitch < self.min_pitch:
             pitch += 12
         while pitch > self.max_pitch:
