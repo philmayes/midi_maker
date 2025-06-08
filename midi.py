@@ -186,16 +186,29 @@ def make_improv_bar(midi_file: MIDIFile,
         pitches.extend([octave * 12 + tonic_pitch + i for i in intervals])
 
     while start < bar_end:
-        # Choose a pitch.
-        if voice.prev_pitch >= 0 and voice.prev_pitch in pitches:
+        # Choose a pitch based on the previous one.
+        prev_pitch = voice.prev_pitch
+        if prev_pitch >= 0 and prev_pitch in pitches:
             # find where the previous note was in the scale
-            index = pitches.index(voice.prev_pitch)
+            index = pitches.index(prev_pitch)
         else:
-            # This error message also fires for the initial prev_pitch == -1
-            logging.warning(f'{voice.prev_pitch} not in {pitches}')
-            index = tonic_pitch + 36
+            if prev_pitch == -1:
+                # There is no previous note, so start on the tonic
+                index = tonic_pitch + 36
+            else:
+                # Previous note is not in this scale, probably because of
+                # chord change, so find a note near it.
+                for prev in pitches:
+                    if prev > prev_pitch:
+                        index = prev
+                        break
+                else:
+                    assert 0, f'prev_pitch ouside range?!'
+                    index = tonic_pitch + 36
+        # Pick a new pitch not far from the previous one.
         pick = random.choice(error7)
         pitch = pitches[index + pick]
+
         # Keep the pitch within a reasonable range.
         pitch = voice.constrain_pitch(pitch)
         voice.prev_pitch = pitch
@@ -428,7 +441,7 @@ def run(args:argparse.Namespace):
             else:
                 logging.warning(f'Rhythm {item.rhythm} does not exist.')
         else:
-            assert 0, f'Unrecognized item {item}'
+            logging.error(f'Unrecognized item {item}')
         item_number += 1
 
     with open(out_file, "wb") as f_out:

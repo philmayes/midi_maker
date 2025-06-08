@@ -17,9 +17,9 @@ def clean_line(line: str) -> str:
     c = line.find('#')
     if c >= 0:
         line = line[:c]
-    # c = line.find(';')
-    # if c >= 0:
-    #     line = line[:c]
+    c = line.find(';')
+    if c >= 0:
+        line = line[:c]
     # Remove leading & trailing whitespace
     line = line.strip()
     return line
