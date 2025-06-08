@@ -1,6 +1,4 @@
-import os
 import re
-from typing import TypeAlias
 
 from midi_channels import Channel
 from midi_items import *
@@ -98,10 +96,9 @@ def str_to_channel(name: str) -> Channel:
     return Channel.none
 
 class Commands:
-    def __init__(self, in_dir: str, in_file: str):
-        path = os.path.join(in_dir, in_file)
-        with open(path, "r") as input_file:
-            self.commands = input_file.readlines()
+    def __init__(self, in_file: str):
+        with open(in_file, "r") as f_in:
+            self.commands = f_in.readlines()
 
     def get_composition(self, name: str) -> Composition:
         composition: Composition = Composition()

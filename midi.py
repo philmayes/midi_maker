@@ -18,6 +18,7 @@ The bottom number tells what sort of notes each bar is going to contain,
 The top one tells how many of them there will be (or equivalent).
 e.g. for 6/8, each bar contains 6 quavers
 """
+import argparse
 from collections import namedtuple
 import os
 import random
@@ -35,10 +36,6 @@ from midi_types import *
 from midi_voice import Voice
 from midi_voices import voices as v
 
-in_dir = "E:\\tmp"
-out_dir = "E:\\tmp"
-in_file = "phil.txt"
-out_file = "phil.mid"
 player = "E:\\devtools\\FluidSynth\\bin\\fluidsynth.exe"
 sound_file = "E:\\devtools\\MIDISoundFiles\\FluidR3 GM.sf2"
 
@@ -285,8 +282,14 @@ def make_rhythm_bar(midi_file: MIDIFile,
                     )
         start += note_length
 
-def run() -> None:
-    commands = midi_parse.Commands(in_dir, in_file)
+def run(args:argparse.Namespace):
+    in_file = args.ini
+    if not os.path.exists(in_file):
+        print(f'Input file "{in_file}" does not exist')
+        return
+    fname, _ = os.path.splitext(in_file)
+    out_file = os.path.join(fname, 'mid')
+    commands = midi_parse.Commands(in_file)
     voices = commands.get_voices()
     rhythms = commands.get_rhythms()
 
@@ -409,11 +412,14 @@ def run() -> None:
             assert 0, f'Unrecognized item {item}'
         item_number += 1
 
-    path = os.path.join(out_dir, out_file)
-    with open(path, "wb") as output_file:
-        midi_file.writeFile(output_file)
+    with open(out_file, "wb") as f_out:
+        midi_file.writeFile(out_file)
 
-    subprocess.run([player, '-n', '-i', sound_file, path])
+    subprocess.run([player, '-n', '-i', sound_file, out_file])
 
 if __name__=='__main__':
-    run()
+    parser = argparse.ArgumentParser(description='Create MIDI file')
+    parser.add_argument('ini', help=f'Data to create MIDI file (default: test.ini)')
+    args = parser.parse_args()
+
+    run(args)
