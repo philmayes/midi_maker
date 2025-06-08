@@ -231,6 +231,19 @@ def make_improv_bar(midi_file: MIDIFile,
                           voice.volume)
         start += duration
 
+def make_in_range(value: int, max_value: int, desc: str) -> int:
+    """Coerces a value into range.
+    
+    Valid range is 0 <= value < max_value.
+    """
+    if value >= max_value:
+        logging.warning(f'{desc} value {value} too high')
+        value = max_value
+    elif value < 0:
+        logging.warning(f'{desc} value {value} too low')
+        value = 0
+    return value
+
     # channel_info: list[ChannelInfo] = [ChannelInfo()] * Channel.max_channels
 def make_percussion_bar(midi_file: MIDIFile,
                         channel_info: ChannelInfo,
@@ -397,14 +410,12 @@ def run(args:argparse.Namespace):
                         # The volume for channels is held in the Voice instance.
                         assert channel < len(voices), f'Channel {channel} out of range'
                         new_volume = voices[channel].volume + item.delta
-                        assert 0 <= new_volume <= 127, f'Volume {new_volume} out of range'
-                        voices[channel].volume = new_volume
+                        new_volume = make_in_range(new_volume, 128, 'Volume channel')
                         channel_info[channel].volume = new_volume
                     else:
                         # The volume for percussion tracks is held in volumes[].
                         new_volume = channel_info[channel].volume + item.delta
-                        assert 0 <= new_volume <= 127, f'Volume {new_volume} out of range'
-                        # volume[channel] = new_volume
+                        new_volume = make_in_range(new_volume, 128, 'Volume channel')
                         channel_info[channel].volume = new_volume
 
         elif isinstance(item, Beat):
