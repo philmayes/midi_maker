@@ -278,6 +278,12 @@ def make_rhythm_bar(midi_file: MIDIFile,
                     )
         start += note_length
 
+class ChannelInfo:
+    def __init__(self):
+        self.active = False
+        self.volume = 60
+        self.rhythm = ''
+
 def run() -> None:
     commands = midi_parse.Commands(in_dir, in_file)
     voices = commands.get_voices()
@@ -307,6 +313,8 @@ def run() -> None:
     active: list[bool] = [False] * Channel.max_channels
     # Array to hold percussion volumes. The first 16 are unused.
     volume: list[int] = [volume_percussion] * Channel.max_channels
+    # Array to hold rhythm info for channels and percussion..
+    rhythms2 = ['rhythm4'] * Channel.max_channels
     item_number = 0
     while item_number < len(composition.items):
         item = composition.items[item_number]
@@ -318,18 +326,25 @@ def run() -> None:
             for _ in range(item.repeat):
                 # print(item.chord)
                 if active[Channel.perc0]:
-                    make_percussion_bar(midi_file, rhythms['rhythm1'], volume[Channel.perc0], p['high_tom'], timesig, bar_start)
+                    r = rhythms[rhythms2[Channel.perc0]]
+                    make_percussion_bar(midi_file, r, volume[Channel.perc0], p['high_tom'], timesig, bar_start)
                 if active[Channel.perc1]:
+                    r = rhythms[rhythms2[Channel.perc1]]
                     make_percussion_bar(midi_file, rhythms['rhythm2'], volume[Channel.perc1], p['cowbell'], timesig, bar_start)
                 if active[Channel.perc2]:
+                    r = rhythms[rhythms2[Channel.perc2]]
                     make_percussion_bar(midi_file, rhythms['rhythm3'], volume[Channel.perc2], p['acoustic_bass_drum'], timesig, bar_start)
                 if active[Channel.bass]:
+                    r = rhythms[rhythms2[Channel.bass]]
                     make_bass_bar(midi_file, voices[Channel.bass], rhythms['rhythm3'], timesig, item, bar_start)
                 if active[Channel.rhythm]:
+                    r = rhythms[rhythms2[Channel.rhythm]]
                     make_rhythm_bar(midi_file, voices[Channel.rhythm], rhythms['rhythm4'], 200, timesig, item, bar_start)
                 if active[Channel.arpeggio]:
+                    r = rhythms[rhythms2[Channel.arpeggio]]
                     make_arpeggio_bar(midi_file, voices[Channel.arpeggio], timesig, item, bar_start)
                 if active[Channel.lead1]:
+                    r = rhythms[rhythms2[Channel.lead1]]
                     make_improv_bar(midi_file, voices[Channel.lead2], timesig, item, bar_start)
                 bar_start += timesig.ticks_per_bar
 
@@ -381,6 +396,15 @@ def run() -> None:
                         new_volume = volume[channel] + item.delta
                         assert 0 <= new_volume <= 127
                         volume[channel] = new_volume
+
+        elif isinstance(item, Beat):
+            if item.rhythm in rhythms:
+                for channel in item.channels:
+                    if channel is not Channel.none:
+                        assert 0 <= channel < Channel.max_channels
+                        rhythms2[channel] = item.rhythm
+            else:
+                print(f'Rhythm {item.rhythm} does not exist.')
         else:
             assert 0, f'Unrecognized item {item}'
         item_number += 1

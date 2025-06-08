@@ -163,6 +163,13 @@ class Commands:
             elif item == 'repeat':
                 composition += Repeat()
 
+            elif item == 'beat':
+                if params:
+                    key, value = params[0]
+                    if key == 'name':
+                        channels = get_channels(params)
+                        composition += Beat(value, channels)
+
         return composition
 
     def get_voices(self) -> dict[Channel, Voice]:

@@ -13,6 +13,12 @@ class Bar(Item):
         self.repeat = repeat
         self.clip = False
 
+class Beat(Item):
+    """Adjust rhythm for channel(s)."""
+    def __init__(self, rhythm: str, channels: list[Channel]):
+        self.rhythm = rhythm
+        self.channels = channels
+
 class Loop(Item):
     """Start a loop."""
     def __init__(self):
