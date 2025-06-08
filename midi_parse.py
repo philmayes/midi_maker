@@ -15,7 +15,7 @@ volumes = {
     'arpeggio': 60,
     'bass': 100,
     'chord': 60,
-    'lead': 120,
+    'improv': 120,
     'percussion': 60,
     'default': 100,
 }

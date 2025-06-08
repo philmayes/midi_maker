@@ -5,8 +5,8 @@ class Channel(IntEnum):
     bass = 0
     rhythm = 1
     arpeggio = 2
-    lead1 = 3
-    lead2 = 4
+    improv1 = 3
+    improv2 = 4
     percussion = 9
     # Above are real MIDI channels;
     # below are pseudo-channels used as percussion tracks.

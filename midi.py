@@ -51,7 +51,7 @@ tempo = 120   # In BPM
 volume_arpeggio = 60
 volume_bass = 100
 volume_chord = 60
-volume_lead = 120
+volume_improv = 120
 volume_percussion = 60
 volume_default = 100
 
@@ -354,8 +354,8 @@ def run(args:argparse.Namespace):
                     make_rhythm_bar(midi_file, voices[Channel.rhythm], channel_info[Channel.rhythm], 200, timesig, item, bar_start)
                 if channel_info[Channel.arpeggio].active:
                     make_arpeggio_bar(midi_file, voices[Channel.arpeggio], timesig, item, bar_start)
-                if channel_info[Channel.lead1].active:
-                    make_improv_bar(midi_file, voices[Channel.lead2], timesig, item, bar_start)
+                if channel_info[Channel.improv1].active:
+                    make_improv_bar(midi_file, voices[Channel.improv1], timesig, item, bar_start)
                 bar_start += timesig.ticks_per_bar
 
         elif isinstance(item, Loop):
@@ -434,6 +434,9 @@ if __name__=='__main__':
     parser.add_argument('ini', help=f'Data to create MIDI file (default: test.ini)')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
     args = parser.parse_args()
-    logging.basicConfig(level=get_logging_level(args))
+    logging.basicConfig(format='%(message)s', level=get_logging_level(args))
 
-    run(args)
+    try:
+        run(args)
+    except Exception as e:
+        logging.error(f"Exception {e}")
