@@ -53,7 +53,7 @@ tempo = 120   # In BPM
 # Negative values represent a silence.
 # A zero value extends the event to the end of the bar.
 rhythms: dict[str, Rhythm] = {}
-default_rhythm = [0, 960, 1920, 2840,]
+default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
 
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
