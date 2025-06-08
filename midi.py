@@ -313,7 +313,7 @@ def run(args:argparse.Namespace):
         assert voice.channel == channel, 'Voice index must match channel'
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
-    composition = commands.get_composition('one')
+    composition = commands.get_composition()
     bar_start = 0
     loop_stack: list[LoopItem] = []
     timesig = TimeSig(4, 4) # default
@@ -378,32 +378,32 @@ def run(args:argparse.Namespace):
         elif isinstance(item, Mute):
             for channel in item.channels:
                 if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels
+                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
                     # active[channel] = False
                     channel_info[channel].active = False
 
         elif isinstance(item, Play):
             for channel in item.channels:
                 if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels
+                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
                     # active[channel] = True
                     channel_info[channel].active = True
 
         elif isinstance(item, Volume):
             for channel in item.channels:
                 if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels
+                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
                     if channel < 16:
                         # The volume for channels is held in the Voice instance.
-                        assert channel < len(voices)
+                        assert channel < len(voices), f'Channel {channel} out of range'
                         new_volume = voices[channel].volume + item.delta
-                        assert 0 <= new_volume <= 127
+                        assert 0 <= new_volume <= 127, f'Volume {new_volume} out of range'
                         voices[channel].volume = new_volume
                         channel_info[channel].volume = new_volume
                     else:
                         # The volume for percussion tracks is held in volumes[].
                         new_volume = channel_info[channel].volume + item.delta
-                        assert 0 <= new_volume <= 127
+                        assert 0 <= new_volume <= 127, f'Volume {new_volume} out of range'
                         # volume[channel] = new_volume
                         channel_info[channel].volume = new_volume
 
@@ -411,7 +411,7 @@ def run(args:argparse.Namespace):
             if item.rhythm in rhythms:
                 for channel in item.channels:
                     if channel is not Channel.none:
-                        assert 0 <= channel < Channel.max_channels
+                        assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
                         # rhythms2[channel] = rhythms[item.rhythm]
                         channel_info[channel].rhythm = rhythms[item.rhythm]
             else:
@@ -435,4 +435,4 @@ if __name__=='__main__':
     try:
         run(args)
     except Exception as e:
-        logging.error(f"Exception {e}")
+        print(e)

@@ -17,6 +17,9 @@ def clean_line(line: str) -> str:
     c = line.find('#')
     if c >= 0:
         line = line[:c]
+    # c = line.find(';')
+    # if c >= 0:
+    #     line = line[:c]
     # Remove leading & trailing whitespace
     line = line.strip()
     return line
@@ -27,7 +30,7 @@ def get_channels(params: Params) -> list[Channel]:
 
 def get_number(text: str) -> int | None:
     """Returns possibly signed number as int or None."""
-    assert text != ''
+    assert text != '', f'Number is missing'
     neg = False
     if not text.isdigit():
         neg = text == '-'
@@ -93,7 +96,8 @@ class Commands:
         with open(in_file, "r") as f_in:
             self.commands = f_in.readlines()
 
-    def get_composition(self, name: str) -> Composition:
+    def get_composition(self, name: str='') -> Composition:
+        """Gets the list of items between."""
         composition: Composition = Composition()
         in_composition = False
         for command in self.commands:
@@ -106,7 +110,9 @@ class Commands:
             if item == 'composition':
                 if in_composition:
                     break
-                if params:
+                if not name:
+                    in_composition = True
+                elif params:
                     key, value = params[0]
                     if key == 'name' and value == name:
                         in_composition = True

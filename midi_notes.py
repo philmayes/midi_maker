@@ -28,7 +28,7 @@ class Note:
 
 def str_to_note(name: str) -> int:
     """Returns the note duration described by the string."""
-    assert len(name) > 0
+    assert len(name) > 0, 'No name provided for note'
     # A leading minus sign inverts the value of the note
     neg = name[0] == '-'
     if neg:

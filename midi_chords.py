@@ -48,8 +48,8 @@ note_to_offset = {
 def chord_to_intervals(chord: str) -> list[int]:
     """Convert a chord name to list of intervals."""
     match = re_chord.match(chord)
-    assert match
-    assert match.group(2) in chords
+    assert match, f'Unknown chord "{str}"'
+    assert match.group(2) in chords, f'Unknown chord "{str}"'
     offset: int = note_to_offset[match.group(1)]
     intervals: list[int] = chords[match.group(2)]
     result: list[int] = [interval + offset for interval in intervals]
@@ -57,7 +57,7 @@ def chord_to_intervals(chord: str) -> list[int]:
 
 def chord_to_pitches(chord: str, octave: int) -> list[int]:
     """Convert a chord name to list of intervals for a specific octave."""
-    assert 0 <= octave < 12
+    assert 0 <= octave < 12, f'Octave {octave} out of range'
     octave *= NOTES_IN_OCTAVE
     intervals: list[int] = chord_to_intervals(chord)
     result: list[int] = [interval + octave for interval in intervals]
