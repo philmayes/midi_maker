@@ -67,6 +67,9 @@ Note = namedtuple('Note', 'pitch time duration volume',
                   defaults=(40, 0, n.crotchet, volumes['default']))
 
 class ChannelInfo:
+    """Holds all info for a channel (which includes percussion)
+    that can be adjusted dynamically.
+    """
     def __init__(self):
         self.active = False
         self.volume = volumes['default']
@@ -88,6 +91,7 @@ def get_logging_level(args:argparse.Namespace) -> str:
 
 def make_arpeggio_bar(midi_file: MIDIFile,
                     voice: Voice,
+                    channel_info: ChannelInfo,
                     timesig: TimeSig,
                     bar: Bar,
                     start: int):
@@ -101,7 +105,7 @@ def make_arpeggio_bar(midi_file: MIDIFile,
                           pitch,
                           add_start_error(start),
                           duration,
-                          voice.volume)
+                          channel_info.volume)
         start += duration
 
 def make_bass_bar(midi_file: MIDIFile,
@@ -165,6 +169,7 @@ def make_error_table(amount: int) -> list[int]:
 
 def make_improv_bar(midi_file: MIDIFile,
                     voice: Voice,
+                    channel_info: ChannelInfo,
                     timesig: TimeSig,
                     bar: Bar,
                     bar_start: int):
@@ -241,7 +246,7 @@ def make_improv_bar(midi_file: MIDIFile,
                           pitch,
                           add_start_error(start),
                           duration,
-                          voice.volume)
+                          channel_info.volume)
         start += duration
 
 def make_in_range(value: int, max_value: int, desc: str) -> int:
@@ -251,7 +256,7 @@ def make_in_range(value: int, max_value: int, desc: str) -> int:
     """
     if value >= max_value:
         logging.warning(f'{desc} value {value} too high')
-        value = max_value
+        value = max_value - 1
     elif value < 0:
         logging.warning(f'{desc} value {value} too low')
         value = 0
@@ -335,14 +340,6 @@ def run(args:argparse.Namespace):
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, tempo)
 
-    for channel, voice in voices.items():
-        assert voice.channel == channel, 'Voice index must match channel'
-        midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
-
-    composition = commands.get_composition()
-    bar_start = 0
-    loop_stack: list[LoopItem] = []
-    timesig = TimeSig(4, 4) # default
     # Array to indicate which channels and percussions are active (playing).
     # These are changed via the classes Mute and Play.
     # The first 16 are real channels; the rest are percussion tracks.
@@ -351,7 +348,20 @@ def run(args:argparse.Namespace):
     # volume: list[int] = [volume_percussion] * Channel.max_channels
     # Array to hold rhythm info for channels and percussion.
     # rhythms2 = [default_rhythm] * Channel.max_channels
-    channel_info: list[ChannelInfo] = [ChannelInfo()] * Channel.max_channels
+    # channel_info: list[ChannelInfo] = [ChannelInfo()] * Channel.max_channels
+    channel_info: list[ChannelInfo] = []
+    for _ in range(Channel.max_channels):
+        channel_info.append(ChannelInfo())
+
+    for channel, voice in voices.items():
+        assert voice.channel == channel, 'Voice index must match channel'
+        channel_info[voice.channel].volume = voice.volume
+        midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
+
+    composition = commands.get_composition(args.comp)
+    bar_start = 0
+    loop_stack: list[LoopItem] = []
+    timesig = TimeSig(4, 4) # default
     item_number = 0
     while item_number < len(composition.items):
         item = composition.items[item_number]
@@ -373,11 +383,11 @@ def run(args:argparse.Namespace):
                 if channel_info[Channel.rhythm].active:
                     make_rhythm_bar(midi_file, voices[Channel.rhythm], channel_info[Channel.rhythm], 200, timesig, item, bar_start)
                 if channel_info[Channel.arpeggio].active:
-                    make_arpeggio_bar(midi_file, voices[Channel.arpeggio], timesig, item, bar_start)
+                    make_arpeggio_bar(midi_file, voices[Channel.arpeggio], channel_info[Channel.arpeggio], timesig, item, bar_start)
                 if channel_info[Channel.improv1].active:
-                    make_improv_bar(midi_file, voices[Channel.improv1], timesig, item, bar_start)
+                    make_improv_bar(midi_file, voices[Channel.improv1], channel_info[Channel.improv1], timesig, item, bar_start)
                 if channel_info[Channel.improv2].active:
-                    make_improv_bar(midi_file, voices[Channel.improv2], timesig, item, bar_start)
+                    make_improv_bar(midi_file, voices[Channel.improv2], channel_info[Channel.improv2], timesig, item, bar_start)
                 bar_start += timesig.ticks_per_bar
 
         elif isinstance(item, Loop):
@@ -405,38 +415,27 @@ def run(args:argparse.Namespace):
             for channel in item.channels:
                 if channel is not Channel.none:
                     assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                    # active[channel] = False
                     channel_info[channel].active = False
 
         elif isinstance(item, Play):
             for channel in item.channels:
                 if channel is not Channel.none:
                     assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                    # active[channel] = True
                     channel_info[channel].active = True
 
         elif isinstance(item, Volume):
             for channel in item.channels:
                 if channel is not Channel.none:
                     assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                    if channel < 16:
-                        # The volume for channels is held in the Voice instance.
-                        assert channel < len(voices), f'Channel {channel} out of range'
-                        new_volume = voices[channel].volume + item.delta
-                        new_volume = make_in_range(new_volume, 128, 'Volume channel')
-                        channel_info[channel].volume = new_volume
-                    else:
-                        # The volume for percussion tracks is held in volumes[].
-                        new_volume = channel_info[channel].volume + item.delta
-                        new_volume = make_in_range(new_volume, 128, 'Volume channel')
-                        channel_info[channel].volume = new_volume
+                    new_volume = channel_info[channel].volume + item.delta
+                    new_volume = make_in_range(new_volume, 128, 'Volume channel')
+                    channel_info[channel].volume = new_volume
 
         elif isinstance(item, Beat):
             if item.rhythm in rhythms:
                 for channel in item.channels:
                     if channel is not Channel.none:
                         assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                        # rhythms2[channel] = rhythms[item.rhythm]
                         channel_info[channel].rhythm = rhythms[item.rhythm]
             else:
                 logging.warning(f'Rhythm {item.rhythm} does not exist.')
@@ -453,6 +452,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Create MIDI file')
     parser.add_argument('ini', help=f'Data to create MIDI file (default: test.ini)')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
+    parser.add_argument('-c', '--comp', default='', help='name of composition in data file')
     args = parser.parse_args()
     logging.basicConfig(format='%(message)s', level=get_logging_level(args))
 
