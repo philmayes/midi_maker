@@ -1,7 +1,7 @@
 import logging
 import re
 
-from midi_channels import Channel
+from midi_channels import Channel, is_midi, str_to_channel
 from midi_items import *
 from midi_notes import *
 import midi_percussion
@@ -83,13 +83,6 @@ def parse_command(command: str) -> Command:
         # Weird python syntax: the loop finished without a break
         return item, params
     return '', []
-
-def str_to_channel(name: str) -> Channel:
-    """Returns the Channel described by the string."""
-    for ch in Channel:
-        if ch.name == name:
-            return ch
-    return Channel.none
 
 class Commands:
     def __init__(self, in_file: str):
@@ -244,7 +237,7 @@ class Commands:
                         logging.warning(f'Channel must precede voice in "{command}"')
                         continue
                     table: dict[str, int] = midi_voices.voices\
-                        if channel < Channel.perc0\
+                        if is_midi(channel)\
                         else midi_percussion.percussion
                     if value not in table:
                         logging.warning(f'Bad voice in {command}')

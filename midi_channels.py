@@ -22,3 +22,16 @@ class Channel(IntEnum):
     perc9 = 25
     max_channels = 26   # Can be extended if more percussion tracks needed.
     none = 99
+
+def is_midi(channel: Channel) -> bool:
+    return channel < Channel.perc0
+
+def is_perc(channel: Channel) -> bool:
+    return channel >= Channel.perc0
+
+def str_to_channel(name: str) -> Channel:
+    """Returns the Channel described by the string."""
+    for ch in Channel:
+        if ch.name == name:
+            return ch
+    return Channel.none
