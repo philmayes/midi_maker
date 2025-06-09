@@ -63,6 +63,17 @@ durations2 = [n.minim, n.crotchet, n.quaver, n.quaver, n.quaver, n.quaver, n.qua
 Note = namedtuple('Note', 'pitch time duration volume',
                   defaults=(40, 0, n.crotchet, volumes['default']))
 
+class BarInfo:
+    """Class that holds info for the current bar."""
+    def __init__(self, midi_file: MIDIFile):
+        self.midi_file = midi_file
+        self.timesig: TimeSig = TimeSig(4, 4)
+        self.bar: Bar = Bar('Cmaj')
+        self.start = 0
+
+    def bar_end(self) -> int:
+        return self.start + self.timesig.ticks_per_bar
+
 class ChannelInfo:
     """Holds all info for a channel (which includes percussion)
     that can be adjusted dynamically.
@@ -87,31 +98,25 @@ def get_logging_level(args:argparse.Namespace) -> str:
     print(f"Invalid log level '{short_level}'. Defaulting to '{default_log_level}'.")
     return default_log_level
 
-def make_arpeggio_bar(midi_file: MIDIFile,
-                    channel_info: ChannelInfo,
-                    timesig: TimeSig,
-                    bar: Bar,
-                    start: int):
-    bar_end = start + timesig.ticks_per_bar
+def make_arpeggio_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+    start = bar_info.start
+    bar_end = bar_info.bar_end()
     duration = n.crotchet
-    for pitch in chord_to_pitches(bar.chord, 4):
+    for pitch in chord_to_pitches(bar_info.bar.chord, 4):
         if start >= bar_end:
             break
-        midi_file.addNote(0,
-                          channel_info.voice.channel,
-                          pitch,
-                          add_start_error(start),
-                          duration,
-                          channel_info.volume)
+        bar_info.midi_file.addNote(0,
+                                   channel_info.voice.channel,
+                                   pitch,
+                                   add_start_error(start),
+                                   duration,
+                                   channel_info.volume)
         start += duration
 
-def make_bass_bar(midi_file: MIDIFile,
-                  channel_info: ChannelInfo,
-                  timesig: TimeSig,
-                  bar: Bar,
-                  start: int):
-    bar_end = start + timesig.ticks_per_bar
-    pitch = chord_to_pitches(bar.chord, 3)[0]
+def make_bass_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+    start = bar_info.start
+    bar_end = bar_info.bar_end()
+    pitch = chord_to_pitches(bar_info.bar.chord, 3)[0]
     for note_length in channel_info.rhythm:
         remaining = bar_end - start
         if remaining <= 0:
@@ -127,27 +132,27 @@ def make_bass_bar(midi_file: MIDIFile,
         if note_length > remaining:
             note_length = remaining
         # logging.debug(f'Bass {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord}, duration {note_length}')
-        midi_file.addNote(0,
-                          channel_info.voice.channel,
-                          pitch,
-                          add_start_error(start),
-                          note_length,
-                          channel_info.volume)
+        bar_info.midi_file.addNote(0,
+                                   channel_info.voice.channel,
+                                   pitch,
+                                   add_start_error(start),
+                                   note_length,
+                                   channel_info.volume)
         start += note_length
 
-def make_chord(midi_file: MIDIFile,
-                    channel_info: ChannelInfo,
+def make_chord(bar_info: BarInfo, channel_info: ChannelInfo,
+                    # channel_info: ChannelInfo,
                     pitches: Pitches,
                     start: int,
                     duration: int):
     start = add_start_error(start)
     for pitch in pitches:
-        midi_file.addNote(0,
-                          channel_info.voice.channel,
-                          pitch,
-                          start,
-                          duration,
-                          channel_info.volume)
+        bar_info.midi_file.addNote(0,
+                                   channel_info.voice.channel,
+                                   pitch,
+                                   start,
+                                   duration,
+                                   channel_info.volume)
 
 def make_error_table(amount: int) -> list[int]:
     """Makes an error table
@@ -163,22 +168,18 @@ def make_error_table(amount: int) -> list[int]:
         table.extend(make_error_table(amount))
     return table
 
-def make_improv_bar(midi_file: MIDIFile,
-                    channel_info: ChannelInfo,
-                    timesig: TimeSig,
-                    bar: Bar,
-                    bar_start: int):
-    bar_end = bar_start + timesig.ticks_per_bar
+def make_improv_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+    bar_end = bar_info.bar_end()
     voice: Voice = channel_info.voice
     # If the last note in the previous bar extended beyond the bar,
     # start at that point.
-    start = bar_start + voice.overlap
+    start = bar_info.start + voice.overlap
     voice.overlap = 0
 
     # Get the chord, tonic and scale
-    chord: list[int] = chord_to_intervals(bar.chord)
+    chord: list[int] = chord_to_intervals(bar_info.bar.chord)
     tonic_pitch = chord[0]
-    intervals = minor_ints if 'min' in bar.chord else major_ints
+    intervals = minor_ints if 'min' in bar_info.bar.chord else major_ints
     # Construct a dozen octaves of the pitches in this scale.
     # Some of these pitches will be outside the MIDI spec of 0-127,
     # but they will be corralled by voice.constrain_pitch().
@@ -230,19 +231,19 @@ def make_improv_bar(midi_file: MIDIFile,
             # A zero note length extends note to the end of the bar.
             duration = remaining
         if duration > remaining:
-            if bar.clip:
+            if bar_info.bar.clip:
                 # Don't allow notes to extend beyond the bar.
                 duration = remaining
             else:
                 # Make a note for the next bar
                 voice.overlap = duration - remaining
         # logging.debug(f'Playing {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord} = {chord}, duration {duration}')
-        midi_file.addNote(0,
-                          channel_info.voice.channel,
-                          pitch,
-                          add_start_error(start),
-                          duration,
-                          channel_info.volume)
+        bar_info.midi_file.addNote(0,
+                                   channel_info.voice.channel,
+                                   pitch,
+                                   add_start_error(start),
+                                   duration,
+                                   channel_info.volume)
         start += duration
 
 def make_in_range(value: int, max_value: int, desc: str) -> int:
@@ -258,12 +259,9 @@ def make_in_range(value: int, max_value: int, desc: str) -> int:
         value = 0
     return value
 
-def make_percussion_bar(midi_file: MIDIFile,
-                        channel_info: ChannelInfo,
-                        timesig: TimeSig,
-                        bar_start: int):
-    bar_end = bar_start + timesig.ticks_per_bar
-    start = bar_start
+def make_percussion_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+    bar_end = bar_info.bar_end()
+    start = bar_info.start
     for note_length in channel_info.rhythm:
         if start >= bar_end:
             break
@@ -274,23 +272,20 @@ def make_percussion_bar(midi_file: MIDIFile,
         if note_length == 0:
             # A zero note length is to be extended to the end of the bar
             note_length = bar_end - start
-        midi_file.addNote(0,
-                          Channel.percussion,
-                          channel_info.voice.voice,
-                          add_start_error(start),
-                          note_length,
-                          channel_info.volume)
+        bar_info.midi_file.addNote(0,
+                                   Channel.percussion,
+                                   channel_info.voice.voice,
+                                   add_start_error(start),
+                                   note_length,
+                                   channel_info.volume)
         start += note_length
 
-def make_rhythm_bar(midi_file: MIDIFile,
-                        channel_info: ChannelInfo,
-                        duration: int,
-                        timesig: TimeSig,
-                        bar: Bar,
-                        bar_start: int):
-    bar_end = bar_start + timesig.ticks_per_bar
-    start = bar_start
-    pitches = chord_to_pitches(bar.chord, 4)
+def make_rhythm_bar(bar_info: BarInfo,
+                    channel_info: ChannelInfo,
+                    duration: int):
+    start = bar_info.start
+    bar_end = bar_info.bar_end()
+    pitches = chord_to_pitches(bar_info.bar.chord, 4)
     for note_length in channel_info.rhythm:
         if start >= bar_end:
             break
@@ -304,7 +299,7 @@ def make_rhythm_bar(midi_file: MIDIFile,
             note_length = bar_end - start
             duration = 0
         play_time = duration if duration else note_length
-        make_chord(midi_file,
+        make_chord(bar_info,
                    channel_info,
                    pitches,
                    start,
@@ -334,6 +329,7 @@ def run(args:argparse.Namespace):
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, tempo)
 
+    bar_info: BarInfo = BarInfo(midi_file)
     # Array to indicate which channels and percussions are active (playing).
     # These are changed via the classes Mute and Play.
     # The first 16 are real channels; the rest are percussion tracks.
@@ -354,33 +350,32 @@ def run(args:argparse.Namespace):
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
     composition = commands.get_composition(args.comp)
-    bar_start = 0
     loop_stack: list[LoopItem] = []
-    timesig = TimeSig(4, 4) # default
     item_number = 0
     while item_number < len(composition.items):
         item = composition.items[item_number]
         if isinstance(item, TimeSig):
-            timesig = item
+            bar_info.timesig = item
         elif isinstance(item, Tempo):
-            midi_file.addTempo(0, bar_start, item.tempo)
+            midi_file.addTempo(0, bar_info.start, item.tempo)
         elif isinstance(item, Bar):
+            bar_info.bar = item
             for _ in range(item.repeat):
                 logging.debug(item.chord)
                 for channel in range(Channel.perc0, Channel.max_channels):
                     if channel_info[Channel.perc1].active:
-                        make_percussion_bar(midi_file, channel_info[channel], timesig, bar_start)
+                        make_percussion_bar(bar_info, channel_info[channel])
                 if channel_info[Channel.bass].active:
-                    make_bass_bar(midi_file,channel_info[Channel.bass], timesig, item, bar_start)
+                    make_bass_bar(bar_info, channel_info[Channel.bass])
                 if channel_info[Channel.rhythm].active:
-                    make_rhythm_bar(midi_file, channel_info[Channel.rhythm], 200, timesig, item, bar_start)
+                    make_rhythm_bar(bar_info, channel_info[Channel.rhythm], 200)
                 if channel_info[Channel.arpeggio].active:
-                    make_arpeggio_bar(midi_file, channel_info[Channel.arpeggio], timesig, item, bar_start)
+                    make_arpeggio_bar(bar_info, channel_info[Channel.arpeggio])
                 if channel_info[Channel.improv1].active:
-                    make_improv_bar(midi_file, channel_info[Channel.improv1], timesig, item, bar_start)
+                    make_improv_bar(bar_info, channel_info[Channel.improv1])
                 if channel_info[Channel.improv2].active:
-                    make_improv_bar(midi_file, channel_info[Channel.improv2], timesig, item, bar_start)
-                bar_start += timesig.ticks_per_bar
+                    make_improv_bar(bar_info, channel_info[Channel.improv2])
+                bar_info.start += bar_info.timesig.ticks_per_bar
 
         elif isinstance(item, Loop):
                 # This is the beginning of a loop. Save the location
