@@ -4,7 +4,7 @@ import re
 from midi_channels import Channel
 from midi_items import *
 from midi_notes import *
-from midi_percussion import percussion as p
+import midi_percussion
 from midi_voice import Voice
 from midi_types import *
 import midi_voices
@@ -121,7 +121,34 @@ class Commands:
             if not in_composition:
                 continue
 
-            if item == 'tempo':
+            elif item == 'bar':
+                if params:
+                    key, value = params[0]
+                    if key == 'key':
+                        composition += Bar(value)
+
+            elif item == 'beat':
+                if params:
+                    key, value = params[0]
+                    if key == 'name':
+                        channels = get_channels(params)
+                        composition += Beat(value, channels)
+
+            elif item == 'loop':
+                composition += Loop()
+                pass
+            elif item == 'mute':
+                channels = get_channels(params)
+                composition += Mute(channels)
+
+            elif item == 'play':
+                channels = get_channels(params)
+                composition += Play(channels)
+
+            elif item == 'repeat':
+                composition += Repeat()
+
+            elif item == 'tempo':
                 if params:
                     key, value = params[0]
                     if key == 'bpm':
@@ -129,16 +156,6 @@ class Commands:
                             composition += Tempo(int(value))
                             continue
                 logging.warning(f'Bad tempo in {command}')
-
-            elif item == 'play':
-                channels = get_channels(params)
-                composition += Play(channels)
-
-            elif item == 'bar':
-                if params:
-                    key, value = params[0]
-                    if key == 'key':
-                        composition += Bar(value)
 
             elif item == 'volume':
                 if params:
@@ -149,24 +166,35 @@ class Commands:
                             channels = get_channels(params)
                             composition += Volume(delta, channels)
 
-            elif item == 'loop':
-                composition += Loop()
-                pass
-            elif item == 'mute':
-                channels = get_channels(params)
-                composition += Mute(channels)
-
-            elif item == 'repeat':
-                composition += Repeat()
-
-            elif item == 'beat':
-                if params:
-                    key, value = params[0]
-                    if key == 'name':
-                        channels = get_channels(params)
-                        composition += Beat(value, channels)
-
         return composition
+
+    def get_rhythms(self) -> Rhythms:
+        """Constructs Voice() instances from the list of commands."""
+        rhythms: Rhythms = {}
+        for command in self.commands:
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+
+            if item == 'rhythm':
+                name: str = ''
+                values: str = ''
+                rhythm: Rhythm = []
+                for param in params:
+                    if param[0] == 'name':
+                        name = param[1]
+                    elif param[0] == 'values':
+                        values = param[1]
+
+                if name and values:
+                    notes = values.split(',')
+                    for note in notes:
+                        duration: int = str_to_note(note)
+                        # TODO: error handling?
+                        rhythm.append(duration)
+                    rhythms[name] = rhythm
+
+        return rhythms
 
     def get_voices(self) -> dict[Channel, Voice]:
         """Constructs Voice() instances from the list of commands."""
@@ -199,18 +227,6 @@ class Commands:
                 if key == 'channel':
                     channel = str_to_channel(value)
 
-                elif key == 'voice':
-                    if value not in midi_voices.voices:
-                        logging.warning(f'Bad voice in {command}')
-                        continue
-                    voice = midi_voices.voices[value]
-
-                elif key == 'volume':
-                    if value not in volumes:
-                        logging.warning(f'Bad volume in {command}')
-                        continue
-                    volume = volumes[value]
-
                 elif key == 'min_pitch':
                     if not value.isdigit() or not 0 <= int(value) <= 127:
                         logging.warning(f'Bad min_pitch in {command}')
@@ -223,36 +239,26 @@ class Commands:
                         continue
                     max_pitch = int(value)
 
+                elif key == 'voice':
+                    if channel == Channel.none:
+                        logging.warning(f'Channel must precede voice in "{command}"')
+                        continue
+                    table: dict[str, int] = midi_voices.voices\
+                        if channel < Channel.perc0\
+                        else midi_percussion.percussion
+                    if value not in table:
+                        logging.warning(f'Bad voice in {command}')
+                        continue
+                    voice = table[value]
+
+                elif key == 'volume':
+                    if value not in volumes:
+                        logging.warning(f'Bad volume in {command}')
+                        continue
+                    volume = volumes[value]
+
             if channel == Channel.none:
                 logging.warning(f'No channel in {command}')
                 continue
             voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
         return voices
-
-    def get_rhythms(self) -> Rhythms:
-        """Constructs Voice() instances from the list of commands."""
-        rhythms: Rhythms = {}
-        for command in self.commands:
-            cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
-
-            if item == 'rhythm':
-                name: str = ''
-                values: str = ''
-                rhythm: Rhythm = []
-                for param in params:
-                    if param[0] == 'name':
-                        name = param[1]
-                    elif param[0] == 'values':
-                        values = param[1]
-
-                if name and values:
-                    notes = values.split(',')
-                    for note in notes:
-                        duration: int = str_to_note(note)
-                        # TODO: error handling?
-                        rhythm.append(duration)
-                    rhythms[name] = rhythm
-
-        return rhythms
