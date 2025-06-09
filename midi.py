@@ -264,8 +264,8 @@ def make_in_range(value: int, max_value: int, desc: str) -> int:
 
     # channel_info: list[ChannelInfo] = [ChannelInfo()] * Channel.max_channels
 def make_percussion_bar(midi_file: MIDIFile,
+                        voice: Voice,
                         channel_info: ChannelInfo,
-                        instrument: int,
                         timesig: TimeSig,
                         bar_start: int):
     bar_end = bar_start + timesig.ticks_per_bar
@@ -282,7 +282,7 @@ def make_percussion_bar(midi_file: MIDIFile,
             note_length = bar_end - start
         midi_file.addNote(0,
                           Channel.percussion,
-                          instrument, # for percussion channel, pitch == instrument
+                          voice.voice,
                           add_start_error(start),
                           note_length,
                           channel_info.volume)
@@ -335,6 +335,7 @@ def run(args:argparse.Namespace):
     start_error = make_error_table(10)
     global error7
     error7 = make_error_table(7)
+    # TODO: only count non-perc channels
     midi_file = MIDIFile(len(voices),
                          ticks_per_quarternote=n.crotchet,
                          eventtime_is_ticks=True)
@@ -354,7 +355,7 @@ def run(args:argparse.Namespace):
         channel_info.append(ChannelInfo())
 
     for channel, voice in voices.items():
-        assert voice.channel == channel, 'Voice index must match channel'
+        # assert voice.channel == channel, 'Voice index must match channel'
         channel_info[voice.channel].volume = voice.volume
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
@@ -373,11 +374,11 @@ def run(args:argparse.Namespace):
             for _ in range(item.repeat):
                 logging.debug(item.chord)
                 if channel_info[Channel.perc0].active:
-                    make_percussion_bar(midi_file, channel_info[Channel.perc0], p['high_tom'], timesig, bar_start)
+                    make_percussion_bar(midi_file, voices[Channel.perc0], channel_info[Channel.perc0], timesig, bar_start)
                 if channel_info[Channel.perc1].active:
-                    make_percussion_bar(midi_file, channel_info[Channel.perc1], p['cowbell'], timesig, bar_start)
+                    make_percussion_bar(midi_file, voices[Channel.perc1], channel_info[Channel.perc1], timesig, bar_start)
                 if channel_info[Channel.perc2].active:
-                    make_percussion_bar(midi_file, channel_info[Channel.perc2], p['acoustic_bass_drum'], timesig, bar_start)
+                    make_percussion_bar(midi_file, voices[Channel.perc2], channel_info[Channel.perc2], timesig, bar_start)
                 if channel_info[Channel.bass].active:
                     make_bass_bar(midi_file, voices[Channel.bass], channel_info[Channel.bass], timesig, item, bar_start)
                 if channel_info[Channel.rhythm].active:

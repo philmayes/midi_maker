@@ -9,6 +9,10 @@ class Voice:
                  min_pitch:int=0,
                  max_pitch:int=127,
                  ) -> None:
+        # if channel < Channel.perc0:
+        #     self.channel = channel
+        # else:
+        #     self.channel = Channel.percussion
         self.channel = channel
         self.voice = voice
         self.volume = volume
