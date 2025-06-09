@@ -66,8 +66,10 @@ class TimeSig(Item):
 
 class Volume(Item):
     """Adjust volume for channel(s)."""
-    def __init__(self, delta: int, channels: list[Channel]):
-        self.delta = delta
+    def __init__(self, delta: int, abs: int, rate: int, channels: list[Channel]):
+        self.delta = delta  # Amount by which to adjust volume
+        self.abs = abs      # New setting for volume (takes precedence over delta)
+        self.rate = rate
         self.channels = channels
 
 class Composition:

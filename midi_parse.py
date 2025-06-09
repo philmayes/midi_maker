@@ -14,15 +14,11 @@ re_text = re.compile('[a-zA-Z_]')
 
 def clean_line(line: str) -> str:
     # Remove possible comment
-    c = line.find('#')
-    if c >= 0:
-        line = line[:c]
     c = line.find(';')
     if c >= 0:
         line = line[:c]
     # Remove leading & trailing whitespace
-    line = line.strip()
-    return line
+    return line.strip()
 
 def get_channels(params: Params) -> list[Channel]:
     """Returns a list of all the channels suppied in params."""
@@ -151,13 +147,25 @@ class Commands:
                 logging.warning(f'Bad tempo in {command}')
 
             elif item == 'volume':
-                if params:
-                    key, value = params[0]
-                    if key == 'delta':
-                        delta = get_number(value)
-                        if delta is not None:
-                            channels = get_channels(params)
-                            composition += Volume(delta, channels)
+                channels = get_channels(params)
+                if channels:
+                    vol = Volume(0, 0, 0, channels)
+                    for param in params:
+                        key, value = param
+                        if key == 'delta':
+                            number = get_number(value)
+                            if number is not None:
+                                vol.delta = number
+                        if key == 'abs':
+                            number = get_number(value)
+                            if number is not None and number > 0:
+                                vol.abs = number
+                        if key == 'rate':
+                            number = get_number(value)
+                            if number is not None and number > 0:
+                                vol.rate = number
+                    if vol.delta or vol.abs:
+                        composition += vol
 
         return composition
 

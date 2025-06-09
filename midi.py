@@ -82,7 +82,41 @@ class ChannelInfo:
         self.active = False
         self.voice = Voice(Channel.none, 0, 0, 0, 0)
         self.volume = volumes['default']
+        self.volume_target = volumes['default']
+        self.rate = 0
         self.rhythm = default_rhythm
+
+    def channel(self) -> Channel:
+        return self.voice.channel
+
+    def set_volume(self, item: Volume):
+        old_vol = self.volume
+        # An absolute setting takes priority over a delta:
+        if item.abs:
+            new_vol = item.abs
+        else:
+            new_vol = old_vol + item.delta
+        new_vol = make_in_range(new_vol, 128, 'Volume channel')
+        self.volume_target = new_vol
+        self.rate = item.rate
+
+    def adjust_volume(self):
+        """Is called for each bar to set volume, possibly dynamically."""
+        old_vol = self.volume
+        new_vol = self.volume_target
+        delta = new_vol - old_vol
+        if delta:   # Is a volume change required?
+            if self.rate >= 0:
+                # The new volume is to be applied over time per bar.
+                # Find out whether we are to increase or decrease.
+                if delta > 0:
+                    # The volume is to be increased
+                    new_vol = min(old_vol + self.rate, new_vol)
+                else:
+                    new_vol = min(old_vol - self.rate, new_vol)
+
+            logging.debug(f'change volume channel:{self.channel()} level {self.volume} -> {new_vol}')
+            self.volume = new_vol
 
 def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
@@ -356,6 +390,10 @@ def run(args:argparse.Namespace):
         item = composition.items[item_number]
         if isinstance(item, Bar):
             bar_info.bar = item
+            # Handle volume changes.
+            for info in channel_info:
+                if info.channel() != Channel.none:
+                    info.adjust_volume()
             for _ in range(item.repeat):
                 logging.debug(item.chord)
                 for channel in range(Channel.perc0, Channel.max_channels):
@@ -377,7 +415,7 @@ def run(args:argparse.Namespace):
             if item.rhythm in rhythms:
                 for channel in item.channels:
                     if channel is not Channel.none:
-                        assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
+                        assert 0 <= channel < Channel.max_channels, f'Beat channel {channel} out of range'
                         channel_info[channel].rhythm = rhythms[item.rhythm]
             else:
                 logging.warning(f'Rhythm {item.rhythm} does not exist.')
@@ -390,13 +428,13 @@ def run(args:argparse.Namespace):
         elif isinstance(item, Mute):
             for channel in item.channels:
                 if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
+                    assert 0 <= channel < Channel.max_channels, f'Mute channel {channel} out of range'
                     channel_info[channel].active = False
 
         elif isinstance(item, Play):
             for channel in item.channels:
                 if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
+                    assert 0 <= channel < Channel.max_channels, f'Play channel {channel} out of range'
                     channel_info[channel].active = True
 
         elif isinstance(item, Repeat):
@@ -422,12 +460,16 @@ def run(args:argparse.Namespace):
             bar_info.timesig = item
 
         elif isinstance(item, Volume):
+            # midi_parse is responsible for ensuring the following.
+            assert item.abs or item.delta, 'Volume has no abs or delta'
+            # The volume in the channel is not set directly because it may
+            # change over a period of time. Instead, info.adjust_volume()
+            # is called on all channels for every bar.
             for channel in item.channels:
-                if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                    new_volume = channel_info[channel].volume + item.delta
-                    new_volume = make_in_range(new_volume, 128, 'Volume channel')
-                    channel_info[channel].volume = new_volume
+                if 0 <= channel < Channel.max_channels:
+                    channel_info[channel].set_volume(item)
+                else:
+                    logging.warning(f'Volume channel {channel} out of range')
 
         else:
             logging.error(f'Unrecognized item {item}')
