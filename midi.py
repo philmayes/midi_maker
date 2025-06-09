@@ -27,7 +27,7 @@ import subprocess
 
 from midiutil import MIDIFile
 
-from midi_channels import Channel
+from midi_channels import Channel, is_midi
 from midi_chords import chord_to_intervals, chord_to_pitches
 from midi_items import *
 from midi_notes import Note as n
@@ -315,7 +315,7 @@ def run(args:argparse.Namespace):
     fname, _ = os.path.splitext(in_file)
     out_file =fname + '.mid'
     commands = midi_parse.Commands(in_file)
-    voices = commands.get_voices()
+    voices: dict[Channel, Voice] = commands.get_voices()
     rhythms = commands.get_rhythms()
 
     random.seed(1)
@@ -323,42 +323,38 @@ def run(args:argparse.Namespace):
     start_error = make_error_table(10)
     global error7
     error7 = make_error_table(7)
-    # TODO: only count non-perc channels
-    midi_file = MIDIFile(len(voices),
+
+    # MIDIFile channel count does not include percussion channels
+    # they are pseudo-channels that map to track in the percussion channel.)
+    midi_channel_count = len([k for k in voices.keys() if is_midi(k)])
+    midi_file = MIDIFile(midi_channel_count,
                          ticks_per_quarternote=n.crotchet,
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, tempo)
 
-    bar_info: BarInfo = BarInfo(midi_file)
-    # Array to indicate which channels and percussions are active (playing).
-    # These are changed via the classes Mute and Play.
-    # The first 16 are real channels; the rest are percussion tracks.
-    # active: list[bool] = [False] * Channel.max_channels
-    # Array to hold percussion volumes. The first 16 are unused.
-    # volume: list[int] = [volume_percussion] * Channel.max_channels
-    # Array to hold rhythm info for channels and percussion.
-    # rhythms2 = [default_rhythm] * Channel.max_channels
-    # channel_info: list[ChannelInfo] = [ChannelInfo()] * Channel.max_channels
+    # Array to hold all info for a channel (which includes percussion)
+    # that can be adjusted dynamically.
     channel_info: list[ChannelInfo] = []
     for _ in range(Channel.max_channels):
         channel_info.append(ChannelInfo())
 
+    # Populate channel_info with voice info and set the voice up in MIDI.
     for channel, voice in voices.items():
         # assert voice.channel == channel, 'Voice index must match channel'
         channel_info[voice.channel].voice = voice
         channel_info[voice.channel].volume = voice.volume
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
+    # Create an object to hold dynamic info about the current bar.
+    bar_info: BarInfo = BarInfo(midi_file)
+
+    # Get a composition and process all the commands in it.
     composition = commands.get_composition(args.comp)
     loop_stack: list[LoopItem] = []
     item_number = 0
     while item_number < len(composition.items):
         item = composition.items[item_number]
-        if isinstance(item, TimeSig):
-            bar_info.timesig = item
-        elif isinstance(item, Tempo):
-            midi_file.addTempo(0, bar_info.start, item.tempo)
-        elif isinstance(item, Bar):
+        if isinstance(item, Bar):
             bar_info.bar = item
             for _ in range(item.repeat):
                 logging.debug(item.chord)
@@ -377,10 +373,31 @@ def run(args:argparse.Namespace):
                     make_improv_bar(bar_info, channel_info[Channel.improv2])
                 bar_info.start += bar_info.timesig.ticks_per_bar
 
+        elif isinstance(item, Beat):
+            if item.rhythm in rhythms:
+                for channel in item.channels:
+                    if channel is not Channel.none:
+                        assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
+                        channel_info[channel].rhythm = rhythms[item.rhythm]
+            else:
+                logging.warning(f'Rhythm {item.rhythm} does not exist.')
+
         elif isinstance(item, Loop):
                 # This is the beginning of a loop. Save the location
                 # and mark the loop as not started.
                 loop_stack.append(LoopItem(item_number, -1))
+
+        elif isinstance(item, Mute):
+            for channel in item.channels:
+                if channel is not Channel.none:
+                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
+                    channel_info[channel].active = False
+
+        elif isinstance(item, Play):
+            for channel in item.channels:
+                if channel is not Channel.none:
+                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
+                    channel_info[channel].active = True
 
         elif isinstance(item, Repeat):
             if not loop_stack:
@@ -398,17 +415,11 @@ def run(args:argparse.Namespace):
                     loop_item.count -= 1
                     item_number = loop_item.item_no
 
-        elif isinstance(item, Mute):
-            for channel in item.channels:
-                if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                    channel_info[channel].active = False
+        elif isinstance(item, Tempo):
+            midi_file.addTempo(0, bar_info.start, item.tempo)
 
-        elif isinstance(item, Play):
-            for channel in item.channels:
-                if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                    channel_info[channel].active = True
+        elif isinstance(item, TimeSig):
+            bar_info.timesig = item
 
         elif isinstance(item, Volume):
             for channel in item.channels:
@@ -418,16 +429,10 @@ def run(args:argparse.Namespace):
                     new_volume = make_in_range(new_volume, 128, 'Volume channel')
                     channel_info[channel].volume = new_volume
 
-        elif isinstance(item, Beat):
-            if item.rhythm in rhythms:
-                for channel in item.channels:
-                    if channel is not Channel.none:
-                        assert 0 <= channel < Channel.max_channels, f'Channel {channel} out of range'
-                        channel_info[channel].rhythm = rhythms[item.rhythm]
-            else:
-                logging.warning(f'Rhythm {item.rhythm} does not exist.')
         else:
             logging.error(f'Unrecognized item {item}')
+
+        # After processing the item, step to the next one.
         item_number += 1
 
     with open(out_file, "wb") as f_out:
