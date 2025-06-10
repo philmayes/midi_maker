@@ -9,6 +9,7 @@ from midi_voice import Voice
 from midi_types import *
 import midi_voices
 from midi_volumes import volumes
+import utils
 
 re_text = re.compile('[a-zA-Z_]')
 
@@ -19,19 +20,6 @@ def clean_line(line: str) -> str:
         line = line[:c]
     # Remove leading & trailing whitespace
     return line.strip()
-
-def get_number(text: str) -> int | None:
-    """Returns possibly signed number as int or None."""
-    assert text != '', f'Number is missing'
-    neg = False
-    if not text.isdigit():
-        neg = text == '-'
-        text = text[1:]
-    if text.isdigit():
-        delta = int(text)
-        if neg:
-            delta = -delta
-        return delta
 
 def get_parameter(text: str, prefix: str) -> str:
     if not text.startswith(prefix):
@@ -174,19 +162,19 @@ class Commands:
                 if channels:
                     vol = Volume(0, 0, 0, channels)
                     for param in params:
+                        # No need to range-check here;
+                        # it is done by ChannelInfo.set_volume
                         key, value = param
                         if key == 'delta':
-                            number = get_number(value)
+                            number = utils.get_signed_number(value)
                             if number is not None:
                                 vol.delta = number
                         if key == 'abs':
-                            number = get_number(value)
-                            if number is not None and number > 0:
-                                vol.abs = number
+                            if value.isdigit():
+                                vol.abs = int(value)
                         if key == 'rate':
-                            number = get_number(value)
-                            if number is not None and number > 0:
-                                vol.rate = number
+                            if value.isdigit():
+                                vol.rate = int(value)
                     if vol.delta or vol.abs:
                         composition += vol
 
@@ -299,10 +287,12 @@ class Commands:
                     voice = table[value]
 
                 elif key == 'volume':
-                    if value not in volumes:
+                    if value in volumes:
+                        volume = volumes[value]
+                    elif value.isdigit():
+                        volume = utils.make_in_range(int(value), 128, 'Voice volume')
+                    else:
                         logging.warning(f'Bad volume in {command}')
-                        continue
-                    volume = volumes[value]
 
             if channel == Channel.none:
                 logging.warning(f'No channel in {command}')
