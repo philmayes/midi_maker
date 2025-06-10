@@ -20,10 +20,6 @@ def clean_line(line: str) -> str:
     # Remove leading & trailing whitespace
     return line.strip()
 
-def get_channels(params: Params) -> list[Channel]:
-    """Returns a list of all the channels suppied in params."""
-    return [str_to_channel(kv[1]) for kv in params if kv[0] == 'channel']
-
 def get_number(text: str) -> int | None:
     """Returns possibly signed number as int or None."""
     assert text != '', f'Number is missing'
@@ -84,6 +80,33 @@ class Commands:
     def __init__(self, in_file: str):
         with open(in_file, "r") as f_in:
             self.commands = f_in.readlines()
+        self.channel_names = self.get_channel_names()
+
+    def get_channel_names(self) -> list[str]:
+        """Gets a list of all channel names that are in use."""
+        names: list[str] = []
+        for command in self.commands:
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+            if item == 'voice':
+                for param in params:
+                    key, value = param
+                    if key == 'channel':
+                        names.append(value)
+        return names
+
+    def get_channels(self, params: Params) -> list[Channel]:
+        """Returns a list of all the channels supplied in params."""
+        channels: list[Channel] = []
+        for kv in params:
+            if kv[0] == 'channel':
+                name = kv[1]
+                if name in self.channel_names:
+                    channels.append(str_to_channel(name))
+                else:
+                    logging.error(f'Channel {name} does not exist')
+        return channels
 
     def get_composition(self, name: str='') -> Composition:
         """Gets the list of items between."""
@@ -120,18 +143,18 @@ class Commands:
                 if params:
                     key, value = params[0]
                     if key == 'name':
-                        channels = get_channels(params)
+                        channels = self.get_channels(params)
                         composition += Beat(value, channels)
 
             elif item == 'loop':
                 composition += Loop()
                 pass
             elif item == 'mute':
-                channels = get_channels(params)
+                channels = self.get_channels(params)
                 composition += Mute(channels)
 
             elif item == 'play':
-                channels = get_channels(params)
+                channels = self.get_channels(params)
                 composition += Play(channels)
 
             elif item == 'repeat':
@@ -147,7 +170,7 @@ class Commands:
                 logging.warning(f'Bad tempo in {command}')
 
             elif item == 'volume':
-                channels = get_channels(params)
+                channels = self.get_channels(params)
                 if channels:
                     vol = Volume(0, 0, 0, channels)
                     for param in params:
