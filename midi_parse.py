@@ -169,6 +169,29 @@ class Commands:
 
         return composition
 
+    def get_opus(self, name: str) -> str:
+        """Gets parts of the named opus."""
+        names: list[str] = []
+        for command in self.commands:
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+            if not item:
+                continue
+
+            if item == 'opus':
+                found = False
+                parts = ''
+                for param in params:
+                    key, value = param
+                    if key == 'name' and value == name:
+                        found = True
+                    elif key == 'parts':
+                        parts = value
+                if found:
+                    return parts
+        return ''
+
     def get_rhythms(self) -> Rhythms:
         """Constructs Voice() instances from the list of commands."""
         rhythms: Rhythms = {}
@@ -263,3 +286,20 @@ class Commands:
                 continue
             voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
         return voices
+
+    def get_works(self, name: str) -> list[str]:
+        """Gets a list of all opuses or compositions."""
+        names: list[str] = []
+        for command in self.commands:
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+            if not item:
+                continue
+
+            if item == name:
+                if params:
+                    key, value = params[0]
+                    if key == 'name':
+                        names.append(value)
+        return names

@@ -106,14 +106,14 @@ class ChannelInfo:
         new_vol = self.volume_target
         delta = new_vol - old_vol
         if delta:   # Is a volume change required?
-            if self.rate >= 0:
+            if self.rate > 0:
                 # The new volume is to be applied over time per bar.
                 # Find out whether we are to increase or decrease.
                 if delta > 0:
                     # The volume is to be increased
                     new_vol = min(old_vol + self.rate, new_vol)
                 else:
-                    new_vol = min(old_vol - self.rate, new_vol)
+                    new_vol = max(old_vol - self.rate, new_vol)
 
             logging.debug(f'change volume channel:{self.channel()} level {self.volume} -> {new_vol}')
             self.volume = new_vol
@@ -131,6 +131,27 @@ def get_logging_level(args:argparse.Namespace) -> str:
             return log_level
     print(f"Invalid log level '{short_level}'. Defaulting to '{default_log_level}'.")
     return default_log_level
+
+def get_work(commands: midi_parse.Commands, name: str) -> Composition:
+    """Assembles the components (compositions) of a work."""
+    composition = Composition()
+    works = commands.get_opus(name)
+    if works:
+        for work in works.split(','):
+            count = 1
+            bits = work.split('*', 1)
+            if len(bits) > 1:
+                work = bits[0]
+                if bits[1].isdigit():
+                    count = int(bits[1])
+                else:
+                    logging.warning(f'Bad count in {works}')
+            for _ in range(count):
+                c2 = commands.get_composition(work)
+                composition += c2.items
+    else:
+        composition = commands.get_composition(name)
+    return composition
 
 def make_arpeggio_bar(bar_info: BarInfo, channel_info: ChannelInfo):
     start = bar_info.start
@@ -341,6 +362,7 @@ def make_rhythm_bar(bar_info: BarInfo,
                    )
         start += note_length
 
+
 def run(args:argparse.Namespace):
     in_file = args.ini
     if not os.path.exists(in_file):
@@ -375,15 +397,17 @@ def run(args:argparse.Namespace):
     # Populate channel_info with voice info and set the voice up in MIDI.
     for channel, voice in voices.items():
         # assert voice.channel == channel, 'Voice index must match channel'
-        channel_info[voice.channel].voice = voice
-        channel_info[voice.channel].volume = voice.volume
+        info = channel_info[voice.channel]
+        info.voice = voice
+        info.volume = info.volume_target = voice.volume
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
     # Create an object to hold dynamic info about the current bar.
     bar_info: BarInfo = BarInfo(midi_file)
 
     # Get a composition and process all the commands in it.
-    composition = commands.get_composition(args.comp)
+    # composition = commands.get_composition(args.play)
+    composition = get_work(commands, args.play)
     loop_stack: list[LoopItem] = []
     item_number = 0
     while item_number < len(composition.items):
@@ -486,7 +510,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Create MIDI file')
     parser.add_argument('ini', help=f'Data to create MIDI file (default: test.ini)')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
-    parser.add_argument('-c', '--comp', default='', help='name of composition in data file')
+    parser.add_argument('-p', '--play', default='', help='play composition or opus')
     args = parser.parse_args()
     logging.basicConfig(format='%(message)s', level=get_logging_level(args))
 
