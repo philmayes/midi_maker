@@ -37,6 +37,7 @@ from midi_types import *
 from midi_voice import Voice
 from midi_voices import voices as v
 from midi_volumes import volumes
+import utils
 
 player = "E:\\devtools\\FluidSynth\\bin\\fluidsynth.exe"
 sound_file = "E:\\devtools\\MIDISoundFiles\\FluidR3 GM.sf2"
@@ -96,7 +97,7 @@ class ChannelInfo:
             new_vol = item.abs
         else:
             new_vol = old_vol + item.delta
-        new_vol = make_in_range(new_vol, 128, 'Volume channel')
+        new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
         self.volume_target = new_vol
         self.rate = item.rate
 
@@ -300,19 +301,6 @@ def make_improv_bar(bar_info: BarInfo, channel_info: ChannelInfo):
                                    duration,
                                    channel_info.volume)
         start += duration
-
-def make_in_range(value: int, max_value: int, desc: str) -> int:
-    """Coerces a value into range.
-    
-    Valid range is 0 <= value < max_value.
-    """
-    if value >= max_value:
-        logging.warning(f'{desc} value {value} too high')
-        value = max_value - 1
-    elif value < 0:
-        logging.warning(f'{desc} value {value} too low')
-        value = 0
-    return value
 
 def make_percussion_bar(bar_info: BarInfo, channel_info: ChannelInfo):
     bar_end = bar_info.bar_end()
