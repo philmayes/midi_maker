@@ -431,6 +431,12 @@ def run(args:argparse.Namespace):
             else:
                 logging.warning(f'Rhythm {item.rhythm} does not exist.')
 
+        elif isinstance(item, Hear):
+            for channel in item.channels:
+                if channel is not Channel.none:
+                    assert 0 <= channel < Channel.max_channels, f'Play channel {channel} out of range'
+                    channel_info[channel].active = True
+
         elif isinstance(item, Loop):
                 # This is the beginning of a loop. Save the location
                 # and mark the loop as not started.

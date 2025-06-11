@@ -3,6 +3,8 @@ C:/Users/Phil/AppData/Local/Programs/Python/Python313/Lib/site-packages/mingus/c
 """
 import re
 
+from midi_notes import note_to_offset
+
 re_chord = re.compile(r'([A-G][#b]*)([a-z]+[679]?)')
 
 NOTES_IN_OCTAVE = 12
@@ -33,16 +35,6 @@ chords: dict[str, list[int]]  = {
     'min6': min6,
     'maj9': maj9,
     'min9': min9,
-}
-
-note_to_offset = {
-    'Cb':11, 'C':  0, 'C#': 1,
-    'Db': 1, 'D':  2, 'D#': 3,
-    'Eb': 3, 'E':  4, 'E#': 5,
-    'Fb': 4, 'F':  5, 'F#': 6,
-    'Gb': 6, 'G':  7, 'G#': 8,
-    'Ab': 8, 'A':  9, 'A#':10,
-    'Bb':10, 'B': 11, 'B#':12,
 }
 
 def chord_to_intervals(chord: str) -> list[int]:

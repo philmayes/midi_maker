@@ -19,6 +19,11 @@ class Beat(Item):
         self.rhythm = rhythm
         self.channels = channels
 
+class Hear(Item):
+    """Play (unmute) channel(s)."""
+    def __init__(self, channels: list[Channel]):
+        self.channels = channels
+
 class Loop(Item):
     """Start a loop."""
     def __init__(self):

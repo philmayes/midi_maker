@@ -137,6 +137,10 @@ class Commands:
                         channels = self.get_channels(params)
                         composition += Beat(value, channels)
 
+            elif item == 'hear':
+                channels = self.get_channels(params)
+                composition += Play(channels)
+
             elif item == 'loop':
                 composition += Loop()
                 pass
@@ -227,7 +231,7 @@ class Commands:
                 if name and values:
                     notes = values.split(',')
                     for note in notes:
-                        duration: int = str_to_note(note)
+                        duration: int = str_to_duration(note)
                         # TODO: error handling?
                         rhythm.append(duration)
                     rhythms[name] = rhythm
