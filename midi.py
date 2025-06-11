@@ -36,7 +36,6 @@ from midi_percussion import percussion as p
 from midi_types import *
 from midi_voice import Voice
 from midi_voices import voices as v
-from midi_volumes import volumes
 import utils
 
 player = "E:\\devtools\\FluidSynth\\bin\\fluidsynth.exe"
@@ -55,6 +54,7 @@ tempo = 120   # In BPM
 # A zero value extends the event to the end of the bar.
 rhythms: dict[str, Rhythm] = {}
 default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
+default_volume = 100
 
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
@@ -62,7 +62,7 @@ durations1 = [n.minim, n.crotchet, n.quaver, -n.quaver]
 durations2 = [n.minim, n.crotchet, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, -n.quaver]
 
 Note = namedtuple('Note', 'pitch time duration volume',
-                  defaults=(40, 0, n.crotchet, volumes['default']))
+                  defaults=(40, 0, n.crotchet, default_volume))
 
 class BarInfo:
     """Class that holds info for the current bar."""
@@ -82,8 +82,8 @@ class ChannelInfo:
     def __init__(self):
         self.active = False
         self.voice = Voice(Channel.none, 0, 0, 0, 0)
-        self.volume = volumes['default']
-        self.volume_target = volumes['default']
+        self.volume = default_volume
+        self.volume_target = default_volume
         self.rate = 0
         self.rhythm = default_rhythm
 

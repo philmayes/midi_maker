@@ -8,13 +8,15 @@ import midi_percussion
 from midi_voice import Voice
 from midi_types import *
 import midi_voices
-from midi_volumes import volumes
 import utils
 
 re_text = re.compile('[a-zA-Z_]')
 
 def clean_line(line: str) -> str:
     # Remove possible comment
+    c = line.find('#')
+    if c >= 0:
+        line = line[:c]
     c = line.find(';')
     if c >= 0:
         line = line[:c]
@@ -68,6 +70,7 @@ class Commands:
     def __init__(self, in_file: str):
         with open(in_file, "r") as f_in:
             self.commands = f_in.readlines()
+        self.volumes = self.get_volumes()
         self.channel_names = self.get_channel_names()
 
     def get_channel_names(self) -> list[str]:
@@ -287,8 +290,8 @@ class Commands:
                     voice = table[value]
 
                 elif key == 'volume':
-                    if value in volumes:
-                        volume = volumes[value]
+                    if value in self.volumes:
+                        volume = self.volumes[value]
                     elif value.isdigit():
                         volume = utils.make_in_range(int(value), 128, 'Voice volume')
                     else:
@@ -299,6 +302,22 @@ class Commands:
                 continue
             voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
         return voices
+
+    def get_volumes(self):
+        """Gets a dictionary of all volume names and values."""
+        volumes: dict[str, int] = {}
+        for command in self.commands:
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+            if item == 'volname':
+                if params:
+                    key, value = params[0]
+                    if is_text(key) and value.isdigit():
+                        volumes[key] = utils.make_in_range(int(value), 128, 'volname')
+                    else:
+                        logging.error(f'volname "{params[0]}" is invalid')
+        return volumes
 
     def get_works(self, name: str) -> list[str]:
         """Gets a list of all opuses or compositions."""
