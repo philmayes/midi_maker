@@ -305,7 +305,7 @@ class Commands:
 
     def get_volumes(self):
         """Gets a dictionary of all volume names and values."""
-        volumes: dict[str, int] = {}
+        volumes: dict[str, int] = {'default': utils.default_volume}
         for command in self.commands:
             cmd = parse_command(command)
             item: Verb = cmd[0]

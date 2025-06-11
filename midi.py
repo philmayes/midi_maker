@@ -54,7 +54,6 @@ tempo = 120   # In BPM
 # A zero value extends the event to the end of the bar.
 rhythms: dict[str, Rhythm] = {}
 default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
-default_volume = 100
 
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
@@ -62,7 +61,7 @@ durations1 = [n.minim, n.crotchet, n.quaver, -n.quaver]
 durations2 = [n.minim, n.crotchet, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, -n.quaver]
 
 Note = namedtuple('Note', 'pitch time duration volume',
-                  defaults=(40, 0, n.crotchet, default_volume))
+                  defaults=(40, 0, n.crotchet, utils.default_volume))
 
 class BarInfo:
     """Class that holds info for the current bar."""
@@ -82,8 +81,8 @@ class ChannelInfo:
     def __init__(self):
         self.active = False
         self.voice = Voice(Channel.none, 0, 0, 0, 0)
-        self.volume = default_volume
-        self.volume_target = default_volume
+        self.volume = utils.default_volume
+        self.volume_target = utils.default_volume
         self.rate = 0
         self.rhythm = default_rhythm
 
