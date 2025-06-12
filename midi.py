@@ -13,13 +13,13 @@ semibreve= whole note
 minim    = half    (1/2) note
 crotchet = quarter (1/4) note ♩
 quaver   = eighth  (1/8) note ♪
+See midi_notes.NoteDuration for full list.
 Time signature:
 The bottom number tells what sort of notes each bar is going to contain,
 The top one tells how many of them there will be (or equivalent).
 e.g. for 6/8, each bar contains 6 quavers
 """
 import argparse
-from collections import namedtuple
 import logging
 import os
 import random

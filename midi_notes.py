@@ -12,7 +12,11 @@ note_to_offset = {
     'Ab': 8, 'A':  9, 'A#':10,
     'Bb':10, 'B': 11, 'B#':12,
 }
-# Format of a note as supplied by tune command.
+# Format of a note as supplied by tune command. Takes the format:
+# duration note octave. Succeeding notes can omit the duration
+# or octave; they will be picked up from the preceding note.
+# The note is (roughly) the first letter of the NoteDuration
+# with an optional prefix of t or d for triplets or doublets.
 re_note = re.compile(r'([t|d]?[dhqcmsb])?([A-G|X][#|b]?)(\d)?')
 
 class NoteDuration:
