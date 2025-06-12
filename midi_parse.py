@@ -132,7 +132,7 @@ class Commands:
                     if key == 'tune':
                         if value in self.tunes:
                             tune = self.tunes[value]
-                    elif key == 'name':
+                    elif key == 'voice':
                         voice = self.get_voice(value)
                 if tune and voice:
                     composition += Play(tune, voice)
@@ -347,14 +347,18 @@ class Commands:
         """Returns a list of all the voices supplied in params."""
         voices: list[Voice] = []
         for kv in params:
-            if kv[0] == 'name':
-                voice_name = kv[1]
-                for voice in self.voices:
-                    if voice.name == voice_name:
-                        voices.append(voice)
-                        break
-                else:
-                    logging.error(f'Voice {voice_name} does not exist')
+            if kv[0] == 'voice':
+                voice_names = kv[1].split(',')
+                for voice_name in voice_names:
+                    for voice in self.voices:
+                        if voice.name == voice_name:
+                            if voice not in voices:
+                                voices.append(voice)
+                            else:
+                                logging.error(f'{voice_name} repeated')
+                            break
+                    else:
+                        logging.error(f'Voice {voice_name} does not exist')
         return voices
 
     def get_volumes(self):
