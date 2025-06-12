@@ -76,6 +76,9 @@ def add_start_error(value: int) -> int:
 
 def adjust_volume(voice: Voice):
     """Is called for each bar to set volume, possibly dynamically."""
+    # This cannot be made a member function of Voice because that
+    # would create a circular import; midi_items uses Voice in its
+    # Volume class. Same restriction applies to set_volume().
     old_vol = voice.volume
     new_vol = voice.volume_target
     delta = new_vol - old_vol
@@ -391,14 +394,14 @@ def run(args:argparse.Namespace):
 
         elif isinstance(item, Beat):
             if item.rhythm in rhythms:
-                for voice in voices:
+                for voice in item.voices:
                     if voice.channel is not Channel.none:
                             voice.rhythm = rhythms[item.rhythm]
             else:
                 logging.warning(f'Rhythm {item.rhythm} does not exist.')
 
         elif isinstance(item, Hear):
-            for voice in voices:
+            for voice in item.voices:
                 if voice.channel is not Channel.none:
                     voice.active = True
 
@@ -408,7 +411,7 @@ def run(args:argparse.Namespace):
                 loop_stack.append(LoopItem(item_number, -1))
 
         elif isinstance(item, Mute):
-            for voice in voices:
+            for voice in item.voices:
                 if voice.channel is not Channel.none:
                     voice.active = False
 
