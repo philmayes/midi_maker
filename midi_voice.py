@@ -1,16 +1,25 @@
 import logging
 
 from midi_channels import Channel
+from midi_notes import NoteDuration as n
+import utils
+
+default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
 
 class Voice:
-    def __init__(self, channel: Channel,
+    def __init__(self,
+                 name: str,
+                 channel: Channel,
                  voice: int,
+                 style: str,
                  volume: int,
                  min_pitch:int=0,
                  max_pitch:int=127,
                  ) -> None:
+        self.name = name
         self.channel = channel
         self.voice = voice
+        self.style = style
         self.volume = volume
         self.min_pitch = min_pitch
         self.max_pitch = max_pitch
@@ -18,6 +27,13 @@ class Voice:
         self.prev_pitch = -1    # pitch of the last note played
         self.prev_duration = 0  # duration of the last note played
         self.overlap = 0        # amount by which last note extends into next bar
+        # Following is information for a channel (which includes percussion)
+        # that can be adjusted dynamically.
+        self.active = False
+        self.volume = utils.default_volume
+        self.volume_target = utils.default_volume
+        self.rate = 0
+        self.rhythm = default_rhythm
 
     def constrain_pitch(self, pitch: int) -> int:
         """Limit the pitch to that described in the voice."""

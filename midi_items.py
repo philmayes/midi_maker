@@ -1,5 +1,5 @@
-from midi_channels import Channel
 from midi_types import *
+from midi_voice import Voice
 
 class Item:
     """Abstract class constituent of a composition."""
@@ -15,15 +15,15 @@ class Bar(Item):
         self.clip = False
 
 class Beat(Item):
-    """Adjust rhythm for channel(s)."""
-    def __init__(self, rhythm: str, channels: list[Channel]):
+    """Adjust rhythm for voice(s)."""
+    def __init__(self, rhythm: str, voices: list[Voice]):
         self.rhythm = rhythm
-        self.channels = channels
+        self.voices = voices
 
 class Hear(Item):
-    """Play (unmute) channel(s)."""
-    def __init__(self, channels: list[Channel]):
-        self.channels = channels
+    """Play (unmute) voice(s)."""
+    def __init__(self, voices: list[Voice]):
+        self.voices = voices
 
 class Loop(Item):
     """Start a loop."""
@@ -37,15 +37,15 @@ class LoopItem:
         self.count = count
 
 class Mute(Item):
-    """Mute channel(s)."""
-    def __init__(self, channels: list[Channel]):
-        self.channels = channels
+    """Mute voice(s)."""
+    def __init__(self, voices: list[Voice]):
+        self.voices = voices
 
 class Play(Item):
-    """Play (unmute) channel(s)."""
-    def __init__(self, tune: Tune, channel: Channel):
+    """Play tune with voice."""
+    def __init__(self, tune: Tune, voice: Voice):
         self.tune = tune
-        self.channel = channel
+        self.voice = voice
 
 class Repeat(Item):
     start = -1
@@ -72,12 +72,12 @@ class TimeSig(Item):
         self.ticks_per_bar = self.ticks_per_beat * time_sig_top
 
 class Volume(Item):
-    """Adjust volume for channel(s)."""
-    def __init__(self, delta: int, abs: int, rate: int, channels: list[Channel]):
+    """Adjust volume for voice(s)."""
+    def __init__(self, delta: int, abs: int, rate: int, voices: list[Voice]):
         self.delta = delta  # Amount by which to adjust volume
         self.abs = abs      # New setting for volume (takes precedence over delta)
         self.rate = rate
-        self.channels = channels
+        self.voices = voices
 
 class Composition:
     """Collection of items that will generate a MIDI file."""

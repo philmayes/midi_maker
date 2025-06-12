@@ -53,7 +53,6 @@ tempo = 120   # In BPM
 # Negative values represent a silence.
 # A zero value extends the event to the end of the bar.
 rhythms: dict[str, Rhythm] = {}
-default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
 
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
@@ -71,53 +70,27 @@ class BarInfo:
     def bar_end(self) -> int:
         return self.start + self.timesig.ticks_per_bar
 
-class ChannelInfo:
-    """Holds all info for a channel (which includes percussion)
-    that can be adjusted dynamically.
-    """
-    def __init__(self):
-        self.active = False
-        self.voice = Voice(Channel.none, 0, 0, 0, 0)
-        self.volume = utils.default_volume
-        self.volume_target = utils.default_volume
-        self.rate = 0
-        self.rhythm = default_rhythm
-
-    def channel(self) -> Channel:
-        return self.voice.channel
-
-    def set_volume(self, item: Volume):
-        old_vol = self.volume
-        # An absolute setting takes priority over a delta:
-        if item.abs:
-            new_vol = item.abs
-        else:
-            new_vol = old_vol + item.delta
-        new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
-        self.volume_target = new_vol
-        self.rate = item.rate
-
-    def adjust_volume(self):
-        """Is called for each bar to set volume, possibly dynamically."""
-        old_vol = self.volume
-        new_vol = self.volume_target
-        delta = new_vol - old_vol
-        if delta:   # Is a volume change required?
-            if self.rate > 0:
-                # The new volume is to be applied over time per bar.
-                # Find out whether we are to increase or decrease.
-                if delta > 0:
-                    # The volume is to be increased
-                    new_vol = min(old_vol + self.rate, new_vol)
-                else:
-                    new_vol = max(old_vol - self.rate, new_vol)
-
-            logging.debug(f'change volume channel:{self.channel()} level {self.volume} -> {new_vol}')
-            self.volume = new_vol
-
 def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
     return max(err, 0)
+
+def adjust_volume(voice: Voice):
+    """Is called for each bar to set volume, possibly dynamically."""
+    old_vol = voice.volume
+    new_vol = voice.volume_target
+    delta = new_vol - old_vol
+    if delta:   # Is a volume change required?
+        if voice.rate > 0:
+            # The new volume is to be applied over time per bar.
+            # Find out whether we are to increase or decrease.
+            if delta > 0:
+                # The volume is to be increased
+                new_vol = min(old_vol + voice.rate, new_vol)
+            else:
+                new_vol = max(old_vol - voice.rate, new_vol)
+
+        logging.debug(f'change volume channel:{voice.channel} level {voice.volume} -> {new_vol}')
+        voice.volume = new_vol
 
 def get_logging_level(args:argparse.Namespace) -> str:
     # get the logging level: can be partial word, case-insensitive
@@ -150,7 +123,7 @@ def get_work(commands: midi_parse.Commands, name: str) -> Composition:
         composition = commands.get_composition(name)
     return composition
 
-def make_arpeggio_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
     duration = n.crotchet
@@ -158,18 +131,18 @@ def make_arpeggio_bar(bar_info: BarInfo, channel_info: ChannelInfo):
         if start >= bar_end:
             break
         bar_info.midi_file.addNote(0,
-                                   channel_info.voice.channel,
+                                   voice.channel,
                                    pitch,
                                    add_start_error(start),
                                    duration,
-                                   channel_info.volume)
+                                   voice.volume)
         start += duration
 
-def make_bass_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+def make_bass_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
     pitch = chord_to_pitches(bar_info.bar.chord, 3)[0]
-    for note_length in channel_info.rhythm:
+    for note_length in voice.rhythm:
         remaining = bar_end - start
         if remaining <= 0:
             break
@@ -185,26 +158,26 @@ def make_bass_bar(bar_info: BarInfo, channel_info: ChannelInfo):
             note_length = remaining
         # logging.debug(f'Bass {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord}, duration {note_length}')
         bar_info.midi_file.addNote(0,
-                                   channel_info.voice.channel,
+                                   voice.channel,
                                    pitch,
                                    add_start_error(start),
                                    note_length,
-                                   channel_info.volume)
+                                   voice.volume)
         start += note_length
 
-def make_chord(bar_info: BarInfo, channel_info: ChannelInfo,
-                    # channel_info: ChannelInfo,
+def make_chord(bar_info: BarInfo, voice: Voice,
+                    # voice: Voice,
                     pitches: Pitches,
                     start: int,
                     duration: int):
     start = add_start_error(start)
     for pitch in pitches:
         bar_info.midi_file.addNote(0,
-                                   channel_info.voice.channel,
+                                   voice.channel,
                                    pitch,
                                    start,
                                    duration,
-                                   channel_info.volume)
+                                   voice.volume)
 
 def make_error_table(amount: int) -> list[int]:
     """Makes an error table
@@ -220,9 +193,8 @@ def make_error_table(amount: int) -> list[int]:
         table.extend(make_error_table(amount))
     return table
 
-def make_improv_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+def make_improv_bar(bar_info: BarInfo, voice: Voice):
     bar_end = bar_info.bar_end()
-    voice: Voice = channel_info.voice
     # If the last note in the previous bar extended beyond the bar,
     # start at that point.
     start = bar_info.start + voice.overlap
@@ -291,17 +263,17 @@ def make_improv_bar(bar_info: BarInfo, channel_info: ChannelInfo):
                 voice.overlap = duration - remaining
         # logging.debug(f'Playing {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord} = {chord}, duration {duration}')
         bar_info.midi_file.addNote(0,
-                                   channel_info.voice.channel,
+                                   voice.channel,
                                    pitch,
                                    add_start_error(start),
                                    duration,
-                                   channel_info.volume)
+                                   voice.volume)
         start += duration
 
-def make_percussion_bar(bar_info: BarInfo, channel_info: ChannelInfo):
+def make_percussion_bar(bar_info: BarInfo, voice: Voice):
     bar_end = bar_info.bar_end()
     start = bar_info.start
-    for note_length in channel_info.rhythm:
+    for note_length in voice.rhythm:
         if start >= bar_end:
             break
         if note_length < 0:
@@ -313,19 +285,19 @@ def make_percussion_bar(bar_info: BarInfo, channel_info: ChannelInfo):
             note_length = bar_end - start
         bar_info.midi_file.addNote(0,
                                    Channel.percussion,
-                                   channel_info.voice.voice,
+                                   voice.voice,
                                    add_start_error(start),
                                    note_length,
-                                   channel_info.volume)
+                                   voice.volume)
         start += note_length
 
 def make_rhythm_bar(bar_info: BarInfo,
-                    channel_info: ChannelInfo,
+                    voice: Voice,
                     duration: int):
     start = bar_info.start
     bar_end = bar_info.bar_end()
     pitches = chord_to_pitches(bar_info.bar.chord, 4)
-    for note_length in channel_info.rhythm:
+    for note_length in voice.rhythm:
         if start >= bar_end:
             break
         if note_length < 0:
@@ -339,13 +311,23 @@ def make_rhythm_bar(bar_info: BarInfo,
             duration = 0
         play_time = duration if duration else note_length
         make_chord(bar_info,
-                   channel_info,
+                   voice,
                    pitches,
                    start,
                    play_time,
                    )
         start += note_length
 
+def set_volume(voice: Voice, item: Volume):
+    old_vol = voice.volume
+    # An absolute setting takes priority over a delta:
+    if item.abs:
+        new_vol = item.abs
+    else:
+        new_vol = old_vol + item.delta
+    new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
+    voice.volume_target = new_vol
+    voice.rate = item.rate
 
 def run(args:argparse.Namespace):
     in_file = args.ini
@@ -355,7 +337,7 @@ def run(args:argparse.Namespace):
     fname, _ = os.path.splitext(in_file)
     out_file =fname + '.mid'
     commands = midi_parse.Commands(in_file)
-    voices: dict[Channel, Voice] = commands.get_voices()
+    voices: list[Voice] = commands.voices
     rhythms = commands.get_rhythms()
 
     random.seed(1)
@@ -364,26 +346,16 @@ def run(args:argparse.Namespace):
     global error7
     error7 = make_error_table(7)
 
-    # MIDIFile channel count does not include percussion channels
-    # they are pseudo-channels that map to track in the percussion channel.)
-    midi_channel_count = len([k for k in voices.keys() if is_midi(k)])
+    # MIDIFile channel count does not include percussion voices as they are
+    # pseudo-channels that map to track in the percussion channel.
+    midi_channel_count = len([k for k in voices if k.style != 'perc'])
     midi_file = MIDIFile(midi_channel_count,
                          ticks_per_quarternote=n.crotchet,
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, tempo)
 
-    # Array to hold all info for a channel (which includes percussion)
-    # that can be adjusted dynamically.
-    channel_info: list[ChannelInfo] = []
-    for _ in range(Channel.max_channels):
-        channel_info.append(ChannelInfo())
-
     # Populate channel_info with voice info and set the voice up in MIDI.
-    for channel, voice in voices.items():
-        # assert voice.channel == channel, 'Voice index must match channel'
-        info = channel_info[voice.channel]
-        info.voice = voice
-        info.volume = info.volume_target = voice.volume
+    for voice in voices:
         midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
 
     # Create an object to hold dynamic info about the current bar.
@@ -399,40 +371,36 @@ def run(args:argparse.Namespace):
         if isinstance(item, Bar):
             bar_info.bar = item
             # Handle volume changes.
-            for info in channel_info:
-                if info.channel() != Channel.none:
-                    info.adjust_volume()
+            for voice in voices:
+                if voice.channel != Channel.none:
+                    adjust_volume(voice)
             for _ in range(item.repeat):
                 logging.debug(item.chord)
-                for channel in range(Channel.perc0, Channel.max_channels):
-                    if channel_info[Channel.perc1].active:
-                        make_percussion_bar(bar_info, channel_info[channel])
-                if channel_info[Channel.bass].active:
-                    make_bass_bar(bar_info, channel_info[Channel.bass])
-                if channel_info[Channel.rhythm].active:
-                    make_rhythm_bar(bar_info, channel_info[Channel.rhythm], 200)
-                if channel_info[Channel.arpeggio].active:
-                    make_arpeggio_bar(bar_info, channel_info[Channel.arpeggio])
-                if channel_info[Channel.improv1].active:
-                    make_improv_bar(bar_info, channel_info[Channel.improv1])
-                if channel_info[Channel.improv2].active:
-                    make_improv_bar(bar_info, channel_info[Channel.improv2])
+                for voice in voices:
+                    if voice.style == 'perc' and voice.active:
+                        make_percussion_bar(bar_info, voice)
+                    if voice.style == 'bass' and voice.active:
+                        make_bass_bar(bar_info, voice)
+                    if voice.style == 'rhythm' and voice.active:
+                        make_rhythm_bar(bar_info, voice, 200)
+                    if voice.style == 'arpeggio' and voice.active:
+                        make_arpeggio_bar(bar_info, voice)
+                    if voice.style == 'improv' and voice.active:
+                        make_improv_bar(bar_info, voice)
                 bar_info.start += bar_info.timesig.ticks_per_bar
 
         elif isinstance(item, Beat):
             if item.rhythm in rhythms:
-                for channel in item.channels:
-                    if channel is not Channel.none:
-                        assert 0 <= channel < Channel.max_channels, f'Beat channel {channel} out of range'
-                        channel_info[channel].rhythm = rhythms[item.rhythm]
+                for voice in voices:
+                    if voice.channel is not Channel.none:
+                            voice.rhythm = rhythms[item.rhythm]
             else:
                 logging.warning(f'Rhythm {item.rhythm} does not exist.')
 
         elif isinstance(item, Hear):
-            for channel in item.channels:
-                if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Play channel {channel} out of range'
-                    channel_info[channel].active = True
+            for voice in voices:
+                if voice.channel is not Channel.none:
+                    voice.active = True
 
         elif isinstance(item, Loop):
                 # This is the beginning of a loop. Save the location
@@ -440,10 +408,9 @@ def run(args:argparse.Namespace):
                 loop_stack.append(LoopItem(item_number, -1))
 
         elif isinstance(item, Mute):
-            for channel in item.channels:
-                if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Mute channel {channel} out of range'
-                    channel_info[channel].active = False
+            for voice in voices:
+                if voice.channel is not Channel.none:
+                    voice.active = False
 
         elif isinstance(item, Play):
             start = bar_info.start
@@ -451,11 +418,11 @@ def run(args:argparse.Namespace):
                 # A pitch < 0 requests a period of silence.
                 if note[1] >= 0:
                     midi_file.addNote(0,
-                                      item.channel,
+                                      item.voice.channel,
                                       note[1],
                                       add_start_error(start),
                                       note[0],
-                                      channel_info[channel].volume)
+                                      voice.volume)
                 start += note[0]
 
         elif isinstance(item, Repeat):
@@ -483,14 +450,11 @@ def run(args:argparse.Namespace):
         elif isinstance(item, Volume):
             # midi_parse is responsible for ensuring the following.
             assert item.abs or item.delta, 'Volume has no abs or delta'
-            # The volume in the channel is not set directly because it may
+            # The volume in the voice is not set directly because it may
             # change over a period of time. Instead, info.adjust_volume()
-            # is called on all channels for every bar.
-            for channel in item.channels:
-                if 0 <= channel < Channel.max_channels:
-                    channel_info[channel].set_volume(item)
-                else:
-                    logging.warning(f'Volume channel {channel} out of range')
+            # is called on all voices for every bar.
+            for voice in item.voices:
+                set_volume(voice, item)
 
         else:
             logging.error(f'Unrecognized item {item}')

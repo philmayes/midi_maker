@@ -5,7 +5,6 @@ from midi_channels import Channel, is_midi, str_to_channel
 from midi_items import *
 from midi_notes import *
 import midi_percussion
-from midi_voice import Voice
 from midi_types import *
 import midi_voices
 import utils
@@ -67,38 +66,14 @@ def parse_command(command: str) -> Command:
     return '', []
 
 class Commands:
+    """Class that parses the .ini file."""
     def __init__(self, in_file: str):
         with open(in_file, "r") as f_in:
             self.commands = f_in.readlines()
         self.volumes = self.get_volumes()
-        self.channel_names = self.get_channel_names()
+        self.voices: list[Voice] = self.get_all_voices()
+        # self.voice_names = self.get_voice_names()
         self.tunes = self.get_tunes()
-
-    def get_channel_names(self) -> list[str]:
-        """Gets a list of all channel names that are in use."""
-        names: list[str] = []
-        for command in self.commands:
-            cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
-            if item == 'voice':
-                for param in params:
-                    key, value = param
-                    if key == 'channel':
-                        names.append(value)
-        return names
-
-    def get_channels(self, params: Params) -> list[Channel]:
-        """Returns a list of all the channels supplied in params."""
-        channels: list[Channel] = []
-        for kv in params:
-            if kv[0] == 'channel':
-                name = kv[1]
-                if name in self.channel_names:
-                    channels.append(str_to_channel(name))
-                else:
-                    logging.error(f'Channel {name} does not exist')
-        return channels
 
     def get_composition(self, name: str='') -> Composition:
         """Gets the list of items between named composition & the next one."""
@@ -135,31 +110,32 @@ class Commands:
                 if params:
                     key, value = params[0]
                     if key == 'name':
-                        channels = self.get_channels(params)
-                        composition += Beat(value, channels)
+                        voices = self.get_voices(params)
+                        composition += Beat(value, voices)
 
             elif item == 'hear':
-                channels = self.get_channels(params)
-                composition += Hear(channels)
+                voices = self.get_voices(params)
+                composition += Hear(voices)
 
             elif item == 'loop':
                 composition += Loop()
                 pass
             elif item == 'mute':
-                channels = self.get_channels(params)
-                composition += Mute(channels)
+                voices = self.get_voices(params)
+                composition += Mute(voices)
 
             elif item == 'play':
+                tune = ''
+                voice: Voice | None = None
                 for param in params:
                     key, value = param
                     if key == 'tune':
                         if value in self.tunes:
                             tune = self.tunes[value]
-                    elif key == 'channel':
-                        if value in self.channel_names:
-                            channel = str_to_channel(value)
-                if tune and channel:
-                    composition += Play(tune, channel)
+                    elif key == 'name':
+                        voice = self.get_voice(value)
+                if tune and voice:
+                    composition += Play(tune, voice)
 
             elif item == 'repeat':
                 composition += Repeat()
@@ -174,9 +150,9 @@ class Commands:
                 logging.warning(f'Bad tempo in {command}')
 
             elif item == 'volume':
-                channels = self.get_channels(params)
-                if channels:
-                    vol = Volume(0, 0, 0, channels)
+                voices = self.get_voices(params)
+                if voices:
+                    vol = Volume(0, 0, 0, voices)
                     for param in params:
                         # No need to range-check here;
                         # it is done by ChannelInfo.set_volume
@@ -271,9 +247,11 @@ class Commands:
 
         return tunes
 
-    def get_voices(self) -> dict[Channel, Voice]:
+    def get_all_voices(self) -> list[Voice]:
         """Constructs Voice() instances from the list of commands."""
-        voices: dict[Channel, Voice] = {}
+        voices: list[Voice] = []
+        next_voice_channel = 1
+        next_perc_channel = 1
         for command in self.commands:
             command = clean_line(command)
             if not command:
@@ -283,8 +261,10 @@ class Commands:
                 continue
 
             # Set up default values
+            name: str = ''
             channel: Channel = Channel.none
             voice: int = 0
+            style: str = ''
             volume: int = 0
             min_pitch = 0
             max_pitch = 127
@@ -299,8 +279,8 @@ class Commands:
                     logging.warning(f'Missing value in {command}')
                     continue
 
-                if key == 'channel':
-                    channel = str_to_channel(value)
+                if key == 'name':
+                    name = value
 
                 elif key == 'min_pitch':
                     if not value.isdigit() or not 0 <= int(value) <= 127:
@@ -314,17 +294,32 @@ class Commands:
                         continue
                     max_pitch = int(value)
 
+                elif key == 'style':
+                    styles = ['perc', 'bass', 'rhythm', 'arpeggio', 'improv']
+                    if value in styles:
+                        style = value
+                    else:
+                        style = 'bass'
+                        logging.warning(f'Bad style in {command}, using {style}')
+
                 elif key == 'voice':
-                    if channel == Channel.none:
-                        logging.warning(f'Channel must precede voice in "{command}"')
-                        continue
-                    table: dict[str, int] = midi_voices.voices\
-                        if is_midi(channel)\
-                        else midi_percussion.percussion
-                    if value not in table:
+                    if value in midi_voices.voices:
+                        if next_voice_channel >= 16:
+                            logging.warning(f'Too many voice channels')
+                            continue
+                        voice = midi_voices.voices[value]
+                        channel = str_to_channel(f'ch{next_voice_channel}')
+                        next_voice_channel += 1
+                    elif value in midi_percussion.percussion:
+                        if next_perc_channel >= 10:
+                            logging.warning(f'Too many percussion channels')
+                            continue
+                        voice = midi_percussion.percussion[value]
+                        channel = str_to_channel(f'perc{next_perc_channel}')
+                        next_perc_channel += 1
+                    else:
                         logging.warning(f'Bad voice in {command}')
                         continue
-                    voice = table[value]
 
                 elif key == 'volume':
                     if value in self.volumes:
@@ -337,7 +332,29 @@ class Commands:
             if channel == Channel.none:
                 logging.warning(f'No channel in {command}')
                 continue
-            voices[channel] = Voice(channel, voice, volume, min_pitch, max_pitch)
+            voices.append(Voice(name, channel, voice, style, volume, min_pitch, max_pitch))
+        return voices
+
+    def get_voice(self, name: str) -> Voice | None:
+        """Returns the named voice."""
+        for voice in self.voices:
+            if voice.name == name:
+                return voice
+        else:
+            logging.error(f'Voice {name} does not exist')
+
+    def get_voices(self, params: Params) -> list[Voice]:
+        """Returns a list of all the voices supplied in params."""
+        voices: list[Voice] = []
+        for kv in params:
+            if kv[0] == 'name':
+                voice_name = kv[1]
+                for voice in self.voices:
+                    if voice.name == voice_name:
+                        voices.append(voice)
+                        break
+                else:
+                    logging.error(f'Voice {voice_name} does not exist')
         return voices
 
     def get_volumes(self):
