@@ -1,6 +1,8 @@
 import logging
 import re
 
+from midi_types import *
+
 note_to_offset = {
     'Cb':11, 'C':  0, 'C#': 1,
     'Db': 1, 'D':  2, 'D#': 3,
@@ -10,9 +12,10 @@ note_to_offset = {
     'Ab': 8, 'A':  9, 'A#':10,
     'Bb':10, 'B': 11, 'B#':12,
 }
-re_note = re.compile(r'([t|d]?[dhqcmsb])?([A-G][#|b]?)(\d)')
+# Format of a note as supplied by tune command.
+re_note = re.compile(r'([t|d]?[dhqcmsb])?([A-G|X][#|b]?)(\d)?')
 
-class Note:
+class NoteDuration:
     # note durations
     demisemiquaver = 120    # thirtysecond note
     semiquaver = 2 * demisemiquaver # sixteenth note
@@ -39,13 +42,13 @@ class Note:
     d_breve = 2 * d_semibreve
 
 letter_to_duration = {
-    'd': Note.demisemiquaver,
-    'h': Note.semiquaver,
-    'q': Note.quaver,
-    'c': Note.crotchet,
-    'm': Note.minim,
-    's': Note.semibreve,
-    'b': Note.breve,
+    'd': NoteDuration.demisemiquaver,
+    'h': NoteDuration.semiquaver,
+    'q': NoteDuration.quaver,
+    'c': NoteDuration.crotchet,
+    'm': NoteDuration.minim,
+    's': NoteDuration.semibreve,
+    'b': NoteDuration.breve,
 }
 
 def get_duration(text: str) -> int:
@@ -56,25 +59,6 @@ def get_duration(text: str) -> int:
         if factor == 'd':
             duration *= 2
     return duration
-
-def str_to_note(name: str) -> tuple[int, int]:
-    """Returns the note duration and pitch described by the string."""
-    assert len(name) > 0, 'No name provided for note'
-    match = re_note.match(name)
-    if match:
-        duration = match.group(1)
-        note = match.group(2)
-        octave = match.group(3)
-        if duration is None:
-            ticks = 0
-        else:
-            ticks = get_duration(duration)
-        if octave is not None:
-            if note in note_to_offset:
-                pitch = note_to_offset[note] + int(octave) * 12
-        return ticks, pitch
-    logging.warning(f'{name} is not a valid note')
-    return 0, 0
 
 def str_to_duration(name: str) -> int:
     """Returns the note duration described by the string."""
@@ -87,11 +71,56 @@ def str_to_duration(name: str) -> int:
     if name.isdigit():
         return int(name)
     # Look up the name and return its value
-    d = Note.__dict__
+    d = NoteDuration.__dict__
     if name in d:
         duration =  d[name]
         if neg:
             duration = -duration
         return duration
-    logging.warning(f'Note "{name}" not recognized')
+    logging.warning(f'Duration "{name}" not recognized')
     return 0
+
+def str_to_notes(notes: str) -> Tune:
+    """Returns the notes (duration and pitch) described by the string."""
+    tune: Tune = []
+    last_duration = 0
+    last_octave_pitch = -1
+    for note_str in notes.split(','):
+        match = re_note.match(note_str)
+        if match:
+            # process the duration
+            duration = match.group(1)
+            if duration is None:
+                if last_duration:
+                    ticks = last_duration
+                else:
+                    logging.warning(f'First note of {notes} must have a duration')
+                    ticks = 0
+            else:
+                ticks = get_duration(duration)
+                last_duration = ticks
+
+            # process the note
+            note = match.group(2)
+            # A note of X is silence; indicate this with pitch < 0.
+            if note == 'X':
+                note_pitch = -1000
+            else:
+                note_pitch = note_to_offset[note]
+
+            # process the octave
+            octave = match.group(3)
+            if octave is None:
+                if last_octave_pitch >= 0:
+                    octave_pitch = last_octave_pitch
+                else:
+                    logging.warning(f'First note of {notes} must have an octave')
+                    octave_pitch = 36
+            else:
+                octave_pitch = int(octave) * 12
+                last_octave_pitch = octave_pitch
+
+            pitch = note_pitch + octave_pitch
+            tune.append((ticks, pitch))
+
+    return tune

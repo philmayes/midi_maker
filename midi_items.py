@@ -1,4 +1,5 @@
 from midi_channels import Channel
+from midi_types import *
 
 class Item:
     """Abstract class constituent of a composition."""
@@ -42,8 +43,9 @@ class Mute(Item):
 
 class Play(Item):
     """Play (unmute) channel(s)."""
-    def __init__(self, channels: list[Channel]):
-        self.channels = channels
+    def __init__(self, tune: Tune, channel: Channel):
+        self.tune = tune
+        self.channel = channel
 
 class Repeat(Item):
     start = -1

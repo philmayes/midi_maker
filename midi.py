@@ -30,7 +30,7 @@ from midiutil import MIDIFile
 from midi_channels import Channel, is_midi
 from midi_chords import chord_to_intervals, chord_to_pitches
 from midi_items import *
-from midi_notes import Note as n
+from midi_notes import NoteDuration as n
 import midi_parse
 from midi_percussion import percussion as p
 from midi_types import *
@@ -59,9 +59,6 @@ default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
 # Used by make_improv_bar().
 durations1 = [n.minim, n.crotchet, n.quaver, -n.quaver]
 durations2 = [n.minim, n.crotchet, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, -n.quaver]
-
-Note = namedtuple('Note', 'pitch time duration volume',
-                  defaults=(40, 0, n.crotchet, utils.default_volume))
 
 class BarInfo:
     """Class that holds info for the current bar."""
@@ -449,10 +446,17 @@ def run(args:argparse.Namespace):
                     channel_info[channel].active = False
 
         elif isinstance(item, Play):
-            for channel in item.channels:
-                if channel is not Channel.none:
-                    assert 0 <= channel < Channel.max_channels, f'Play channel {channel} out of range'
-                    channel_info[channel].active = True
+            start = bar_info.start
+            for note in item.tune:
+                # A pitch < 0 requests a period of silence.
+                if note[1] >= 0:
+                    midi_file.addNote(0,
+                                      item.channel,
+                                      note[1],
+                                      add_start_error(start),
+                                      note[0],
+                                      channel_info[channel].volume)
+                start += note[0]
 
         elif isinstance(item, Repeat):
             if not loop_stack:

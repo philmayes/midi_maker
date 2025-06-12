@@ -72,6 +72,7 @@ class Commands:
             self.commands = f_in.readlines()
         self.volumes = self.get_volumes()
         self.channel_names = self.get_channel_names()
+        self.tunes = self.get_tunes()
 
     def get_channel_names(self) -> list[str]:
         """Gets a list of all channel names that are in use."""
@@ -100,7 +101,7 @@ class Commands:
         return channels
 
     def get_composition(self, name: str='') -> Composition:
-        """Gets the list of items between."""
+        """Gets the list of items between named composition & the next one."""
         composition: Composition = Composition()
         in_composition = False
         for command in self.commands:
@@ -139,7 +140,7 @@ class Commands:
 
             elif item == 'hear':
                 channels = self.get_channels(params)
-                composition += Play(channels)
+                composition += Hear(channels)
 
             elif item == 'loop':
                 composition += Loop()
@@ -149,8 +150,16 @@ class Commands:
                 composition += Mute(channels)
 
             elif item == 'play':
-                channels = self.get_channels(params)
-                composition += Play(channels)
+                for param in params:
+                    key, value = param
+                    if key == 'tune':
+                        if value in self.tunes:
+                            tune = self.tunes[value]
+                    elif key == 'channel':
+                        if value in self.channel_names:
+                            channel = str_to_channel(value)
+                if tune and channel:
+                    composition += Play(tune, channel)
 
             elif item == 'repeat':
                 composition += Repeat()
@@ -237,6 +246,30 @@ class Commands:
                     rhythms[name] = rhythm
 
         return rhythms
+
+    def get_tunes(self) -> Tunes:
+        """Constructs Tune() instances from the list of commands."""
+        tunes: Tunes = {}
+        for command in self.commands:
+            cmd = parse_command(command)
+            item: Verb = cmd[0]
+            params: Params = cmd[1]
+
+            if item == 'tune':
+                name: str = ''
+                notes: str = ''
+                tune: Tune = []
+                for param in params:
+                    if param[0] == 'name':
+                        name = param[1]
+                    elif param[0] == 'notes':
+                        notes = param[1]
+
+                if name and notes:
+                    tune = str_to_notes(notes)
+                    tunes[name] = tune
+
+        return tunes
 
     def get_voices(self) -> dict[Channel, Voice]:
         """Constructs Voice() instances from the list of commands."""
