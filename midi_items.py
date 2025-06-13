@@ -15,10 +15,10 @@ class Bar(Item):
         self.clip = False
 
 class Beat(Item):
-    """Adjust rhythm for voice(s)."""
-    def __init__(self, rhythm: str, voices: list[Voice]):
-        self.rhythm = rhythm
-        self.voices = voices
+    """Supply rhythm(s) for voice."""
+    def __init__(self, voice: Voice, rhythms: list[Rhythm]):
+        self.voice = voice
+        self.rhythms = rhythms
 
 class Hear(Item):
     """Play (unmute) voice(s)."""

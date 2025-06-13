@@ -75,6 +75,7 @@ class Commands:
         self.voices: list[Voice] = self.get_all_voices()
         # self.voice_names = self.get_voice_names()
         self.tunes = self.get_tunes()
+        self.rhythms = self.get_all_rhythms()
 
     def get_composition(self, name: str='') -> Composition:
         """Gets the list of items between named composition & the next one."""
@@ -88,6 +89,7 @@ class Commands:
                 continue
 
             if item == 'composition':
+                # syntax: composition name=foobar
                 if in_composition:
                     break
                 if not name:
@@ -102,17 +104,24 @@ class Commands:
                 continue
 
             elif item == 'bar':
+                # syntax: bar key=Cmaj
                 if params:
                     key, value = params[0]
                     if key == 'key':
                         composition += Bar(value)
 
             elif item == 'beat':
-                if params:
-                    key, value = params[0]
-                    if key == 'name':
-                        voices = self.get_voices(params)
-                        composition += Beat(value, voices)
+                # syntax: beat voice=vvv rhythms=r1,r2,...
+                voice: Voice | None = None
+                rhythms: list[Rhythm] = []
+                for param in params:
+                    key, value = param
+                    if key == 'voice':
+                        voice = self.get_voice(value)
+                    elif key == 'rhythms':
+                        rhythms = self.get_rhythms(value)
+                if voice and rhythms:
+                    composition += Beat(voice, rhythms)
 
             elif item == 'hear':
                 voices = self.get_voices(params)
@@ -196,8 +205,8 @@ class Commands:
                     return parts
         return ''
 
-    def get_rhythms(self) -> Rhythms:
-        """Constructs Voice() instances from the list of commands."""
+    def get_all_rhythms(self) -> Rhythms:
+        """Constructs Rhythm dictionary from the list of commands."""
         rhythms: Rhythms = {}
         for command in self.commands:
             cmd = parse_command(command)
@@ -335,6 +344,17 @@ class Commands:
             voices.append(Voice(name, channel, voice, style, volume, min_pitch, max_pitch))
         return voices
 
+    def get_rhythms(self, value: str) -> list[Rhythm]:
+        """Returns a list of all the rhythms supplied in param."""
+        rhythms: list[Rhythm] = []
+        rhythm_names = value.split(',')
+        for rhythm_name in rhythm_names:
+            if rhythm_name in self.rhythms:
+                rhythms.append(self.rhythms[rhythm_name])
+            else:
+                logging.error(f'rhythm {rhythm_name} does not exist')
+        return rhythms
+
     def get_voice(self, name: str) -> Voice | None:
         """Returns the named voice."""
         for voice in self.voices:
@@ -347,7 +367,7 @@ class Commands:
         """Returns a list of all the voices supplied in params."""
         voices: list[Voice] = []
         for kv in params:
-            if kv[0] in ('voice', 'voices'):
+            if kv[0] == 'voices':
                 voice_names = kv[1].split(',')
                 for voice_name in voice_names:
                     for voice in self.voices:

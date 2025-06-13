@@ -145,7 +145,8 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
     pitch = chord_to_pitches(bar_info.bar.chord, 3)[0]
-    for note_length in voice.rhythm:
+    rhythm = voice.get_rhythm()
+    for note_length in rhythm:
         remaining = bar_end - start
         if remaining <= 0:
             break
@@ -276,7 +277,8 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
 def make_percussion_bar(bar_info: BarInfo, voice: Voice):
     bar_end = bar_info.bar_end()
     start = bar_info.start
-    for note_length in voice.rhythm:
+    rhythm = voice.get_rhythm()
+    for note_length in rhythm:
         if start >= bar_end:
             break
         if note_length < 0:
@@ -300,7 +302,8 @@ def make_rhythm_bar(bar_info: BarInfo,
     start = bar_info.start
     bar_end = bar_info.bar_end()
     pitches = chord_to_pitches(bar_info.bar.chord, 4)
-    for note_length in voice.rhythm:
+    rhythm = voice.get_rhythm()
+    for note_length in rhythm:
         if start >= bar_end:
             break
         if note_length < 0:
@@ -341,7 +344,6 @@ def run(args:argparse.Namespace):
     out_file =fname + '.mid'
     commands = midi_parse.Commands(in_file)
     voices: list[Voice] = commands.voices
-    rhythms = commands.get_rhythms()
 
     random.seed(1)
     global start_error
@@ -393,12 +395,10 @@ def run(args:argparse.Namespace):
                 bar_info.start += bar_info.timesig.ticks_per_bar
 
         elif isinstance(item, Beat):
-            if item.rhythm in rhythms:
-                for voice in item.voices:
-                    if voice.channel is not Channel.none:
-                            voice.rhythm = rhythms[item.rhythm]
+            if item.rhythms:
+                item.voice.rhythms = item.rhythms
             else:
-                logging.warning(f'Rhythm {item.rhythm} does not exist.')
+                logging.warning(f'Beat rhythms not supplied.')
 
         elif isinstance(item, Hear):
             for voice in item.voices:

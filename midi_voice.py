@@ -2,9 +2,10 @@ import logging
 
 from midi_channels import Channel
 from midi_notes import NoteDuration as n
+from midi_types import *
 import utils
 
-default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
+default_rhythm: Rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
 
 class Voice:
     styles = ['perc', 'bass', 'rhythm', 'arpeggio', 'improv', 'lead']
@@ -35,7 +36,8 @@ class Voice:
         self.volume = utils.default_volume
         self.volume_target = utils.default_volume
         self.rate = 0
-        self.rhythm = default_rhythm
+        self.rhythms: list[Rhythm] = [default_rhythm]
+        self.rhythm_index = 0
 
     def constrain_pitch(self, pitch: int) -> int:
         """Limit the pitch to that described in the voice."""
@@ -46,3 +48,10 @@ class Voice:
         while pitch > self.max_pitch:
             pitch -= 12
         return pitch
+
+    def get_rhythm(self) -> Rhythm:
+        if self.rhythm_index >= len(self.rhythms):
+            self.rhythm_index = 0
+        rhythm = self.rhythms[self.rhythm_index]
+        self.rhythm_index += 1
+        return rhythm
