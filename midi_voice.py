@@ -7,6 +7,8 @@ import utils
 default_rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
 
 class Voice:
+    styles = ['perc', 'bass', 'rhythm', 'arpeggio', 'improv', 'lead']
+
     def __init__(self,
                  name: str,
                  channel: Channel,

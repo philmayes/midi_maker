@@ -6,6 +6,7 @@ from midi_items import *
 from midi_notes import *
 import midi_percussion
 from midi_types import *
+import midi_voice
 import midi_voices
 import utils
 
@@ -295,8 +296,7 @@ class Commands:
                     max_pitch = int(value)
 
                 elif key == 'style':
-                    styles = ['perc', 'bass', 'rhythm', 'arpeggio', 'improv']
-                    if value in styles:
+                    if value in midi_voice.Voice.styles:
                         style = value
                     else:
                         style = 'bass'
@@ -347,7 +347,7 @@ class Commands:
         """Returns a list of all the voices supplied in params."""
         voices: list[Voice] = []
         for kv in params:
-            if kv[0] == 'voice':
+            if kv[0] in ('voice', 'voices'):
                 voice_names = kv[1].split(',')
                 for voice_name in voice_names:
                     for voice in self.voices:
