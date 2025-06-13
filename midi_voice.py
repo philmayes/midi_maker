@@ -36,7 +36,7 @@ class Voice:
         self.volume = utils.default_volume
         self.volume_target = utils.default_volume
         self.rate = 0
-        self.rhythms: list[Rhythm] = [default_rhythm]
+        self.rhythms: Rhythms = [default_rhythm]
         self.rhythm_index = 0
 
     def constrain_pitch(self, pitch: int) -> int:

@@ -16,7 +16,7 @@ class Bar(Item):
 
 class Beat(Item):
     """Supply rhythm(s) for voice."""
-    def __init__(self, voice: Voice, rhythms: list[Rhythm]):
+    def __init__(self, voice: Voice, rhythms: Rhythms):
         self.voice = voice
         self.rhythms = rhythms
 
@@ -43,9 +43,9 @@ class Mute(Item):
 
 class Play(Item):
     """Play tune with voice."""
-    def __init__(self, tune: Tune, voice: Voice):
-        self.tune = tune
+    def __init__(self, voice: Voice, tunes: Tunes):
         self.voice = voice
+        self.tunes = tunes
 
 class Repeat(Item):
     start = -1

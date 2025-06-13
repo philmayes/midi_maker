@@ -417,16 +417,17 @@ def run(args:argparse.Namespace):
 
         elif isinstance(item, Play):
             start = bar_info.start
-            for note in item.tune:
-                # A pitch < 0 requests a period of silence.
-                if note[1] >= 0:
-                    midi_file.addNote(0,
-                                      item.voice.channel,
-                                      note[1],
-                                      add_start_error(start),
-                                      note[0],
-                                      voice.volume)
-                start += note[0]
+            for tune in item.tunes:
+                for note in tune:
+                    # A pitch < 0 requests a period of silence.
+                    if note[1] >= 0:
+                        midi_file.addNote(0,
+                                        item.voice.channel,
+                                        note[1],
+                                        add_start_error(start),
+                                        note[0],
+                                        voice.volume)
+                    start += note[0]
 
         elif isinstance(item, Repeat):
             if not loop_stack:

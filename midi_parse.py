@@ -73,8 +73,7 @@ class Commands:
             self.commands = f_in.readlines()
         self.volumes = self.get_volumes()
         self.voices: list[Voice] = self.get_all_voices()
-        # self.voice_names = self.get_voice_names()
-        self.tunes = self.get_tunes()
+        self.tunes = self.get_all_tunes()
         self.rhythms = self.get_all_rhythms()
 
     def get_composition(self, name: str='') -> Composition:
@@ -113,7 +112,7 @@ class Commands:
             elif item == 'beat':
                 # syntax: beat voice=vvv rhythms=r1,r2,...
                 voice: Voice | None = None
-                rhythms: list[Rhythm] = []
+                rhythms: Rhythms = []
                 for param in params:
                     key, value = param
                     if key == 'voice':
@@ -135,17 +134,16 @@ class Commands:
                 composition += Mute(voices)
 
             elif item == 'play':
-                tune = ''
                 voice: Voice | None = None
+                tunes: Tunes = []
                 for param in params:
                     key, value = param
-                    if key == 'tune':
-                        if value in self.tunes:
-                            tune = self.tunes[value]
-                    elif key == 'voice':
+                    if key == 'voice':
                         voice = self.get_voice(value)
-                if tune and voice:
-                    composition += Play(tune, voice)
+                    elif key == 'tunes':
+                        tunes = self.get_tunes(value)
+                if tunes and voice:
+                    composition += Play(voice, tunes)
 
             elif item == 'repeat':
                 composition += Repeat()
@@ -205,9 +203,9 @@ class Commands:
                     return parts
         return ''
 
-    def get_all_rhythms(self) -> Rhythms:
+    def get_all_rhythms(self) -> RhythmDict:
         """Constructs Rhythm dictionary from the list of commands."""
-        rhythms: Rhythms = {}
+        rhythms: RhythmDict = {}
         for command in self.commands:
             cmd = parse_command(command)
             item: Verb = cmd[0]
@@ -233,9 +231,9 @@ class Commands:
 
         return rhythms
 
-    def get_tunes(self) -> Tunes:
-        """Constructs Tune() instances from the list of commands."""
-        tunes: Tunes = {}
+    def get_all_tunes(self) -> TuneDict:
+        """Constructs Tune dictionary from the list of commands."""
+        tunes: TuneDict = {}
         for command in self.commands:
             cmd = parse_command(command)
             item: Verb = cmd[0]
@@ -344,9 +342,9 @@ class Commands:
             voices.append(Voice(name, channel, voice, style, volume, min_pitch, max_pitch))
         return voices
 
-    def get_rhythms(self, value: str) -> list[Rhythm]:
+    def get_rhythms(self, value: str) -> Rhythms:
         """Returns a list of all the rhythms supplied in param."""
-        rhythms: list[Rhythm] = []
+        rhythms: Rhythms = []
         rhythm_names = value.split(',')
         for rhythm_name in rhythm_names:
             if rhythm_name in self.rhythms:
@@ -354,6 +352,17 @@ class Commands:
             else:
                 logging.error(f'rhythm {rhythm_name} does not exist')
         return rhythms
+
+    def get_tunes(self, value: str) -> Tunes:
+        """Returns a list of all the tunes supplied in param."""
+        tunes: Tunes = []
+        tune_names = value.split(',')
+        for tune_name in tune_names:
+            if tune_name in self.tunes:
+                tunes.append(self.tunes[tune_name])
+            else:
+                logging.error(f'tune {tune_name} does not exist')
+        return tunes
 
     def get_voice(self, name: str) -> Voice | None:
         """Returns the named voice."""
