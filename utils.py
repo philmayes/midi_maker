@@ -7,7 +7,7 @@ def get_signed_number(text: str) -> int | None:
     assert text != '', f'Number is missing'
     neg = False
     if not text.isdigit():
-        neg = text == '-'
+        neg = text.startswith('-')
         text = text[1:]
     if text.isdigit():
         number = int(text)
