@@ -21,29 +21,51 @@ re_note = re.compile(r'([t|d]?[dhqcmsb])?([A-G|X][#|b]?)(\d)?')
 
 class NoteDuration:
     # note durations
-    demisemiquaver = 120    # thirtysecond note
-    semiquaver = 2 * demisemiquaver # sixteenth note
-    quaver = 2 * semiquaver # eighth note
-    crotchet = 2 * quaver   # quarter note
-    minim = 2 * crotchet    # half note
-    semibreve = 2 * minim   # whole note
-    breve = 2 * semibreve   # double whole note
+    demisemiquaver = 120    # thirtysecond note      120
+    semiquaver = 2 * demisemiquaver # sixteenth note 240
+    quaver = 2 * semiquaver # eighth note            480
+    crotchet = 2 * quaver   # quarter note           960
+    minim = 2 * crotchet    # half note             1920
+    semibreve = 2 * minim   # whole note            3840
+    breve = 2 * semibreve   # double whole note     7680
     # triplets
-    t_demisemiquaver = demisemiquaver // 3
-    t_semiquaver = 2 * t_demisemiquaver
-    t_quaver = 2 * t_semiquaver
-    t_crotchet = 2 * t_quaver
-    t_minim = 2 * t_crotchet
-    t_semibreve = 2 * t_minim
-    t_breve = 2 * t_semibreve
+    t_demisemiquaver = demisemiquaver // 3  #         40
+    t_semiquaver = 2 * t_demisemiquaver     #         80
+    t_quaver = 2 * t_semiquaver             #        160
+    t_crotchet = 2 * t_quaver               #        320
+    t_minim = 2 * t_crotchet                #        640
+    t_semibreve = 2 * t_minim               #       1280
+    t_breve = 2 * t_semibreve               #       2560
     # doublets, i.e. 2 x triplets, so triplet + doublet = note
-    d_demisemiquaver = 2 * t_demisemiquaver
-    d_semiquaver = 2 * d_demisemiquaver
-    d_quaver = 2 * d_semiquaver
-    d_crotchet = 2 * d_quaver
-    d_minim = 2 * d_crotchet
-    d_semibreve = 2 * d_minim
-    d_breve = 2 * d_semibreve
+    d_demisemiquaver = 2 * t_demisemiquaver #         80
+    d_semiquaver = 2 * d_demisemiquaver     #        160
+    d_quaver = 2 * d_semiquaver             #        320
+    d_crotchet = 2 * d_quaver               #        640
+    d_minim = 2 * d_crotchet                #       1280
+    d_semibreve = 2 * d_minim               #       2560
+    d_breve = 2 * d_semibreve               #       5120
+    # shorthand
+    d = demisemiquaver
+    h = semiquaver
+    q = quaver
+    c = crotchet
+    m = minim
+    s = semibreve
+    b = breve
+    td = t_demisemiquaver
+    th = t_semiquaver
+    tq = t_quaver
+    tc = t_crotchet
+    tm = t_minim
+    ts = t_semibreve
+    tb = t_breve
+    dd = d_demisemiquaver
+    dh = d_semiquaver
+    dq = d_quaver
+    dc = d_crotchet
+    dm = d_minim
+    ds = d_semibreve
+    db = d_breve
 
 letter_to_duration = {
     'd': NoteDuration.demisemiquaver,

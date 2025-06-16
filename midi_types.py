@@ -12,6 +12,7 @@ Verb: TypeAlias = str
 Param: TypeAlias = list[str]
 Params: TypeAlias = list[Param]
 Command: TypeAlias = tuple[Verb, Params]
+CommandDict: TypeAlias = dict[str, str]
 Note: TypeAlias = tuple[int, int]   # duration, pitch
 Tune: TypeAlias = list[Note]
 TuneDict: TypeAlias = dict[str, Tune]

@@ -8,9 +8,12 @@ import midi_percussion
 from midi_types import *
 import midi_voice
 import midi_voices
+import rando
 import utils
 
 re_text = re.compile('[a-zA-Z_]')
+re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
+re_float = re.compile(r'\d*\.?\d+$')
 
 def clean_line(line: str) -> str:
     # Remove possible comment
@@ -23,18 +26,23 @@ def clean_line(line: str) -> str:
     # Remove leading & trailing whitespace
     return line.strip()
 
-def get_parameter(text: str, prefix: str) -> str:
-    if not text.startswith(prefix):
-        return ''
-    text = text[len(prefix):]
-    if is_text(text):
-        return text
-    return ''
+def get_float(cmds: CommandDict, param: str, default: float|str) -> float:
+    value = cmds.get(param, str(default))
+    if re_float.match(value):
+        return float(value)
+    return 0.0
+
+def get_int(cmds: CommandDict, param: str, default: int|str) -> int:
+    value = cmds.get(param, str(default))
+    if value.isnumeric():
+        return int(value)
+    return int(default)
 
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
 
 def parse_command(command: str) -> Command:
+    """Parse command into verb and params."""
     command = clean_line(command)
     item: Verb = ''
     params: Params = []
@@ -65,6 +73,35 @@ def parse_command(command: str) -> Command:
         # Weird python syntax: the loop finished without a break
         return item, params
     return '', []
+
+def parse_command_dict(command: str) -> CommandDict:
+    """Parse command into dictionary."""
+    result: CommandDict = {'command': ''}
+    command = clean_line(command)
+    if command:
+        words = command.split()
+
+        # parse parameters into the default values
+        for index, word in enumerate(words):
+            if index == 0:
+                # First word is the command aka Item
+                if word.isalpha():
+                    result['command'] = word
+                else:
+                    logging.warning(f'Bad verb in {command}')
+                    break
+            else:
+                if '=' not in word:
+                    # Subsequent words should be of the form key=value
+                    logging.warning(f'Missing "=" in {command}')
+                    break
+                key, value = word.split('=', 1)
+                if not value:
+                    logging.warning(f'Missing value in {command}')
+                    break
+                # params.append([key, value])
+                result[key] = value
+    return result
 
 class Commands:
     """Class that parses the .ini file."""
@@ -207,28 +244,52 @@ class Commands:
         """Constructs Rhythm dictionary from the list of commands."""
         rhythms: RhythmDict = {}
         for command in self.commands:
-            cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
-
-            if item == 'rhythm':
-                name: str = ''
-                values: str = ''
+            cmds: CommandDict = parse_command_dict(command)
+            if cmds['command'] == 'rhythm':
                 rhythm: Rhythm = []
-                for param in params:
-                    if param[0] == 'name':
-                        name = param[1]
-                    elif param[0] == 'values':
-                        values = param[1]
-
+                name: str = cmds.get('name', '')
+                values = cmds.get('values', '')
+                seed = get_int(cmds, 'seed', 1)
+                silence = get_float(cmds, 'silence', 0.5)
+                repeat = get_float(cmds, 'repeat', 0.3)
+                notes = cmds.get('notes', '')
                 if name and values:
-                    notes = values.split(',')
-                    for note in notes:
+                    for note in values.split(','):
                         duration: int = str_to_duration(note)
                         # TODO: error handling?
                         rhythm.append(duration)
                     rhythms[name] = rhythm
-
+                elif name and seed >= 0:
+                    random = rando.Rando(int(seed))
+                    # Construct a table of possible durations
+                    probs: list[int] = []
+                    bits = notes.split(',')
+                    for bit in bits:
+                        match = re_rhythm.match(bit)
+                        if match:
+                            dur = str_to_duration(match.group(1))
+                            for _ in range(int(match.group(2))):
+                                probs.append(dur)
+                        else:
+                            logging.debug(f'Bad note {bit} in rhythm')
+                    # Build a rhythm. We don't know how long the bar is,
+                    # could be 4/4, 7/4, etc., so construct for 8/4.
+                    tick = 0
+                    end = NoteDuration.breve
+                    dur = 0
+                    while tick < end:
+                        if tick == 0 or not random.test(repeat):
+                            index = int(len(probs) * random.number)
+                            dur = probs[index]
+                        if random.test(silence):
+                            rhythm.append(-dur)
+                        else:
+                            rhythm.append(dur)
+                        tick += dur
+                    logging.debug(f'random rhythm {rhythm}')
+                    rhythms[name] = rhythm
+                else:
+                    logging.error(f'Bad rhythm command {command}')
         return rhythms
 
     def get_all_tunes(self) -> TuneDict:

@@ -384,13 +384,13 @@ def run(args:argparse.Namespace):
                 for voice in voices:
                     if voice.style == 'perc' and voice.active:
                         make_percussion_bar(bar_info, voice)
-                    if voice.style == 'bass' and voice.active:
+                    elif voice.style == 'bass' and voice.active:
                         make_bass_bar(bar_info, voice)
-                    if voice.style == 'rhythm' and voice.active:
+                    elif voice.style == 'rhythm' and voice.active:
                         make_rhythm_bar(bar_info, voice, 200)
-                    if voice.style == 'arpeggio' and voice.active:
+                    elif voice.style == 'arpeggio' and voice.active:
                         make_arpeggio_bar(bar_info, voice)
-                    if voice.style == 'improv' and voice.active:
+                    elif voice.style == 'improv' and voice.active:
                         make_improv_bar(bar_info, voice)
                 bar_info.start += bar_info.timesig.ticks_per_bar
 
