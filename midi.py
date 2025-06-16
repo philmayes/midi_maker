@@ -325,15 +325,33 @@ def make_rhythm_bar(bar_info: BarInfo,
         start += note_length
 
 def set_volume(voice: Voice, item: Volume):
+    """Adjust the volume of the voice in various ways.
+    case  abs  delta   rate  set level  set rate
+      1    Y     -      -     to abs       -
+      2    -     Y      -     by delta     -
+      3    -     Y      Y       -          Y
+      4    Y     Y      Y     to abs       Y
+    """
+    assert item.abs or item.delta
+    assert item.rate >= 0
+
+    # First set the current volume
     old_vol = voice.volume
-    # An absolute setting takes priority over a delta:
     if item.abs:
-        new_vol = item.abs
+        new_vol = item.abs              # case 1 or 4
+    elif item.delta and not item.rate:
+        new_vol = old_vol + item.delta  # case 2
     else:
-        new_vol = old_vol + item.delta
+        new_vol = old_vol               # case 3
     new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
-    voice.volume_target = new_vol
-    voice.rate = item.rate
+    voice.volume = new_vol
+
+    # Then set up possible rate change
+    if item.delta and item.rate:        # case 3 or 4
+        new_vol += item.delta
+        new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
+        voice.volume_target = new_vol
+        voice.rate = item.rate
 
 def run(args:argparse.Namespace):
     in_file = args.ini
