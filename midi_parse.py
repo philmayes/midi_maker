@@ -38,6 +38,28 @@ def get_int(cmds: CommandDict, param: str, default: int|str) -> int:
         return int(value)
     return int(default)
 
+def get_signed_int(cmds: CommandDict, param: str, default: int|str) -> int:
+    """Returns possibly signed number as int."""
+    value: str = cmds.get(param, str(default))
+    if not value:
+        logging.error(f'Bad signed number {value}')
+        return int(default)
+    neg = False
+    if not value.isdigit():
+        sign = value[0]
+        value = value[1:]
+        if sign == '-':
+            neg = True
+        elif sign != '+':
+            logging.error(f'Bad signed number {value}')
+            return int(default)
+    if value.isdigit():
+        number = int(value)
+        if neg:
+            number = -number
+        return number
+    return int(default)
+
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
 
@@ -146,8 +168,8 @@ class Commands:
                     if key == 'key':
                         composition += Bar(value)
 
-            elif item == 'beat':
-                # syntax: beat voice=vvv rhythms=r1,r2,...
+            elif item == 'rhythm':
+                # syntax: rhythm voice=vvv rhythms=r1,r2,...
                 voice: Voice | None = None
                 rhythms: Rhythms = []
                 for param in params:
@@ -156,6 +178,11 @@ class Commands:
                         voice = self.get_voice(value)
                     elif key == 'rhythms':
                         rhythms = self.get_rhythms(value)
+                    elif key == 'name':
+                        # Not an error, but not a good .ini layout.
+                        logging.warning('Rhythm definition found within composition')
+                        voice = None
+                        break
                 if voice and rhythms:
                     composition += Beat(voice, rhythms)
 
@@ -249,7 +276,7 @@ class Commands:
                 rhythm: Rhythm = []
                 name: str = cmds.get('name', '')
                 values = cmds.get('values', '')
-                seed = get_int(cmds, 'seed', 1)
+                seed = get_signed_int(cmds, 'seed', -1)
                 silence = get_float(cmds, 'silence', 0.5)
                 repeat = get_float(cmds, 'repeat', 0.3)
                 notes = cmds.get('notes', '')
@@ -288,8 +315,12 @@ class Commands:
                         tick += dur
                     logging.debug(f'random rhythm {rhythm}')
                     rhythms[name] = rhythm
+                elif name:
+                    logging.error(f'Bad rhythm command "{command}"')
                 else:
-                    logging.error(f'Bad rhythm command {command}')
+                    # This is a composition rhythm command. We are too lazy
+                    # to check that it actually live within a composition.
+                    pass
         return rhythms
 
     def get_all_tunes(self) -> TuneDict:
