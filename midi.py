@@ -23,7 +23,6 @@ import argparse
 import logging
 import os
 import random
-import subprocess
 
 from midiutil import MIDIFile
 
@@ -33,13 +32,12 @@ from midi_items import *
 from midi_notes import NoteDuration as n
 import midi_parse
 from midi_percussion import percussion as p
+import midi_play
 from midi_types import *
 from midi_voice import Voice
 from midi_voices import voices as v
 import utils
 
-player = "E:\\devtools\\FluidSynth\\bin\\fluidsynth.exe"
-sound_file = "E:\\devtools\\MIDISoundFiles\\FluidR3 GM.sf2"
 default_log_level = 'WARNING'
 
 #             C  D  E  F  G  A  B
@@ -386,7 +384,7 @@ def run(args:argparse.Namespace):
 
     # Get a composition and process all the commands in it.
     # composition = commands.get_composition(args.play)
-    composition = get_work(commands, args.play)
+    composition = get_work(commands, args.create)
     loop_stack: list[LoopItem] = []
     item_number = 0
     while item_number < len(composition.items):
@@ -487,13 +485,15 @@ def run(args:argparse.Namespace):
     with open(out_file, "wb") as f_out:
         midi_file.writeFile(f_out)
 
-    subprocess.run([player, '-n', '-i', sound_file, out_file])
+    if args.play:
+        midi_play.play(out_file)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Create MIDI file')
-    parser.add_argument('ini', help=f'Data to create MIDI file (default: test.ini)')
+    parser.add_argument('ini', nargs='?', default='example.ini', help=f'Data to create MIDI file (default: example.ini)')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
-    parser.add_argument('-p', '--play', default='', help='play composition or opus')
+    parser.add_argument('-c', '--create', default='', help='create composition or opus')
+    parser.add_argument('-p', '--play', default=True, help='play the generated midi file')
     args = parser.parse_args()
     logging.basicConfig(format='%(message)s', level=get_logging_level(args))
 
