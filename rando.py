@@ -18,6 +18,9 @@ class Rando:
     """
     def __init__(self, seed: int):
         assert 0 <= seed < MAX_RANDOM
+        if seed == 0:
+            # Special case: seed == 0 is truly random.
+            seed = random.randrange(len(table))
         self.index = seed
 
     @property
