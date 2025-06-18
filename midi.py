@@ -19,33 +19,25 @@ The bottom number tells what sort of notes each bar is going to contain,
 The top one tells how many of them there will be (or equivalent).
 e.g. for 6/8, each bar contains 6 quavers
 """
-import argparse
 import logging
-import os
 import random
 
 from midiutil import MIDIFile
 
-from midi_channels import Channel, is_midi
-from midi_chords import chord_to_intervals, chord_to_pitches
+from midi_channels import Channel
+from midi_chords import chord_to_pitches
 from midi_items import *
 from midi_notes import NoteDuration as n, note_to_offset
 import midi_parse
-from midi_percussion import percussion as p
-import midi_play
-from midi_types import *
 from midi_voice import Voice
-from midi_voices import voices as v
 import utils
-
-default_log_level = 'WARNING'
 
 #             C  D  E  F  G  A  B
 major_ints = [0, 2, 4, 5, 7, 9, 11,]
 #             A  B  C  D  E  F  G
 minor_ints = [0, 2, 3, 5, 7, 8, 10,]
 
-tempo = 120   # In BPM
+default_tempo = 120   # In BPM
 
 # Rhythms represent the timing of events within a bar.
 # Negative values represent a silence.
@@ -105,16 +97,6 @@ def adjust_volume(voice: Voice):
 
         logging.debug(f'change volume channel:{voice.channel} level {voice.volume} -> {new_vol}')
         voice.volume = new_vol
-
-def get_logging_level(args:argparse.Namespace) -> str:
-    # get the logging level: can be partial word, case-insensitive
-    short_level = args.log.upper()
-    log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-    for log_level in log_levels:
-        if log_level.startswith(short_level):
-            return log_level
-    print(f"Invalid log level '{short_level}'. Defaulting to '{default_log_level}'.")
-    return default_log_level
 
 def get_work(commands: midi_parse.Commands, name: str) -> Composition:
     """Assembles the components (compositions) of a work."""
@@ -373,13 +355,7 @@ def set_volume(voice: Voice, item: Volume):
         voice.volume_target = new_vol
         voice.volume_rate = item.rate
 
-def run(args:argparse.Namespace):
-    in_file = args.ini
-    if not os.path.exists(in_file):
-        logging.critical(f'Input file "{in_file}" does not exist')
-        return
-    fname, _ = os.path.splitext(in_file)
-    out_file =fname + '.mid'
+def make_midi(in_file: str, out_file: str, create: str):
     commands = midi_parse.Commands(in_file)
     voices: list[Voice] = commands.voices
 
@@ -395,7 +371,7 @@ def run(args:argparse.Namespace):
     midi_file = MIDIFile(midi_channel_count,
                          ticks_per_quarternote=n.crotchet,
                          eventtime_is_ticks=True)
-    midi_file.addTempo(0, 0, tempo)
+    midi_file.addTempo(0, 0, default_tempo)
 
     # Populate channel_info with voice info and set the voice up in MIDI.
     for voice in voices:
@@ -406,7 +382,7 @@ def run(args:argparse.Namespace):
 
     # Get a composition and process all the commands in it.
     # composition = commands.get_composition(args.play)
-    composition = get_work(commands, args.create)
+    composition = get_work(commands, create)
     loop_stack: list[LoopItem] = []
     item_number = 0
     while item_number < len(composition.items):
@@ -506,20 +482,3 @@ def run(args:argparse.Namespace):
 
     with open(out_file, "wb") as f_out:
         midi_file.writeFile(f_out)
-
-    if args.play:
-        midi_play.play(out_file)
-
-if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Create MIDI file')
-    parser.add_argument('ini', nargs='?', default='example.ini', help=f'Data to create MIDI file (default: example.ini)')
-    parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
-    parser.add_argument('-c', '--create', default='', help='create composition or opus')
-    parser.add_argument('-p', '--play', action="store_true", default=False, help='play the generated midi file')
-    args = parser.parse_args()
-    logging.basicConfig(format='%(message)s', level=get_logging_level(args))
-
-    try:
-        run(args)
-    except Exception as e:
-        print(e)
