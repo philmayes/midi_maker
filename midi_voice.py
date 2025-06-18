@@ -35,7 +35,7 @@ class Voice:
         self.active = False
         self.volume = utils.default_volume
         self.volume_target = utils.default_volume
-        self.rate = 0
+        self.volume_rate = 0
         self.rhythms: Rhythms = [default_rhythm]
         self.rhythm_index = 0
 

@@ -94,14 +94,14 @@ def adjust_volume(voice: Voice):
     new_vol = voice.volume_target
     delta = new_vol - old_vol
     if delta:   # Is a volume change required?
-        if voice.rate > 0:
+        if voice.volume_rate > 0:
             # The new volume is to be applied over time per bar.
             # Find out whether we are to increase or decrease.
             if delta > 0:
                 # The volume is to be increased
-                new_vol = min(old_vol + voice.rate, new_vol)
+                new_vol = min(old_vol + voice.volume_rate, new_vol)
             else:
-                new_vol = max(old_vol - voice.rate, new_vol)
+                new_vol = max(old_vol - voice.volume_rate, new_vol)
 
         logging.debug(f'change volume channel:{voice.channel} level {voice.volume} -> {new_vol}')
         voice.volume = new_vol
@@ -371,7 +371,7 @@ def set_volume(voice: Voice, item: Volume):
         new_vol += item.delta
         new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
         voice.volume_target = new_vol
-        voice.rate = item.rate
+        voice.volume_rate = item.rate
 
 def run(args:argparse.Namespace):
     in_file = args.ini
