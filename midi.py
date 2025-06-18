@@ -62,7 +62,7 @@ class BarInfo:
     def __init__(self, midi_file: MIDIFile):
         self.midi_file = midi_file
         self.timesig: TimeSig = TimeSig(4, 4)
-        self.bar: Bar = Bar('Cmaj')
+        self.bar: Bar = Bar([])
         self.start = 0
 
     def bar_end(self) -> int:
@@ -128,7 +128,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
     duration = n.crotchet
-    for pitch in chord_to_pitches(bar_info.bar.chord, 4):
+    for pitch in chord_to_pitches(bar_info.bar.get_chord(0), 4):
         if start >= bar_end:
             break
         bar_info.midi_file.addNote(0,
@@ -142,7 +142,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
 def make_bass_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
-    pitch = chord_to_pitches(bar_info.bar.chord, 3)[0]
+    pitch = chord_to_pitches(bar_info.bar.get_chord(0), 3)[0]
     rhythm = voice.get_rhythm()
     for note_length in rhythm:
         remaining = bar_end - start
@@ -203,9 +203,9 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
     voice.overlap = 0
 
     # Get the chord, tonic and scale
-    chord: list[int] = chord_to_intervals(bar_info.bar.chord)
+    chord: list[int] = chord_to_intervals(bar_info.bar.get_chord(0))
     tonic_pitch = chord[0]
-    intervals = minor_ints if 'min' in bar_info.bar.chord else major_ints
+    intervals = minor_ints if 'min' in bar_info.bar.get_chord(0) else major_ints
     # Construct a dozen octaves of the pitches in this scale.
     # Some of these pitches will be outside the MIDI spec of 0-127,
     # but they will be corralled by voice.constrain_pitch().
@@ -299,7 +299,7 @@ def make_rhythm_bar(bar_info: BarInfo,
                     duration: int):
     start = bar_info.start
     bar_end = bar_info.bar_end()
-    pitches = chord_to_pitches(bar_info.bar.chord, 4)
+    pitches = chord_to_pitches(bar_info.bar.get_chord(0), 4)
     rhythm = voice.get_rhythm()
     for note_length in rhythm:
         if start >= bar_end:
@@ -396,7 +396,7 @@ def run(args:argparse.Namespace):
                 if voice.channel != Channel.none:
                     adjust_volume(voice)
             for _ in range(item.repeat):
-                logging.debug(item.chord)
+                logging.debug(item.chords)
                 for voice in voices:
                     if voice.style == 'perc' and voice.active:
                         make_percussion_bar(bar_info, voice)

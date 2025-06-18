@@ -2,6 +2,7 @@ import logging
 import re
 
 from midi_channels import Channel, is_midi, str_to_channel
+import midi_chords
 from midi_items import *
 from midi_notes import *
 import midi_percussion
@@ -11,9 +12,10 @@ import midi_voices
 import rando
 import utils
 
-re_text = re.compile('[a-zA-Z_]')
-re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
+re_chord = re.compile('([t|d]?[dhqcmsb])?([A-G][#|b]?)([a-z]{3}[679]?)$')
 re_float = re.compile(r'\d*\.?\d+$')
+re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
+re_text = re.compile('[a-zA-Z_]')
 
 def clean_line(line: str) -> str:
     # Remove possible comment
@@ -162,11 +164,30 @@ class Commands:
                 continue
 
             elif item == 'bar':
-                # syntax: bar key=Cmaj
+                # syntax: bar key=cCmaj,qGmaj7
                 if params:
                     key, value = params[0]
-                    if key == 'key':
-                        composition += Bar(value)
+                    if key == 'chords':
+                        chords: list[BarChord] = []
+                        tick = 0
+                        for chord in value.split(','):
+                            match = re_chord.match(chord)
+                            if match:
+                                dur = match.group(1)
+                                key = match.group(2)
+                                cho = match.group(3)
+                                if dur is None:
+                                    dur2 = NoteDuration.crotchet
+                                else:
+                                    dur2 = get_duration(dur)
+                                if cho not in midi_chords.chords:
+                                    logging.error(f'bad')
+                                    break
+                                chords.append(BarChord(tick, key, cho))
+                                tick += dur2
+                            else:
+                                logging.error(f'Bad bar chord "{chord}"')
+                        composition += Bar(chords)
 
             elif item == 'rhythm':
                 # syntax: rhythm voice=vvv rhythms=r1,r2,...

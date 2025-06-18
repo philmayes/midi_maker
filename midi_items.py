@@ -7,15 +7,22 @@ class Item:
 
 class Bar(Item):
     """Bar description of a composition."""
-    def __init__(self, chord: str,
-                 repeat: int=1,
-                 ):
-        self.chord = chord
+    def __init__(self, chords: list[BarChord], repeat: int=1):
+        self.chords: list[BarChord] = chords
         self.repeat = repeat
         self.clip = False
 
+    def get_chord(self, at: int) -> str:
+        for chord in reversed(self.chords):
+            if at >= chord[0]:
+                return chord[1] + chord[2]
+        assert 0, 'chord lookup failed'
+        return ''
+
 class Beat(Item):
-    """Supply rhythm(s) for voice."""
+    """Supply rhythm(s) for voice.
+    This is the internal representation of a composition rhythm command.
+    """
     def __init__(self, voice: Voice, rhythms: Rhythms):
         self.voice = voice
         self.rhythms = rhythms
