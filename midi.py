@@ -140,7 +140,7 @@ def get_work(commands: midi_parse.Commands, name: str) -> Composition:
 def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
-    duration = n.semiquaver
+    duration = voice.rate
     old_chord = 'none'
     while start < bar_end:
         new_chord = bar_info.get_chord(start)

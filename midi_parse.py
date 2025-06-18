@@ -387,8 +387,9 @@ class Commands:
             voice: int = 0
             style: str = ''
             volume: int = 0
-            min_pitch = 0
-            max_pitch = 127
+            min_pitch: int = 0
+            max_pitch: int = 127
+            rate: int = NoteDuration.crotchet
 
             # parse parameters into the default values
             for word in words[1:]:
@@ -414,6 +415,10 @@ class Commands:
                         logging.warning(f'Bad max_pitch in {command}')
                         continue
                     max_pitch = int(value)
+
+                elif key == 'rate':
+                    # str_to_duration returns 0 for bad input, so default to crotchet
+                    rate: int = str_to_duration(value) or NoteDuration.crotchet
 
                 elif key == 'style':
                     if value in midi_voice.Voice.styles:
@@ -452,7 +457,7 @@ class Commands:
             if channel == Channel.none:
                 logging.warning(f'No channel in {command}')
                 continue
-            voices.append(Voice(name, channel, voice, style, volume, min_pitch, max_pitch))
+            voices.append(Voice(name, channel, voice, style, volume, min_pitch, max_pitch, rate))
         return voices
 
     def get_rhythms(self, value: str) -> Rhythms:

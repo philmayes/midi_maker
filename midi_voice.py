@@ -18,6 +18,7 @@ class Voice:
                  volume: int,
                  min_pitch:int=0,
                  max_pitch:int=127,
+                 rate: int=n.crotchet
                  ) -> None:
         self.name = name
         self.channel = channel
@@ -26,6 +27,7 @@ class Voice:
         self.volume = volume
         self.min_pitch = min_pitch
         self.max_pitch = max_pitch
+        self.rate = rate
         # The following 3 are used by improv to improve the melody lines.
         self.prev_pitch = -1    # pitch of the last note played
         self.prev_duration = 0  # duration of the last note played
