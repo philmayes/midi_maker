@@ -181,7 +181,7 @@ class Commands:
                                 else:
                                     dur2 = get_duration(dur)
                                 if cho not in midi_chords.chords:
-                                    logging.error(f'bad')
+                                    logging.error(f'Bad chord {chord}')
                                     break
                                 chords.append(BarChord(tick, key, cho))
                                 tick += dur2

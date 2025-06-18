@@ -19,6 +19,13 @@ class Bar(Item):
         assert 0, 'chord lookup failed'
         return ''
 
+    def get_tonic(self, at: int) -> str:
+        for chord in reversed(self.chords):
+            if at >= chord[0]:
+                return chord[1]
+        assert 0, 'tonic lookup failed'
+        return ''
+
 class Beat(Item):
     """Supply rhythm(s) for voice.
     This is the internal representation of a composition rhythm command.

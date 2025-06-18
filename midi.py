@@ -29,7 +29,7 @@ from midiutil import MIDIFile
 from midi_channels import Channel, is_midi
 from midi_chords import chord_to_intervals, chord_to_pitches
 from midi_items import *
-from midi_notes import NoteDuration as n
+from midi_notes import NoteDuration as n, note_to_offset
 import midi_parse
 from midi_percussion import percussion as p
 import midi_play
@@ -66,7 +66,20 @@ class BarInfo:
         self.start = 0
 
     def bar_end(self) -> int:
+        """Returns the time at the end of the bar in ticks."""
         return self.start + self.timesig.ticks_per_bar
+
+    def get_chord(self, start: int) -> str:
+        """Returns the chord at time <start> within the bar."""
+        return self.bar.get_chord(start - self.start)
+
+    def get_tonic(self, start: int) -> str:
+        """Returns the tonic at time <start> within the bar."""
+        return self.bar.get_tonic(start - self.start)
+
+    def get_tonic_offset(self, start: int) -> int:
+        """Returns the tonic offset (0-11) at time <start> within the bar."""
+        return note_to_offset[self.get_tonic(start)]
 
 def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
@@ -127,24 +140,30 @@ def get_work(commands: midi_parse.Commands, name: str) -> Composition:
 def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
-    duration = n.crotchet
-    for pitch in chord_to_pitches(bar_info.bar.get_chord(0), 4):
-        if start >= bar_end:
-            break
+    duration = n.semiquaver
+    old_chord = 'none'
+    while start < bar_end:
+        new_chord = bar_info.get_chord(start)
+        if new_chord != old_chord:
+            pitches = chord_to_pitches(new_chord, 4)
+            old_chord = new_chord
+            pitch_index = 0
         bar_info.midi_file.addNote(0,
                                    voice.channel,
-                                   pitch,
+                                   pitches[pitch_index],
                                    add_start_error(start),
                                    duration,
                                    voice.volume)
+        pitch_index = (pitch_index + 1) % len(pitches)
         start += duration
 
 def make_bass_bar(bar_info: BarInfo, voice: Voice):
     start = bar_info.start
     bar_end = bar_info.bar_end()
-    pitch = chord_to_pitches(bar_info.bar.get_chord(0), 3)[0]
     rhythm = voice.get_rhythm()
     for note_length in rhythm:
+        tonic: str = bar_info.get_tonic(start)
+        pitch = note_to_offset[tonic] + 36
         remaining = bar_end - start
         if remaining <= 0:
             break
@@ -201,19 +220,22 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
     # start at that point.
     start = bar_info.start + voice.overlap
     voice.overlap = 0
-
-    # Get the chord, tonic and scale
-    chord: list[int] = chord_to_intervals(bar_info.bar.get_chord(0))
-    tonic_pitch = chord[0]
-    intervals = minor_ints if 'min' in bar_info.bar.get_chord(0) else major_ints
-    # Construct a dozen octaves of the pitches in this scale.
-    # Some of these pitches will be outside the MIDI spec of 0-127,
-    # but they will be corralled by voice.constrain_pitch().
-    pitches: list[int] = []
-    for octave in range(-1, 11):
-        pitches.extend([octave * 12 + tonic_pitch + i for i in intervals])
+    old_chord = 'none'
 
     while start < bar_end:
+        # Get the name of the chord at this point in the bar.
+        new_chord = bar_info.get_chord(start)
+        if new_chord != old_chord:
+            # Get the tonic and scale
+            tonic_pitch = bar_info.get_tonic_offset(start)
+            intervals = minor_ints if 'min' in new_chord else major_ints
+            # Construct a dozen octaves of the pitches in this scale.
+            # Some of these pitches will be outside the MIDI spec of 0-127,
+            # but they will be corralled by voice.constrain_pitch().
+            pitches: list[int] = []
+            for octave in range(-1, 11):
+                pitches.extend([octave * 12 + tonic_pitch + i for i in intervals])
+
         # Choose a pitch based on the previous one.
         prev_pitch = voice.prev_pitch
         if prev_pitch >= 0 and prev_pitch in pitches:
@@ -299,7 +321,6 @@ def make_rhythm_bar(bar_info: BarInfo,
                     duration: int):
     start = bar_info.start
     bar_end = bar_info.bar_end()
-    pitches = chord_to_pitches(bar_info.bar.get_chord(0), 4)
     rhythm = voice.get_rhythm()
     for note_length in rhythm:
         if start >= bar_end:
@@ -308,6 +329,7 @@ def make_rhythm_bar(bar_info: BarInfo,
             # A negative note length is a silence.
             start -= note_length
             continue
+        pitches = chord_to_pitches(bar_info.get_chord(start), 4)
         if note_length == 0:
             # A zero note length is to be extended to the end of the bar.
             # Ignore any duration that has been supplied.
