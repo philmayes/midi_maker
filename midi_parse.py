@@ -364,7 +364,10 @@ class Commands:
 
                 if name and notes:
                     tune = str_to_notes(notes)
-                    tunes[name] = tune
+                    if name in tunes:
+                        logging.error(f'Tune "{name}" already used')
+                    else:
+                        tunes[name] = tune
 
         return tunes
 

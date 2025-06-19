@@ -17,7 +17,7 @@ note_to_offset: dict[str, int] = {
 # or octave; they will be picked up from the preceding note.
 # The note is (roughly) the first letter of the NoteDuration
 # with an optional prefix of t or d for triplets or doublets.
-re_note = re.compile(r'([t|d]?[dhqcmsb])?([A-G|X][#|b]?)(\d)?')
+re_note = re.compile(r'([t|d]?[dhqcmsb])?(\.)?([A-G|X][#|b]?)(\d)?')
 
 class NoteDuration:
     # note durations
@@ -124,10 +124,13 @@ def str_to_notes(notes: str) -> Tune:
                     ticks = 0
             else:
                 ticks = get_duration(duration)
+                dot = match.group(2)
+                if dot is not None:
+                    ticks += ticks // 2
                 last_duration = ticks
 
             # process the note
-            note = match.group(2)
+            note = match.group(3)
             # A note of X is silence; indicate this with pitch < 0.
             if note == 'X':
                 note_pitch = -1000
@@ -135,7 +138,7 @@ def str_to_notes(notes: str) -> Tune:
                 note_pitch = note_to_offset[note]
 
             # process the octave
-            octave = match.group(3)
+            octave = match.group(4)
             if octave is None:
                 if last_octave_pitch >= 0:
                     octave_pitch = last_octave_pitch
@@ -147,6 +150,7 @@ def str_to_notes(notes: str) -> Tune:
                 last_octave_pitch = octave_pitch
 
             pitch = note_pitch + octave_pitch
+            # print(f'{note_str}=={pitch}')
             tune.append((ticks, pitch))
 
     return tune
