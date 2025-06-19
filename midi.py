@@ -436,14 +436,14 @@ def make_midi(in_file: str, out_file: str, create: str):
             for tune in item.tunes:
                 for note in tune:
                     # A pitch < 0 requests a period of silence.
-                    if note[1] >= 0:
+                    if note.pitch >= 0:
                         midi_file.addNote(0,
                                         item.voice.channel,
-                                        note[1],
+                                        note.pitch,
                                         add_start_error(start),
-                                        note[0],
+                                        note.duration,
                                         voice.volume)
-                    start += note[0]
+                    start += note.duration
 
         elif isinstance(item, Repeat):
             if not loop_stack:

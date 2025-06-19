@@ -66,6 +66,7 @@ class NoteDuration:
     dm = d_minim
     ds = d_semibreve
     db = d_breve
+    default = crotchet  # used when duration is not supplied
 
 letter_to_duration = {
     'd': NoteDuration.demisemiquaver,
@@ -86,71 +87,73 @@ def get_duration(text: str) -> int:
             duration *= 2
     return duration
 
-def str_to_duration(name: str) -> int:
+def str_to_duration(text: str) -> int:
     """Returns the note duration described by the string."""
-    assert len(name) > 0, 'No name provided for note'
-    # A leading minus sign inverts the value of the note
-    neg = name[0] == '-'
-    if neg:
-        name = name[1:]
-    # Direct numbers are accepted.
-    if name.isdigit():
-        return int(name)
-    # Look up the name and return its value
-    d = NoteDuration.__dict__
-    if name in d:
-        duration =  d[name]
+    if text:
+        # A leading minus sign inverts the value of the note
+        neg = text[0] == '-'
         if neg:
-            duration = -duration
-        return duration
-    logging.warning(f'Duration "{name}" not recognized')
-    return 0
+            text = text[1:]
+        # Direct numbers are accepted.
+        if text.isdigit():
+            return int(text)
+        # Look up the name and return its value
+        d = NoteDuration.__dict__
+        if text in d:
+            duration =  d[text]
+            if neg:
+                duration = -duration
+            return duration
+        logging.warning(f'Duration "{text}" not recognized')
+    return NoteDuration.default
+
+def str_to_note(note_str: str) -> Note:
+    """Returns the note described by the string."""
+    match = re_note.match(note_str)
+    if match:
+        # process the duration
+        duration = match.group(1)
+        if not duration:
+            ticks = NoteDuration.default
+        else:
+            ticks = get_duration(duration)
+            dot = match.group(2)
+            if dot is not None:
+                ticks += ticks // 2
+            last_duration = ticks
+
+        # process the note
+        note = match.group(3)
+        # A note of X is silence; indicate this with pitch < 0.
+        if note == 'X':
+            note_pitch = -1000
+        else:
+            note_pitch = note_to_offset[note]
+
+        # process the octave
+        octave = match.group(4)
+        if not octave:
+            octave = 4
+        octave = int(octave)
+        octave_pitch = octave * 12
+
+        pitch = note_pitch + octave_pitch
+        # print(f'{note_str}=={pitch}')
+        return Note(ticks, note, octave, pitch)
+
+    return Note(0, '', 0, 0)
 
 def str_to_notes(notes: str) -> Tune:
     """Returns the notes (duration and pitch) described by the string."""
     tune: Tune = []
     last_duration = 0
     last_octave_pitch = -1
+    first = True
     for note_str in notes.split(','):
-        match = re_note.match(note_str)
-        if match:
-            # process the duration
-            duration = match.group(1)
-            if duration is None:
-                if last_duration:
-                    ticks = last_duration
-                else:
-                    logging.warning(f'First note of {notes} must have a duration')
-                    ticks = 0
-            else:
-                ticks = get_duration(duration)
-                dot = match.group(2)
-                if dot is not None:
-                    ticks += ticks // 2
-                last_duration = ticks
-
-            # process the note
-            note = match.group(3)
-            # A note of X is silence; indicate this with pitch < 0.
-            if note == 'X':
-                note_pitch = -1000
-            else:
-                note_pitch = note_to_offset[note]
-
-            # process the octave
-            octave = match.group(4)
-            if octave is None:
-                if last_octave_pitch >= 0:
-                    octave_pitch = last_octave_pitch
-                else:
-                    logging.warning(f'First note of {notes} must have an octave')
-                    octave_pitch = 36
-            else:
-                octave_pitch = int(octave) * 12
-                last_octave_pitch = octave_pitch
-
-            pitch = note_pitch + octave_pitch
-            # print(f'{note_str}=={pitch}')
-            tune.append((ticks, pitch))
+        note = str_to_note(note_str)
+        if first:
+            last_duration = note.duration
+            last_octave_pitch = note.octave * 12
+        tune.append(note)
 
     return tune

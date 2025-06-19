@@ -1,13 +1,11 @@
-"""
-C:/Users/Phil/AppData/Local/Programs/Python/Python313/Lib/site-packages/mingus/core/chords.py
-"""
 import re
 
 from midi_notes import note_to_offset
 
-re_chord = re.compile(r'([A-G][#b]*)([a-z]+[679]?)')
-
-NOTES_IN_OCTAVE = 12
+ch1 = r'([t|d]?[dhqcmsb])?'             # duration prefix
+ch2 = r'([A-G][#b]*)([a-z]*)([679]?)$'  # key chord-type chord mod
+re_chord = re.compile(ch2)              # chord
+re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
 
 maj = [0, 4, 7]         # C E  G
 min = [0, 3, 7]         # C Eb G
@@ -50,7 +48,7 @@ def chord_to_intervals(chord: str) -> list[int]:
 def chord_to_pitches(chord: str, octave: int) -> list[int]:
     """Convert a chord name to list of intervals for a specific octave."""
     assert 0 <= octave < 12, f'Octave {octave} out of range'
-    octave *= NOTES_IN_OCTAVE
+    octave *= 12
     intervals: list[int] = chord_to_intervals(chord)
     result: list[int] = [interval + octave for interval in intervals]
     return result

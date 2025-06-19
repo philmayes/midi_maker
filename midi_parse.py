@@ -12,7 +12,6 @@ import midi_voices
 import rando
 import utils
 
-re_chord = re.compile('([t|d]?[dhqcmsb])?([A-G][#|b]?)([a-z]{3}[679]?)$')
 re_float = re.compile(r'\d*\.?\d+$')
 re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_text = re.compile('[a-zA-Z_]')
@@ -171,16 +170,20 @@ class Commands:
                         chords: list[BarChord] = []
                         tick = 0
                         for chord in value.split(','):
-                            match = re_chord.match(chord)
+                            match = midi_chords.re_dur_chord.match(chord)
                             if match:
                                 dur = match.group(1)
                                 key = match.group(2)
                                 cho = match.group(3)
-                                if dur is None:
-                                    dur2 = NoteDuration.crotchet
-                                else:
+                                mod = match.group(4)
+                                if dur:
                                     dur2 = get_duration(dur)
-                                if cho not in midi_chords.chords:
+                                else:
+                                    dur2 = NoteDuration.default
+                                if not cho:
+                                    cho = 'maj'
+                                cho = cho + mod
+                                if not cho in midi_chords.chords:
                                     logging.error(f'Bad chord {chord}')
                                     break
                                 chords.append(BarChord(tick, key, cho))
@@ -420,8 +423,7 @@ class Commands:
                     max_pitch = int(value)
 
                 elif key == 'rate':
-                    # str_to_duration returns 0 for bad input, so default to crotchet
-                    rate: int = str_to_duration(value) or NoteDuration.crotchet
+                    rate: int = str_to_duration(value)
 
                 elif key == 'style':
                     if value in midi_voice.Voice.styles:

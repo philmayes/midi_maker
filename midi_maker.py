@@ -5,11 +5,22 @@ import os
 from midi import make_midi
 import midi_play
 
-log_levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+log_levels = (
+    'DEBUG',    # Detailed information, typically of interest only when
+                # diagnosing problems.
+    'INFO',     # Confirmation that things are working as expected.
+    'WARNING',  # An indication that something unexpected happened,
+                # or indicative of some problem in the near future, e.g. disk
+                # space low. The software is still working as expected.
+    'ERROR',    # Due to a more serious problem, the software has not been
+                # able to perform some function.
+    'CRITICAL', # A serious error, indicating that the program itself may be
+                # unable to continue running.
+    )
 default_log_level = log_levels[2]
 
 def get_logging_level(args:argparse.Namespace) -> str:
-    # get the logging level: can be partial word, case-insensitive
+    """Gets the logging level: can be partial word, case-insensitive."""
     short_level = args.log.upper()
     for log_level in log_levels:
         if log_level.startswith(short_level):

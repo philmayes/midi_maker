@@ -1,6 +1,9 @@
 from collections import namedtuple
 from typing import TypeAlias
 
+BarChord = namedtuple('BarChord', 'start key chord')
+Note = namedtuple('Note', 'duration, name, octave, pitch')
+
 # Used in midi.py
 Notes: TypeAlias = list[str]
 Pitches: TypeAlias = list[int]
@@ -14,9 +17,7 @@ Param: TypeAlias = list[str]
 Params: TypeAlias = list[Param]
 Command: TypeAlias = tuple[Verb, Params]
 CommandDict: TypeAlias = dict[str, str]
-Note: TypeAlias = tuple[int, int]   # duration, pitch
 Tune: TypeAlias = list[Note]
 TuneDict: TypeAlias = dict[str, Tune]
 Tunes: TypeAlias = list[Tune]
 
-BarChord = namedtuple('BarChord', 'start key chord')
