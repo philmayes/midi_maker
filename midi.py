@@ -349,6 +349,7 @@ def set_volume(voice: Voice, item: Volume):
         new_vol = old_vol               # case 3
     new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
     voice.volume = new_vol
+    voice.volume_target = new_vol
 
     # Then set up possible rate change
     if item.delta and item.rate:        # case 3 or 4
