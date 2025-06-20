@@ -17,6 +17,10 @@ re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_text = re.compile('[a-zA-Z_]')
 
 def clean_line(line: str) -> str:
+    max_len = 250
+    if len(line) > max_len:
+        logging.error(f'Line starting "{line[:16]}" is longer than ({max_len} chars)')
+        return ''
     # Remove possible comment
     c = line.find(';')
     if c >= 0:
