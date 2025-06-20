@@ -123,12 +123,12 @@ def str_to_note(note_str: str) -> Note:
             last_duration = ticks
 
         # process the note
-        note = match.group(3)
+        name = match.group(3)
         # A note of X is silence; indicate this with pitch < 0.
-        if note == 'X':
+        if name == 'X':
             note_pitch = -1000
         else:
-            note_pitch = note_to_offset[note]
+            note_pitch = note_to_offset[name]
 
         # process the octave
         octave = match.group(4)
@@ -139,7 +139,7 @@ def str_to_note(note_str: str) -> Note:
 
         pitch = note_pitch + octave_pitch
         # print(f'{note_str}=={pitch}')
-        return Note(ticks, note, octave, pitch)
+        return Note(ticks, name, octave, pitch)
 
     return Note(0, '', 0, 0)
 
@@ -151,9 +151,18 @@ def str_to_notes(notes: str) -> Tune:
     first = True
     for note_str in notes.split(','):
         note = str_to_note(note_str)
+        if not note.name:
+            logging.error(f'Bad note: "{note_str}"')
+            continue
         if first:
             last_duration = note.duration
             last_octave_pitch = note.octave * 12
+            first = False
+        else:
+            if note.duration == 0:
+                note.duration = last_duration
+            if note.octave == 0:
+                note.octave = last_octave_pitch
         tune.append(note)
 
     return tune
