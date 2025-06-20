@@ -3,6 +3,37 @@ import pytest
 from midi_notes import *
 
 bad_note: Note = Note(0, '', 0, 0)
+class TestGetDuration:
+    def test_get_duration0(self):
+        result = get_duration('')
+        assert result == NoteDuration.default
+
+    def test_get_duration1(self):
+        result = get_duration('C')
+        assert result == NoteDuration.default
+
+    def test_get_duration2(self):
+        result = get_duration('h')
+        assert result == NoteDuration.semiquaver
+
+    def test_get_duration3(self):
+        result = get_duration('c.')
+        assert result == NoteDuration.crotchet + NoteDuration.quaver
+
+    def test_get_duration4(self):
+        result = get_duration('c+m')
+        assert result == NoteDuration.crotchet + NoteDuration.minim
+
+    def test_get_duration5(self):
+        result = get_duration('c.+m')
+        assert result == NoteDuration.crotchet\
+                       + NoteDuration.quaver\
+                       + NoteDuration.minim
+
+    def test_get_duration6(self):
+        result = get_duration('c+c')
+        assert result == NoteDuration.minim
+
 class TestStrToNote:
     def test_str_to_note1(self):
         result = str_to_note('C')

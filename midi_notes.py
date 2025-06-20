@@ -15,9 +15,11 @@ note_to_offset: dict[str, int] = {
 # Format of a note as supplied by tune command. Takes the format:
 # duration note octave. Succeeding notes can omit the duration
 # or octave; they will be picked up from the preceding note.
-# The note is (roughly) the first letter of the NoteDuration
-# with an optional prefix of t or d for triplets or doublets.
-re_note = re.compile(r'([t|d]?[dhqcmsb])?(\.)?([A-G|X][#|b]?)(\d)?')
+# The duration is one or more of the shorthand NoteDurations
+# with a possible dot suffix to add 50%. Durations can be added
+# together, e.g. q+m or c.+c and are parsed using a secondary regex.
+re_note = re.compile(r'([tdhqcmsb+\.]*)([A-G|X][#|b]?)(\d)?$')
+re_duration = re.compile(r'([t|d]?[dhqcmsb])?(\.)?$')
 
 class NoteDuration:
     # note durations
@@ -28,6 +30,7 @@ class NoteDuration:
     minim = 2 * crotchet    # half note             1920
     semibreve = 2 * minim   # whole note            3840
     breve = 2 * semibreve   # double whole note     7680
+
     # triplets
     t_demisemiquaver = demisemiquaver // 3  #         40
     t_semiquaver = 2 * t_demisemiquaver     #         80
@@ -36,6 +39,7 @@ class NoteDuration:
     t_minim = 2 * t_crotchet                #        640
     t_semibreve = 2 * t_minim               #       1280
     t_breve = 2 * t_semibreve               #       2560
+
     # doublets, i.e. 2 x triplets, so triplet + doublet = note
     d_demisemiquaver = 2 * t_demisemiquaver #         80
     d_semiquaver = 2 * d_demisemiquaver     #        160
@@ -44,9 +48,10 @@ class NoteDuration:
     d_minim = 2 * d_crotchet                #       1280
     d_semibreve = 2 * d_minim               #       2560
     d_breve = 2 * d_semibreve               #       5120
+
     # shorthand
     d = demisemiquaver
-    h = semiquaver
+    h = semiquaver  # The only shorthand that is not the first letter
     q = quaver
     c = crotchet
     m = minim
@@ -68,24 +73,28 @@ class NoteDuration:
     db = d_breve
     default = crotchet  # used when duration is not supplied
 
-letter_to_duration = {
-    'd': NoteDuration.demisemiquaver,
-    'h': NoteDuration.semiquaver,
-    'q': NoteDuration.quaver,
-    'c': NoteDuration.crotchet,
-    'm': NoteDuration.minim,
-    's': NoteDuration.semibreve,
-    'b': NoteDuration.breve,
-}
-
 def get_duration(text: str) -> int:
-    duration = letter_to_duration[text[-1]]
-    if len(text) == 2:
-        factor = text[0]
-        duration //= 3
-        if factor == 'd':
-            duration *= 2
-    return duration
+    """Translates the duration string into ticks."""
+    total: int = 0
+    for bit in text.split('+'):
+        match = re_duration.match(bit)
+        if match is None:
+            logging.error(f'Bad duration: "{bit}')
+            break
+        dur = match.group(1)
+        dot = match.group(2)
+        d = NoteDuration.__dict__
+        if dur not in d:
+            logging.error(f'Bad duration: "{bit}')
+            break
+        duration =  d[dur]
+        if dot:
+            duration *= 3
+            duration //= 2
+        total += duration
+    if total == 0:
+        return NoteDuration.default
+    return total
 
 def str_to_duration(text: str) -> int:
     """Returns the note duration described by the string."""
@@ -98,13 +107,11 @@ def str_to_duration(text: str) -> int:
         if text.isdigit():
             return int(text)
         # Look up the name and return its value
-        d = NoteDuration.__dict__
-        if text in d:
-            duration =  d[text]
-            if neg:
-                duration = -duration
-            return duration
-        logging.warning(f'Duration "{text}" not recognized')
+        duration = get_duration(text)
+        if neg:
+            duration = -duration
+        return duration
+        # logging.warning(f'Duration "{text}" not recognized')
     return NoteDuration.default
 
 def str_to_note(note_str: str) -> Note:
@@ -113,17 +120,10 @@ def str_to_note(note_str: str) -> Note:
     if match:
         # process the duration
         duration = match.group(1)
-        if not duration:
-            ticks = NoteDuration.default
-        else:
-            ticks = get_duration(duration)
-            dot = match.group(2)
-            if dot is not None:
-                ticks += ticks // 2
-            last_duration = ticks
+        ticks = get_duration(duration)
 
         # process the note
-        name = match.group(3)
+        name = match.group(2)
         # A note of X is silence; indicate this with pitch < 0.
         if name == 'X':
             note_pitch = -1000
@@ -131,14 +131,13 @@ def str_to_note(note_str: str) -> Note:
             note_pitch = note_to_offset[name]
 
         # process the octave
-        octave = match.group(4)
+        octave = match.group(3)
         if not octave:
             octave = 4
         octave = int(octave)
         octave_pitch = octave * 12
 
         pitch = note_pitch + octave_pitch
-        # print(f'{note_str}=={pitch}')
         return Note(ticks, name, octave, pitch)
 
     return Note(0, '', 0, 0)

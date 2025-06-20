@@ -1,0 +1,12 @@
+
+Names of notes. midi_maker uses the English names because their initial letters are (almost) unique. `semiquaver` is the exception, think of `h` as `half`.
+
+| note name | 1/3 note | 2/3 note | abbrs |
+| --------- | -------- | -------- | ----- |
+| demisemiquaver | t_demisemiquaver | d_demisemiquaver | d, td, dd |
+| semiquaver | t_semiquaver | d_semiquaver | h, th, dh |
+| quaver | t_quaver | d_quaver | q, tq, dq |
+| crotchet | t_crotchet | d_crotchet | c, tc, dc |
+| minim | t_minim | d_minim | m, tm, dm |
+| semibreve | t_semibreve | d_semibreve | s, ts, ds |
+| breve | t_breve | d_breve | b, tb, db |

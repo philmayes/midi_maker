@@ -177,10 +177,7 @@ class Commands:
                                 key = match.group(2)
                                 cho = match.group(3)
                                 mod = match.group(4)
-                                if dur:
-                                    dur2 = get_duration(dur)
-                                else:
-                                    dur2 = NoteDuration.default
+                                dur2 = NoteDuration.default
                                 if not cho:
                                     cho = 'maj'
                                 cho = cho + mod
