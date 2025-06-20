@@ -7,32 +7,19 @@ ch2 = r'([A-G][#b]*)([a-z]*)([679]?)$'  # key chord-type chord-mod
 re_chord = re.compile(ch2)              # chord
 re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
 
-maj = [0, 4, 7]         # C E  G
-min = [0, 3, 7]         # C Eb G
-dim = [0, 3, 6]         # C Eb Gb
-aug = [0, 4, 8]         # C E  G#
-maj7 = [0, 4, 7, 11]    # C E  G  B
-min7 = [0, 3, 7, 10]    # C Eb G  Bb
-dom7 = [0, 4, 7, 10]    # C E  G  Bb
-dim7 = [0, 3, 6, 9]     # C Eb Gb A
-maj6 = [0, 4, 7, 9]     # C E  G  A
-min6 = [0, 3, 7, 9]     # C Eb G  A
-maj9 = [0, 4, 7, 11]    # C E  G  B  D
-min9 = [0, 3, 7, 10]    # C Eb G  Bb D
-
 chords: dict[str, list[int]]  = {
-    'maj': maj,
-    'min': min,
-    'dim': dim,
-    'aug': aug,
-    'maj7': maj7,
-    'min7': min7,
-    'dom7': dom7,
-    'dim7': dim7,
-    'maj6': maj6,
-    'min6': min6,
-    'maj9': maj9,
-    'min9': min9,
+    'maj':  [0, 4, 7],        # C E  G
+    'min':  [0, 3, 7],        # C Eb G
+    'dim':  [0, 3, 6],        # C Eb Gb
+    'aug':  [0, 4, 8],        # C E  G#
+    'maj7': [0, 4, 7, 11],    # C E  G  B
+    'min7': [0, 3, 7, 10],    # C Eb G  Bb
+    'dom7': [0, 4, 7, 10],    # C E  G  Bb
+    'dim7': [0, 3, 6, 9],     # C Eb Gb A
+    'maj6': [0, 4, 7, 9],     # C E  G  A
+    'min6': [0, 3, 7, 9],     # C Eb G  A
+    'maj9': [0, 4, 7, 11, 14],# C E  G  B  D
+    'min9': [0, 3, 7, 10, 14],# C Eb G  Bb D
 }
 
 def chord_to_intervals(chord: str) -> list[int]:
