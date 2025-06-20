@@ -67,7 +67,6 @@ def is_text(text: str) -> bool:
 
 def parse_command(command: str) -> Command:
     """Parse command into verb and params."""
-    command = clean_line(command)
     item: Verb = ''
     params: Params = []
     if not command:
@@ -101,7 +100,6 @@ def parse_command(command: str) -> Command:
 def parse_command_dict(command: str) -> CommandDict:
     """Parse command into dictionary."""
     result: CommandDict = {'command': ''}
-    command = clean_line(command)
     if command:
         words = command.split()
 
@@ -132,10 +130,14 @@ class Commands:
     def __init__(self, in_file: str):
         with open(in_file, "r") as f_in:
             self.commands = f_in.readlines()
+        # Remove leading & trailing whitespace and comments.
+        for n, line in enumerate(self.commands):
+            self.commands[n] = clean_line(line)
         self.volumes = self.get_volumes()
         self.voices: list[Voice] = self.get_all_voices()
         self.tunes = self.get_all_tunes()
         self.rhythms = self.get_all_rhythms()
+        self.get_all_chords()
 
     def get_composition(self, name: str='') -> Composition:
         """Gets the list of items between named composition & the next one.
@@ -295,6 +297,30 @@ class Commands:
                     return parts
         return ''
 
+    def get_all_chords(self):
+        """Reads and sets up non-standard chords."""
+        for command in self.commands:
+            cmds: CommandDict = parse_command_dict(command)
+            if cmds['command'] == 'chord':
+                name: str = cmds.get('name', '')
+                notes = cmds.get('notes', '')
+                if name and notes:
+                    offsets: list[int] = []
+                    last_value = -1
+                    for note in notes.split(','):
+                        if note in note_to_offset:
+                            offset = note_to_offset[note]
+                            while offset <= last_value:
+                                offset += 12
+                            offsets.append(offset)
+                            last_value = offset
+                        else:
+                            logging.error(f'Bad note in chord "{command}"')
+                            break
+                    midi_chords.chords[name] = offsets
+                else:
+                    logging.error(f'Bad format for command "{command}"')
+
     def get_all_rhythms(self) -> RhythmDict:
         """Constructs Rhythm dictionary from the list of commands."""
         rhythms: RhythmDict = {}
@@ -384,7 +410,6 @@ class Commands:
         next_voice_channel = 1
         next_perc_channel = 1
         for command in self.commands:
-            command = clean_line(command)
             if not command:
                 continue
             words = command.split()
