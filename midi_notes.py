@@ -76,24 +76,23 @@ class NoteDuration:
 def get_duration(text: str) -> int:
     """Translates the duration string into ticks."""
     total: int = 0
-    for bit in text.split('+'):
-        match = re_duration.match(bit)
-        if match is None:
-            logging.error(f'Bad duration: "{bit}')
-            break
-        dur = match.group(1)
-        dot = match.group(2)
-        d = NoteDuration.__dict__
-        if dur not in d:
-            logging.error(f'Bad duration: "{bit}')
-            break
-        duration =  d[dur]
-        if dot:
-            duration *= 3
-            duration //= 2
-        total += duration
-    if total == 0:
-        return NoteDuration.default
+    if text:
+        for bit in text.split('+'):
+            match = re_duration.match(bit)
+            if match is None:
+                # logging.error(f'Bad duration: "{bit}')
+                break
+            dur = match.group(1)
+            dot = match.group(2)
+            d = NoteDuration.__dict__
+            if dur not in d:
+                logging.error(f'Bad duration: "{bit}')
+                break
+            duration =  d[dur]
+            if dot:
+                duration *= 3
+                duration //= 2
+            total += duration
     return total
 
 def str_to_duration(text: str) -> int:
@@ -121,6 +120,8 @@ def str_to_note(note_str: str) -> Note:
         # process the duration
         duration = match.group(1)
         ticks = get_duration(duration)
+        if ticks == 0:
+            ticks = NoteDuration.default
 
         # process the note
         name = match.group(2)
