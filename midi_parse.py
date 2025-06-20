@@ -18,9 +18,6 @@ re_text = re.compile('[a-zA-Z_]')
 
 def clean_line(line: str) -> str:
     # Remove possible comment
-    c = line.find('#')
-    if c >= 0:
-        line = line[:c]
     c = line.find(';')
     if c >= 0:
         line = line[:c]
