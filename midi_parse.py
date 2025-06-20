@@ -190,7 +190,8 @@ class Commands:
                                 tick += dur2
                             else:
                                 logging.error(f'Bad bar chord "{chord}"')
-                        composition += Bar(chords)
+                        if chords:
+                            composition += Bar(chords)
 
             elif item == 'rhythm':
                 # syntax: rhythm voice=vvv rhythms=r1,r2,...
