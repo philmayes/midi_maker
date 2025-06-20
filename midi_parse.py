@@ -138,9 +138,14 @@ class Commands:
         self.rhythms = self.get_all_rhythms()
 
     def get_composition(self, name: str='') -> Composition:
-        """Gets the list of items between named composition & the next one."""
+        """Gets the list of items between named composition & the next one.
+        
+        However, if no name is supplied, return all items. This is done so
+        that a beginner does not have to deal with composition syntax.
+        """
         composition: Composition = Composition()
-        in_composition = False
+        is_named: bool = name != ''
+        in_composition = not is_named
         for command in self.commands:
             cmd = parse_command(command)
             item: Verb = cmd[0]
@@ -148,7 +153,7 @@ class Commands:
             if not item:
                 continue
 
-            if item == 'composition':
+            if item == 'composition' and is_named:
                 # syntax: composition name=foobar
                 if in_composition:
                     break
