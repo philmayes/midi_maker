@@ -401,6 +401,8 @@ class Commands:
                         logging.error(f'Tune "{name}" already used')
                     else:
                         tunes[name] = tune
+                        total = sum(note.duration for note in tune)
+                        logging.debug(f'Tune {name} has duration {total:5}')
 
         return tunes
 
