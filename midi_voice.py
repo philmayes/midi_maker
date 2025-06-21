@@ -34,7 +34,7 @@ class Voice:
         self.overlap = 0        # amount by which last note extends into next bar
         # Following is information for a channel (which includes percussion)
         # that can be adjusted dynamically.
-        self.active = False
+        self.active = True
         self.volume = utils.default_volume
         self.volume_target = utils.default_volume
         self.volume_rate = 0
