@@ -70,8 +70,7 @@ def parse_command(command: str) -> Command:
     """Parse command into verb and params."""
     item: Verb = ''
     params: Params = []
-    if not command:
-        return item, params
+    assert command, 'Empty command'
     words = command.split()
 
     # parse parameters into the default values
@@ -81,16 +80,16 @@ def parse_command(command: str) -> Command:
             if word.isalpha():
                 item = word
             else:
-                logging.warning(f'Bad verb in {command}')
+                logging.warning(f'Bad verb in "{command}"')
                 break
         else:
             if '=' not in word:
                 # Subsequent words should be of the form key=value
-                logging.warning(f'Missing "=" in {command}')
+                logging.warning(f'Missing "=" in "{command}"')
                 break
             key, value = word.split('=', 1)
             if not value:
-                logging.warning(f'Missing value in {command}')
+                logging.warning(f'Missing value in "{command}"')
                 break
             params.append([key, value])
     else:
@@ -101,39 +100,54 @@ def parse_command(command: str) -> Command:
 def parse_command_dict(command: str) -> CommandDict:
     """Parse command into dictionary."""
     result: CommandDict = {'command': ''}
-    if command:
-        words = command.split()
+    assert command, 'Empty command'
+    words = command.split()
 
-        # parse parameters into the default values
-        for index, word in enumerate(words):
-            if index == 0:
-                # First word is the command aka Item
-                if word.isalpha():
-                    result['command'] = word
-                else:
-                    logging.warning(f'Bad verb in {command}')
-                    break
+    # parse parameters into the default values
+    for index, word in enumerate(words):
+        if index == 0:
+            # First word is the command aka Item
+            if word.isalpha():
+                result['command'] = word
             else:
-                if '=' not in word:
-                    # Subsequent words should be of the form key=value
-                    logging.warning(f'Missing "=" in {command}')
-                    break
-                key, value = word.split('=', 1)
-                if not value:
-                    logging.warning(f'Missing value in {command}')
-                    break
-                # params.append([key, value])
-                result[key] = value
+                logging.warning(f'Bad verb in "{command}"')
+                break
+        else:
+            if '=' not in word:
+                # Subsequent words should be of the form key=value
+                logging.warning(f'Missing "=" in "{command}"')
+                break
+            key, value = word.split('=', 1)
+            if not value:
+                logging.warning(f'Missing value in "{command}"')
+                break
+            # params.append([key, value])
+            result[key] = value
     return result
 
 class Commands:
     """Class that parses the .ini file."""
     def __init__(self, in_file: str):
         with open(in_file, "r") as f_in:
-            self.commands = f_in.readlines()
-        # Remove leading & trailing whitespace and comments.
-        for n, line in enumerate(self.commands):
-            self.commands[n] = clean_line(line)
+            lines = f_in.readlines()
+        # Remove leading & trailing whitespace and comments,
+        # and validate the command.
+        # Assemble command_list and command_dict for future use.
+        self.commands: list[str] = []
+        self.command_list: list[Command] = [] # currently unused
+        self.command_dicts: list[CommandDict] = []
+        for line in lines:
+            clean: str = clean_line(line)
+            if not clean:
+                continue
+            command: Command = parse_command(clean)
+            if not command[0]:
+                logging.error(f'Bad command "{clean}"')
+                continue
+            self.commands.append(clean)
+            self.command_list.append(command)
+            self.command_dicts.append(parse_command_dict(clean))
+
         self.volumes = self.get_volumes()
         self.voices: list[Voice] = self.get_all_voices()
         self.tunes = self.get_all_tunes()
@@ -153,8 +167,7 @@ class Commands:
             cmd = parse_command(command)
             item: Verb = cmd[0]
             params: Params = cmd[1]
-            if not item:
-                continue
+            assert item, 'Empty item'
 
             if item == 'composition' and is_named:
                 # syntax: composition name=foobar
@@ -250,7 +263,7 @@ class Commands:
                         if value.isdigit():
                             composition += Tempo(int(value))
                             continue
-                logging.warning(f'Bad tempo in {command}')
+                logging.warning(f'Bad tempo in "{command}"')
 
             elif item == 'timesig':
                 if params:
@@ -263,7 +276,7 @@ class Commands:
                             if bottom.bit_count() == 1:
                                 composition += TimeSig(top, bottom)
                                 continue
-                logging.warning(f'Bad timesig in {command}')
+                logging.warning(f'Bad timesig in "{command}"')
 
             elif item == 'volume':
                 voices = self.get_voices(params)
@@ -295,8 +308,7 @@ class Commands:
             cmd = parse_command(command)
             item: Verb = cmd[0]
             params: Params = cmd[1]
-            if not item:
-                continue
+            assert item, 'Empty item'
 
             if item == 'opus':
                 found = False
@@ -445,11 +457,11 @@ class Commands:
             # parse parameters into the default values
             for word in words[1:]:
                 if '=' not in word:
-                    logging.warning(f'Missing "=" in {command}')
+                    logging.warning(f'Missing "=" in "{command}"')
                     continue
                 key, value = word.split('=', 1)
                 if not value:
-                    logging.warning(f'Missing value in {command}')
+                    logging.warning(f'Missing value in "{command}"')
                     continue
 
                 if key == 'name':
@@ -457,13 +469,13 @@ class Commands:
 
                 elif key == 'min_pitch':
                     if not value.isdigit() or not 0 <= int(value) <= 127:
-                        logging.warning(f'Bad min_pitch in {command}')
+                        logging.warning(f'Bad min_pitch in "{command}"')
                         continue
                     min_pitch = int(value)
 
                 elif key == 'max_pitch':
                     if not value.isdigit() or not 0 <= int(value) <= 127:
-                        logging.warning(f'Bad max_pitch in {command}')
+                        logging.warning(f'Bad max_pitch in "{command}"')
                         continue
                     max_pitch = int(value)
 
@@ -475,7 +487,7 @@ class Commands:
                         style = value
                     else:
                         style = 'bass'
-                        logging.warning(f'Bad style in {command}, using {style}')
+                        logging.warning(f'Bad style in "{command}", using {style}')
 
                 elif key == 'voice':
                     if value in midi_voices.voices:
@@ -493,7 +505,7 @@ class Commands:
                         channel = str_to_channel(f'perc{next_perc_channel}')
                         next_perc_channel += 1
                     else:
-                        logging.warning(f'Bad voice in {command}')
+                        logging.warning(f'Bad voice in "{command}"')
                         continue
 
                 elif key == 'volume':
@@ -502,10 +514,10 @@ class Commands:
                     elif value.isdigit():
                         volume = utils.make_in_range(int(value), 128, 'Voice volume')
                     else:
-                        logging.warning(f'Bad volume in {command}')
+                        logging.warning(f'Bad volume in "{command}"')
 
             if channel == Channel.none:
-                logging.warning(f'No channel in {command}')
+                logging.warning(f'No channel in "{command}"')
                 continue
             voices.append(Voice(name, channel, voice, style, volume, min_pitch, max_pitch, rate))
         return voices
@@ -583,8 +595,7 @@ class Commands:
             cmd = parse_command(command)
             item: Verb = cmd[0]
             params: Params = cmd[1]
-            if not item:
-                continue
+            assert item, 'Empty item'
 
             if item == name:
                 if params:
