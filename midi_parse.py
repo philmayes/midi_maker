@@ -546,6 +546,8 @@ class Commands:
         for kv in params:
             if kv[0] == 'voices':
                 voice_names = kv[1].split(',')
+                if 'all' in voice_names:
+                    return self.voices
                 for voice_name in voice_names:
                     for voice in self.voices:
                         if voice.name == voice_name:

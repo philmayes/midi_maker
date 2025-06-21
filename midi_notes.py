@@ -17,18 +17,18 @@ note_to_interval: dict[str, int] = {
 # or octave; they will be picked up from the preceding note.
 # The duration is one or more of the shorthand NoteDurations
 # with a possible dot suffix to add 50%. Durations can be added
-# together, e.g. q+m or c.+c and are parsed using a secondary regex.
-re_note = re.compile(r'([ttseqhnd+\.]*)([A-G|X][#|b]?)(\d)?$')
+# together, e.g. q+n or q.+q and are parsed using a secondary regex.
+re_note = re.compile(r'([tseqhnd+\.]*)([A-G|X][#|b]?)(\d)?$')
 re_duration = re.compile(r'([t|d]?[tseqhnd])?(\.)?$')
 
 class NoteDuration:
     # note durations
     thirtysecondth = 120    # thirtysecond note      120
     sixteenth = 2 * thirtysecondth # sixteenth note  240
-    eighth = 2 * sixteenth # eighth note             480
-    quarter = 2 * eighth   # quarter note            960
-    half = 2 * quarter    # half note               1920
-    note = 2 * half   # whole note                  3840
+    eighth = 2 * sixteenth  # eighth note            480
+    quarter = 2 * eighth    # quarter note           960
+    half = 2 * quarter      # half note             1920
+    note = 2 * half         # whole note            3840
     doublenote = 2 * note   # double whole note     7680
 
     # triplets
