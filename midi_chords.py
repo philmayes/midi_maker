@@ -10,6 +10,7 @@ re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
 chords: dict[str, list[int]]  = {
     'maj':  [0, 4, 7],        # C E  G
     'min':  [0, 3, 7],        # C Eb G
+    'm':    [0, 3, 7],        # C Eb G
     'dim':  [0, 3, 6],        # C Eb Gb
     'aug':  [0, 4, 8],        # C E  G#
     'maj7': [0, 4, 7, 11],    # C E  G  B
