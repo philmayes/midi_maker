@@ -2,7 +2,17 @@ from collections import namedtuple
 from typing import TypeAlias
 
 BarChord = namedtuple('BarChord', 'start key chord')
-Note = namedtuple('Note', 'duration, name, octave, pitch')
+
+class Note:
+    def __init__(self, duration: int, name: str, interval: int, octave: int, pitch: int):
+        self.duration = duration
+        self.name = name
+        self.interval = interval
+        self.octave = octave
+        self.pitch = pitch
+
+    def __str__(self):
+        return f'{self.duration:4} {self.name} {self.interval} {self.octave} {self.pitch}'
 
 # Used in midi.py
 Notes: TypeAlias = list[str]
