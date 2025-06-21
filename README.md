@@ -7,7 +7,7 @@ By convention, a param name is plural when it can take multiple values separated
 Comments start with`;`.
 
 ## Definition Commands
-These create the building blocks of a composition.
+These create the building blocks of a composition. They can occur in any order.
 
 ### voice
 Format: `voice name=vname style=perc voice=high_tom volume=percussion`
@@ -22,7 +22,8 @@ and an additional 10 `perc`[ussion] styles.
 Format: `chord name=cname notes=C,E,G,Bb`
 
 midi_maker recognizes major, minor, augmented, diminished, 7th and 9th chord names,
-but you may want to make your own, e.g `chord name=sus4 notes=C,F,G`
+but you may want to make your own, e.g `chord name=sus4 notes=C,F,G`. The notes are taken to apply to the key of C.
+
 ### rhythm
 Format: `rhythm name=rname values=d1,d2,d3,...`
 
@@ -32,11 +33,24 @@ Rhythms are of two sorts: values are supplied or random using seed, silence, rep
 Use these rhythms in compositions with `rhythm voice=vname rhythms=rname1,rname2...`
 
 ### tune
-Use tune commands with `play voice=vname tunes=tune1,tune2...`
+Format: `tune name=tname notes=note1,note2...`
+
+Use tunes with the `play' command.
 
 ## Performance Commands
 ### bar
 Format: `bar chords=chord1,chord2...`
+
+### hear
+The voices created with the `voice` command are initially muted. Turn one or more on with `hear voices=voice1,voice2...`
+
+### mute
+The inverse of `hear` is `mute`. Turn one or more voices off with `mute voices=voice1,voice2...`
+
+### tune
+Format: `play voice=vname tunes=tune1,tune2...`
+
+Use tune commands with 
 
 
 ### composition
@@ -49,12 +63,6 @@ Format: `opus name=oname parts=cname1,cname2...`
 
 ### tempo
 Format: `tempo bpm=96`
-
-### hear
-The voices created with the `voice` command are initially muted. Turn one or more on with `hear voices=voice1,voice2...`
-
-### mute
-The inverse of `hear` is `mute`. Turn one or more voices off with `mute voices=voice1,voice2...`
 
 
 
