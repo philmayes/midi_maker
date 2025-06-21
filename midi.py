@@ -9,10 +9,10 @@ https://www.fluidsynth.org          # plays MIDI files
 https://www.polyphone.io/en/home    # sf2 editor
 """
 """ Music theory
-semibreve= whole note
-minim    = half    (1/2) note
-crotchet = quarter (1/4) note ♩
-quaver   = eighth  (1/8) note ♪
+note= whole note
+half    = half    (1/2) note
+quarter = quarter (1/4) note ♩
+eighth   = eighth  (1/8) note ♪
 See midi_notes.NoteDuration for full list.
 Time signature:
 The bottom number tells what sort of notes each bar is going to contain,
@@ -46,8 +46,8 @@ rhythms: dict[str, Rhythm] = {}
 
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
-durations1 = [n.minim, n.crotchet, n.quaver, -n.quaver]
-durations2 = [n.minim, n.crotchet, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, n.quaver, -n.quaver]
+durations1 = [n.half, n.quarter, n.eighth, -n.eighth]
+durations2 = [n.half, n.quarter, n.eighth, n.eighth, n.eighth, n.eighth, n.eighth, n.eighth, -n.eighth]
 
 class BarInfo:
     """Class that holds info for the current bar."""
@@ -372,7 +372,7 @@ def make_midi(in_file: str, out_file: str, create: str):
     # pseudo-channels that map to track in the percussion channel.
     midi_channel_count = len([k for k in voices if k.style != 'perc'])
     midi_file = MIDIFile(midi_channel_count,
-                         ticks_per_quarternote=n.crotchet,
+                         ticks_per_quarternote=n.quarter,
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, default_tempo)
 

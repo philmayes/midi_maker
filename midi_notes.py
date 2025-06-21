@@ -18,60 +18,60 @@ note_to_offset: dict[str, int] = {
 # The duration is one or more of the shorthand NoteDurations
 # with a possible dot suffix to add 50%. Durations can be added
 # together, e.g. q+m or c.+c and are parsed using a secondary regex.
-re_note = re.compile(r'([tdhqcmsb+\.]*)([A-G|X][#|b]?)(\d)?$')
-re_duration = re.compile(r'([t|d]?[dhqcmsb])?(\.)?$')
+re_note = re.compile(r'([ttseqhnd+\.]*)([A-G|X][#|b]?)(\d)?$')
+re_duration = re.compile(r'([t|d]?[tseqhnd])?(\.)?$')
 
 class NoteDuration:
     # note durations
-    demisemiquaver = 120    # thirtysecond note      120
-    semiquaver = 2 * demisemiquaver # sixteenth note 240
-    quaver = 2 * semiquaver # eighth note            480
-    crotchet = 2 * quaver   # quarter note           960
-    minim = 2 * crotchet    # half note             1920
-    semibreve = 2 * minim   # whole note            3840
-    breve = 2 * semibreve   # double whole note     7680
+    thirtysecondth = 120    # thirtysecond note      120
+    sixteenth = 2 * thirtysecondth # sixteenth note  240
+    eighth = 2 * sixteenth # eighth note             480
+    quarter = 2 * eighth   # quarter note            960
+    half = 2 * quarter    # half note               1920
+    note = 2 * half   # whole note                  3840
+    doublenote = 2 * note   # double whole note     7680
 
     # triplets
-    t_demisemiquaver = demisemiquaver // 3  #         40
-    t_semiquaver = 2 * t_demisemiquaver     #         80
-    t_quaver = 2 * t_semiquaver             #        160
-    t_crotchet = 2 * t_quaver               #        320
-    t_minim = 2 * t_crotchet                #        640
-    t_semibreve = 2 * t_minim               #       1280
-    t_breve = 2 * t_semibreve               #       2560
+    t_thirtysecondth = thirtysecondth // 3  #         40
+    t_sixteenth = 2 * t_thirtysecondth      #         80
+    t_eighth = 2 * t_sixteenth              #        160
+    t_quarter = 2 * t_eighth                #        320
+    t_half = 2 * t_quarter                  #        640
+    t_note = 2 * t_half                     #       1280
+    t_doublenote = 2 * t_note               #       2560
 
     # doublets, i.e. 2 x triplets, so triplet + doublet = note
-    d_demisemiquaver = 2 * t_demisemiquaver #         80
-    d_semiquaver = 2 * d_demisemiquaver     #        160
-    d_quaver = 2 * d_semiquaver             #        320
-    d_crotchet = 2 * d_quaver               #        640
-    d_minim = 2 * d_crotchet                #       1280
-    d_semibreve = 2 * d_minim               #       2560
-    d_breve = 2 * d_semibreve               #       5120
+    d_thirtysecondth = 2 * t_thirtysecondth #         80
+    d_sixteenth = 2 * d_thirtysecondth      #        160
+    d_eighth = 2 * d_sixteenth              #        320
+    d_quarter = 2 * d_eighth                #        640
+    d_half = 2 * d_quarter                  #       1280
+    d_note = 2 * d_half                     #       2560
+    d_doublenote = 2 * d_note               #       5120
 
     # shorthand
-    d = demisemiquaver
-    h = semiquaver  # The only shorthand that is not the first letter
-    q = quaver
-    c = crotchet
-    m = minim
-    s = semibreve
-    b = breve
-    td = t_demisemiquaver
-    th = t_semiquaver
-    tq = t_quaver
-    tc = t_crotchet
-    tm = t_minim
-    ts = t_semibreve
-    tb = t_breve
-    dd = d_demisemiquaver
-    dh = d_semiquaver
-    dq = d_quaver
-    dc = d_crotchet
-    dm = d_minim
-    ds = d_semibreve
-    db = d_breve
-    default = crotchet  # used when duration is not supplied
+    t = thirtysecondth
+    s = sixteenth
+    e = eighth
+    q = quarter
+    h = half
+    n = note
+    d = doublenote
+    tt = t_thirtysecondth
+    ts = t_sixteenth
+    te = t_eighth
+    tq = t_quarter
+    th = t_half
+    tn = t_note
+    td = t_doublenote
+    dt = d_thirtysecondth
+    ds = d_sixteenth
+    de = d_eighth
+    dq = d_quarter
+    dh = d_half
+    dn = d_note
+    dd = d_doublenote
+    default = quarter  # used when duration is not supplied
 
 def get_duration(text: str) -> int:
     """Translates the duration string into ticks."""

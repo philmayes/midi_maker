@@ -2,7 +2,7 @@ import re
 
 from midi_notes import note_to_offset
 
-ch1 = r'([t|d]?[dhqcmsb])?'             # duration prefix
+ch1 = r'([t|d]?[tseqhnd])?'             # duration prefix
 ch2 = r'([A-G][#b]*)([a-z]*)([679]?)$'  # key chord-type chord-mod
 re_chord = re.compile(ch2)              # chord
 re_dur_chord = re.compile(ch1 + ch2)    # duration + chord

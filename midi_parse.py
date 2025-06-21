@@ -370,7 +370,7 @@ class Commands:
                     # Build a rhythm. We don't know how long the bar is,
                     # could be 4/4, 7/4, etc., so construct for 8/4.
                     tick = 0
-                    end = NoteDuration.breve
+                    end = NoteDuration.doublenote
                     dur = 0
                     while tick < end:
                         if tick == 0 or not random.test(repeat):
@@ -440,7 +440,7 @@ class Commands:
             volume: int = 0
             min_pitch: int = 0
             max_pitch: int = 127
-            rate: int = NoteDuration.crotchet
+            rate: int = NoteDuration.quarter
 
             # parse parameters into the default values
             for word in words[1:]:

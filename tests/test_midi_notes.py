@@ -14,25 +14,25 @@ class TestGetDuration:
 
     def test_get_duration2(self):
         result = get_duration('h')
-        assert result == NoteDuration.semiquaver
+        assert result == NoteDuration.sixteenth
 
     def test_get_duration3(self):
         result = get_duration('c.')
-        assert result == NoteDuration.crotchet + NoteDuration.quaver
+        assert result == NoteDuration.quarter + NoteDuration.eighth
 
     def test_get_duration4(self):
         result = get_duration('c+m')
-        assert result == NoteDuration.crotchet + NoteDuration.minim
+        assert result == NoteDuration.quarter + NoteDuration.half
 
     def test_get_duration5(self):
         result = get_duration('c.+m')
-        assert result == NoteDuration.crotchet\
-                       + NoteDuration.quaver\
-                       + NoteDuration.minim
+        assert result == NoteDuration.quarter\
+                       + NoteDuration.eighth\
+                       + NoteDuration.half
 
     def test_get_duration6(self):
         result = get_duration('c+c')
-        assert result == NoteDuration.minim
+        assert result == NoteDuration.half
 
 class TestStrToNote:
     def test_str_to_note1(self):
@@ -44,7 +44,7 @@ class TestStrToNote:
 
     def test_str_to_note2(self):
         result = str_to_note('qEb5')
-        assert result.duration == NoteDuration.quaver
+        assert result.duration == NoteDuration.eighth
         assert result.name == 'Eb'
         assert result.octave == 5
         assert result.pitch == 63

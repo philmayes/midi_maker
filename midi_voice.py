@@ -5,7 +5,7 @@ from midi_notes import NoteDuration as n
 from midi_types import *
 import utils
 
-default_rhythm: Rhythm = [n.crotchet, n.crotchet, n.crotchet, n.crotchet,]
+default_rhythm: Rhythm = [n.quarter, n.quarter, n.quarter, n.quarter,]
 
 class Voice:
     styles = ['perc', 'bass', 'rhythm', 'arpeggio', 'improv', 'lead']
@@ -18,7 +18,7 @@ class Voice:
                  volume: int,
                  min_pitch:int=0,
                  max_pitch:int=127,
-                 rate: int=n.crotchet
+                 rate: int=n.quarter
                  ) -> None:
         self.name = name
         self.channel = channel
