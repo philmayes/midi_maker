@@ -3,7 +3,7 @@ import re
 
 from midi_types import *
 
-note_to_offset: dict[str, int] = {
+note_to_interval: dict[str, int] = {
     'Cb':11, 'C':  0, 'C#': 1,
     'Db': 1, 'D':  2, 'D#': 3,
     'Eb': 3, 'E':  4, 'E#': 5,
@@ -129,7 +129,7 @@ def str_to_note(note_str: str) -> Note:
         if name == 'X':
             interval = -1000
         else:
-            interval = note_to_offset[name]
+            interval = note_to_interval[name]
 
         # process the octave
         octave = match.group(3)

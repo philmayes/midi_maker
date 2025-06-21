@@ -322,8 +322,8 @@ class Commands:
                     offsets: list[int] = []
                     last_value = -1
                     for note in notes.split(','):
-                        if note in note_to_offset:
-                            offset = note_to_offset[note]
+                        if note in note_to_interval:
+                            offset = note_to_interval[note]
                             while offset <= last_value:
                                 offset += 12
                             offsets.append(offset)

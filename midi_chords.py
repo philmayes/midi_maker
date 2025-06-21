@@ -1,6 +1,6 @@
 import re
 
-from midi_notes import note_to_offset
+from midi_notes import note_to_interval
 
 ch1 = r'([t|d]?[tseqhnd])?'             # duration prefix
 ch2 = r'([A-G][#b]*)([a-z]*)([679]?)$'  # key chord-type chord-mod
@@ -29,7 +29,7 @@ def chord_to_intervals(chord: str) -> list[int]:
     assert match, f'Unknown chord "{str}"'
     chord_name = match.group(2) + match.group(3)
     assert chord_name in chords, f'Unknown chord "{str}"'
-    offset: int = note_to_offset[match.group(1)]
+    offset: int = note_to_interval[match.group(1)]
     intervals: list[int] = chords[chord_name]
     result: list[int] = [interval + offset for interval in intervals]
     return result

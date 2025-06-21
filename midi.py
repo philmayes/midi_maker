@@ -27,7 +27,7 @@ from midiutil import MIDIFile
 from midi_channels import Channel
 from midi_chords import chord_to_pitches
 from midi_items import *
-from midi_notes import NoteDuration as n, note_to_offset
+from midi_notes import NoteDuration as n, note_to_interval
 import midi_parse
 from midi_voice import Voice
 import utils
@@ -71,7 +71,7 @@ class BarInfo:
 
     def get_tonic_offset(self, start: int) -> int:
         """Returns the tonic offset (0-11) at time <start> within the bar."""
-        return note_to_offset[self.get_tonic(start)]
+        return note_to_interval[self.get_tonic(start)]
 
 def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
@@ -147,7 +147,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
     rhythm = voice.get_rhythm()
     for note_length in rhythm:
         tonic: str = bar_info.get_tonic(start)
-        pitch = note_to_offset[tonic] + 36
+        pitch = note_to_interval[tonic] + 36
         remaining = bar_end - start
         if remaining <= 0:
             break
