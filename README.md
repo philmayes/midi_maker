@@ -1,6 +1,7 @@
+# Midi Maker
 ## Overview
 `midi_maker` interprets a text file (by convention using a .ini extension) and generates a midi file from it with the same filename in the same directory.
-## Syntax
+### Syntax
 The text file syntax is a list of commands with the format: `command param1=value1 param2=value2...`. Values are case-sensitive. 
 By convention, a param name is plural when it can take multiple values separated by commas.
 
@@ -38,6 +39,8 @@ Format: `tune name=tname notes=note1,note2...`
 Use tunes with the `play' command.
 
 ## Performance Commands
+These generate the actual MIDI output using the definitions that have been created.
+
 ### bar
 Format: `bar chords=chord1,chord2...`
 
@@ -62,9 +65,20 @@ You can have one or more compositions in a file. By naming the composition on th
 Format: `opus name=oname parts=cname1,cname2...`
 
 ### tempo
-Format: `tempo bpm=96`
+Format: `tempo bpm=96` or any other value for beats per minute.
 
+### timesig
+Format: `timesig value=3/4` or any other time signature.
 
+## Data Formats
+These describe the format of the values supplied to commands.
+
+### notes
+Format: `duration note octave`.
+* `duration` is a note abbreviation such as `c` for crotchet (a quarter-note). It can be dotted to make it 50% longer. A duration can use multiple notes, e.g. `c.+s` is 5½ beats.
+* `note` is A-G with possible # or b e.g. `eb`.
+* `octave` is 1-10.
+When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `cG5,A,B,C6,D,E,F#,G`. Note that the `C` must be declared in the next octave.
 
 ### Names of notes
 midi_maker uses the English names because their initial letters are (almost) unique. `semiquaver` is the exception; think of `h` as `half`.

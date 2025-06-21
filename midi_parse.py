@@ -15,6 +15,7 @@ import utils
 re_float = re.compile(r'\d*\.?\d+$')
 re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_text = re.compile('[a-zA-Z_]')
+re_timesig = re.compile(r'(\d+)/(\d+)$')
 
 def clean_line(line: str) -> str:
     max_len = 250
@@ -250,6 +251,19 @@ class Commands:
                             composition += Tempo(int(value))
                             continue
                 logging.warning(f'Bad tempo in {command}')
+
+            elif item == 'timesig':
+                if params:
+                    key, value = params[0]
+                    if key == 'value':
+                        match = re_timesig.match(value)
+                        if match:
+                            top = int(match.group(1))
+                            bottom = int(match.group(2))
+                            if bottom.bit_count() == 1:
+                                composition += TimeSig(top, bottom)
+                                continue
+                logging.warning(f'Bad timesig in {command}')
 
             elif item == 'volume':
                 voices = self.get_voices(params)
