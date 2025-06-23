@@ -27,13 +27,13 @@ def set_volume(channel: int,
                rate:int) -> None:
     """Adjust the volume of the channel in various ways.
 
-    case  abs  delta   rate  set level  set rate
-      1    Y     -      -     to abs       -
-      2    -     Y      -     by delta     -
-      3    -     Y      Y       -          Y
-      4    Y     Y      Y     to abs       Y
-                 ^for case 4, delta is ignored as abs takes preference
-    There are only 4 cases because abs or delta is a requirement
+    case  level  delta   rate  set level  set rate
+      1    Y       -      -     to level     -
+      2    -       Y      -     by delta     -
+      3    -       Y      Y       -          Y
+      4    Y       Y      Y     to level     Y
+                   ^for case 4, delta is ignored as level takes preference
+    There are only 4 cases because level or delta is a requirement
     """
 
     global voice_dict
@@ -87,7 +87,7 @@ def get_volume(channel: int, tick: int) -> int:
     to make the table have simple numbers.
     index   tick   volume   rate
     +----- +------+--------+------+
-    |  0   |    0 |    100 |    0 | created by abs = 100    at t 0
+    |  0   |    0 |    100 |    0 | created by level = 100  at t 0
     |  0   | 1000 |     80 |    0 | created by delta = -20  at t 1000
     |  0   | 3000 |     60 |    0 | created by delta = -20  at t 3000
     |  0   | 5000 |     40 |   10 | ...with rate = 10

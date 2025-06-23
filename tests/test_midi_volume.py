@@ -14,42 +14,42 @@ def vlist(index: int, channel: int = 0) -> mv.VolChange:
 def test_set_volume1(setup):
     """Test case 1. (See mv.set_volume() for the table of test cases.)"""
     channel = 0
-    #             channel, tick, abs, delta, rate
-    mv.set_volume(channel,    0, 100,     0,    0)
+    #             channel, tick, level, delta, rate
+    mv.set_volume(channel,    0,   100,     0,    0)
     assert vlist(-1).vol == 100
-    mv.set_volume(channel,  500,  80,     0,    0)
+    mv.set_volume(channel,  500,    80,     0,    0)
     assert vlist(-1).vol == 80
-    mv.set_volume(channel,  800,  60,     0,    0)
+    mv.set_volume(channel,  800,    60,     0,    0)
     assert vlist(-1).vol == 60
 
 def test_set_volume2(setup):
     """Test case 2."""
     channel = 0
     tick = 0
-    absolute = 0
+    level = 0
     delta = 40
     rate = 0
-    mv.set_volume(channel, tick, absolute, delta, rate)
+    mv.set_volume(channel, tick, level, delta, rate)
     # Should not start with delta. default_volume + 40 = 140, clips to 127
     assert vlist(-1).vol == 127
     tick = 500
     delta = 20
-    mv.set_volume(channel, tick, absolute, delta, rate)
+    mv.set_volume(channel, tick, level, delta, rate)
     assert vlist(-1).vol == 127
     tick = 800
     delta = -10
-    mv.set_volume(channel, tick, absolute, delta, rate)
+    mv.set_volume(channel, tick, level, delta, rate)
     assert vlist(-1).vol == 117
 
 def test_set_volume3(setup):
     """Test case 3."""
     channel = 0
     tick = 0
-    absolute = 100
+    level = 100
     delta = 0
     rate = 0
-    mv.set_volume(channel, tick, absolute, delta, rate)
-    assert vlist(-1).vol == absolute
+    mv.set_volume(channel, tick, level, delta, rate)
+    assert vlist(-1).vol == level
     tick = 500
     delta = 20
     rate = 2
@@ -57,21 +57,21 @@ def test_set_volume3(setup):
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == tick
-    assert prev.vol == absolute
+    assert prev.vol == level
     assert prev.rate == 0
     assert last.tick == tick + (delta * mv.ticks_per_rate) // rate
-    assert last.vol == absolute + delta
+    assert last.vol == level + delta
     assert last.rate == rate
 
 def test_set_volume3neg(setup):
     """Test case 3 with negative delta."""
     channel = 0
     tick = 0
-    absolute = 100
+    level = 100
     delta = 0
     rate = 0
-    mv.set_volume(channel, tick, absolute, delta, rate)
-    assert vlist(-1).vol == absolute
+    mv.set_volume(channel, tick, level, delta, rate)
+    assert vlist(-1).vol == level
     tick = 500
     delta = -20
     rate = 2
@@ -79,18 +79,18 @@ def test_set_volume3neg(setup):
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == tick
-    assert prev.vol == absolute
+    assert prev.vol == level
     assert prev.rate == 0
     assert last.tick == tick + (abs(delta) * mv.ticks_per_rate) // rate
-    assert last.vol == absolute + delta
+    assert last.vol == level + delta
     assert last.rate == rate
 
 def test_set_volume4(setup):
     """Test case 4."""
     channel = 0
-    #             channel, tick, abs, delta, rate
-    mv.set_volume(channel,    0, 100,     0,    0)
-    mv.set_volume(channel, 1000,  40,    20,   20)
+    #             channel, tick, level, delta, rate
+    mv.set_volume(channel,    0,   100,     0,    0)
+    mv.set_volume(channel, 1000,    40,    20,   20)
 
 
 
@@ -107,33 +107,33 @@ def test_set_volume4neg(setup):
     """Test case 4."""
     channel = 0
     tick = 0
-    absolute1 = 100
+    level1 = 100
     delta = 0
     rate = 0
-    mv.set_volume(channel, tick, absolute1, delta, rate)
-    assert vlist(-1).vol == absolute1
+    mv.set_volume(channel, tick, level1, delta, rate)
+    assert vlist(-1).vol == level1
     tick = 500
-    absolute2 = 40
+    level2 = 40
     delta = -20
     rate = 2
-    mv.set_volume(channel, tick, absolute2, delta, rate)
+    mv.set_volume(channel, tick, level2, delta, rate)
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == tick
-    assert prev.vol == absolute1
+    assert prev.vol == level1
     assert prev.rate == 0
-    assert last.tick == tick + (abs(absolute2 - absolute1) * mv.ticks_per_rate) // rate
-    assert last.vol == absolute2
+    assert last.tick == tick + (abs(level2 - level1) * mv.ticks_per_rate) // rate
+    assert last.vol == level2
     assert last.rate == rate
 
 def test_set_volume1_in_change(setup):
     """Test case 1 when change already in place."""
     channel = 0
-    #             channel, tick, abs, delta, rate
-    mv.set_volume(channel,    0, 100,     0,    0)
-    mv.set_volume(channel, 1000,  80,     0,    0)
-    mv.set_volume(channel, 3000,   0,   -30,   10)
-    mv.set_volume(channel, 4000,  90,     0,    0)
+    #             channel, tick, level, delta, rate
+    mv.set_volume(channel,    0,   100,     0,    0)
+    mv.set_volume(channel, 1000,    80,     0,    0)
+    mv.set_volume(channel, 3000,     0,   -30,   10)
+    mv.set_volume(channel, 4000,    90,     0,    0)
     last = vlist(-1)
     assert last.tick == 4000
     assert last.vol == 90
@@ -142,11 +142,11 @@ def test_set_volume1_in_change(setup):
 def test_set_volume4_in_change(setup):
     """Test case 4 when change already in place."""
     channel = 0
-    #             channel, tick, abs, delta, rate
-    mv.set_volume(channel,    0, 100,     0,    0)
-    mv.set_volume(channel, 1000,  80,     0,    0)
-    mv.set_volume(channel, 3000,   0,   -30,   10) # creates(6000,50,10)
-    mv.set_volume(channel, 4000,  90,   -40,   10)
+    #             channel, tick, level, delta, rate
+    mv.set_volume(channel,    0,   100,     0,    0)
+    mv.set_volume(channel, 1000,    80,     0,    0)
+    mv.set_volume(channel, 3000,     0,   -30,   10) # creates(6000,50,10)
+    mv.set_volume(channel, 4000,    90,   -40,   10)
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == 4000
@@ -159,10 +159,10 @@ def test_set_volume4_in_change(setup):
 def test_get_volume1(setup):
     """Test case 4."""
     channel = 0
-    #             channel, tick, absolute, delta, rate
-    mv.set_volume(channel,    0,      100,     0,    0)
-    mv.set_volume(channel, 1000,       80,     0,    0)
-    mv.set_volume(channel, 3000,        0,   -30,   10)
+    #             channel, tick, level, delta, rate
+    mv.set_volume(channel,    0,   100,     0,    0)
+    mv.set_volume(channel, 1000,    80,     0,    0)
+    mv.set_volume(channel, 3000,     0,   -30,   10)
     assert mv.get_volume(channel, 0) == 100
     assert mv.get_volume(channel, 999) == 100
     assert mv.get_volume(channel, 1000) == 80

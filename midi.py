@@ -425,7 +425,7 @@ def make_midi(in_file: str, out_file: str, create: str):
 
         elif isinstance(item, Volume):
             # midi_parse is responsible for ensuring the following.
-            assert item.abs or item.delta, 'Volume has no abs or delta'
+            assert item.level or item.delta, 'Volume has no level or delta'
             # The volume in the voice is not set directly because it may
             # change over a period of time. Instead, mv.set_volume()
             # is called on all supplied voices and mv.get_volume() is
@@ -433,7 +433,7 @@ def make_midi(in_file: str, out_file: str, create: str):
             for voice in item.voices:
                 mv.set_volume(voice.channel,
                               bar_info.start,
-                              item.abs,
+                              item.level,
                               item.delta,
                               item.rate)
 

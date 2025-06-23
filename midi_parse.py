@@ -292,13 +292,13 @@ class Commands:
                             number = utils.get_signed_number(value)
                             if number is not None:
                                 vol.delta = number
-                        if key == 'abs':
+                        if key == 'level':
                             if value.isdigit():
-                                vol.abs = int(value)
+                                vol.level = int(value)
                         if key == 'rate':
                             if value.isdigit():
                                 vol.rate = int(value)
-                    if vol.delta or vol.abs:
+                    if vol.delta or vol.level:
                         composition += vol
 
         return composition
