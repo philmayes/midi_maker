@@ -1,3 +1,4 @@
+"""Parse the input file."""
 import logging
 import re
 
@@ -9,6 +10,7 @@ import midi_percussion
 from midi_types import *
 import midi_voice
 import midi_voices
+import midi_volume as mv
 import rando
 import utils
 
@@ -42,7 +44,7 @@ def get_int(cmds: CommandDict, param: str, default: int|str) -> int:
     return int(default)
 
 def get_signed_int(cmds: CommandDict, param: str, default: int|str) -> int:
-    """Returns possibly signed number as int."""
+    """Return possibly signed number as int."""
     value: str = cmds.get(param, str(default))
     if not value:
         logging.error(f'Bad signed number {value}')
@@ -155,7 +157,7 @@ class Commands:
         self.get_all_chords()
 
     def get_composition(self, name: str='') -> Composition:
-        """Gets the list of items between named composition & the next one.
+        """Get the list of items between named composition & the next one.
         
         However, if no name is supplied, return all items. This is done so
         that a beginner does not have to deal with composition syntax.
@@ -302,7 +304,7 @@ class Commands:
         return composition
 
     def get_opus(self, name: str) -> str:
-        """Gets parts of the named opus."""
+        """Get parts of the named opus."""
         names: list[str] = []
         for command in self.commands:
             cmd = parse_command(command)
@@ -324,7 +326,7 @@ class Commands:
         return ''
 
     def get_all_chords(self):
-        """Reads and sets up non-standard chords."""
+        """Read and set up non-standard chords."""
         for command in self.commands:
             cmds: CommandDict = parse_command_dict(command)
             if cmds['command'] == 'chord':
@@ -348,7 +350,7 @@ class Commands:
                     logging.error(f'Bad format for command "{command}"')
 
     def get_all_rhythms(self) -> RhythmDict:
-        """Constructs Rhythm dictionary from the list of commands."""
+        """Construct Rhythm dictionary from the list of commands."""
         rhythms: RhythmDict = {}
         for command in self.commands:
             cmds: CommandDict = parse_command_dict(command)
@@ -404,7 +406,7 @@ class Commands:
         return rhythms
 
     def get_all_tunes(self) -> TuneDict:
-        """Constructs Tune dictionary from the list of commands."""
+        """Construct Tune dictionary from the list of commands."""
         tunes: TuneDict = {}
         for command in self.commands:
             cmd = parse_command(command)
@@ -433,7 +435,7 @@ class Commands:
         return tunes
 
     def get_all_voices(self) -> list[Voice]:
-        """Constructs Voice() instances from the list of commands."""
+        """Construct Voice() instances from the list of commands."""
         voices: list[Voice] = []
         next_voice_channel = 1
         next_perc_channel = 1
@@ -515,15 +517,17 @@ class Commands:
                         volume = utils.make_in_range(int(value), 128, 'Voice volume')
                     else:
                         logging.warning(f'Bad volume in "{command}"')
+                        volume = utils.default_volume
 
             if channel == Channel.none:
                 logging.warning(f'No channel in "{command}"')
                 continue
-            voices.append(Voice(name, channel, voice, style, volume, min_pitch, max_pitch, rate))
+            voices.append(Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
+            mv.set_volume(channel, 0, volume, 0, 0)
         return voices
 
     def get_rhythms(self, value: str) -> Rhythms:
-        """Returns a list of all the rhythms supplied in param."""
+        """Return a list of all the rhythms supplied in param."""
         rhythms: Rhythms = []
         rhythm_names = value.split(',')
         for rhythm_name in rhythm_names:
@@ -534,7 +538,7 @@ class Commands:
         return rhythms
 
     def get_tunes(self, value: str) -> Tunes:
-        """Returns a list of all the tunes supplied in param."""
+        """Return a list of all the tunes supplied in param."""
         tunes: Tunes = []
         tune_names = value.split(',')
         for tune_name in tune_names:
@@ -545,7 +549,7 @@ class Commands:
         return tunes
 
     def get_voice(self, name: str) -> Voice | None:
-        """Returns the named voice."""
+        """Return the named voice."""
         for voice in self.voices:
             if voice.name == name:
                 return voice
@@ -553,7 +557,7 @@ class Commands:
             logging.error(f'Voice {name} does not exist')
 
     def get_voices(self, params: Params) -> list[Voice]:
-        """Returns a list of all the voices supplied in params."""
+        """Return a list of all the voices supplied in params."""
         voices: list[Voice] = []
         for kv in params:
             if kv[0] == 'voices':
@@ -573,7 +577,7 @@ class Commands:
         return voices
 
     def get_volumes(self):
-        """Gets a dictionary of all volume names and values."""
+        """Get a dictionary of all volume names and values."""
         volumes: dict[str, int] = {'default': utils.default_volume}
         for command in self.commands:
             cmd = parse_command(command)
@@ -589,7 +593,7 @@ class Commands:
         return volumes
 
     def get_works(self, name: str) -> list[str]:
-        """Gets a list of all opuses or compositions."""
+        """Get a list of all opuses or compositions."""
         names: list[str] = []
         for command in self.commands:
             cmd = parse_command(command)

@@ -1,3 +1,7 @@
+"""This module generates a .mid file from a text description.
+
+See README.md for details."""
+
 """ References
 https://medium.com/@stevehiehn/how-to-generate-music-with-python-the-basics-62e8ea9b99a5
 Documentation:
@@ -9,10 +13,10 @@ https://www.fluidsynth.org          # plays MIDI files
 https://www.polyphone.io/en/home    # sf2 editor
 """
 """ Music theory
-note= whole note
+note    = whole note
 half    = half    (1/2) note
 quarter = quarter (1/4) note ♩
-eighth   = eighth  (1/8) note ♪
+eighth  = eighth  (1/8) note ♪
 See midi_notes.NoteDuration for full list.
 Time signature:
 The bottom number tells what sort of notes each bar is going to contain,
@@ -30,7 +34,7 @@ from midi_items import *
 from midi_notes import NoteDuration as n, note_to_interval
 import midi_parse
 from midi_voice import Voice
-import utils
+import midi_volume as mv
 
 #             C  D  E  F  G  A  B
 major_ints = [0, 2, 4, 5, 7, 9, 11,]
@@ -77,27 +81,6 @@ def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
     return max(err, 0)
 
-def adjust_volume(voice: Voice):
-    """Is called for each bar to set volume, possibly dynamically."""
-    # This cannot be made a member function of Voice because that
-    # would create a circular import; midi_items uses Voice in its
-    # Volume class. Same restriction applies to set_volume().
-    old_vol = voice.volume
-    new_vol = voice.volume_target
-    delta = new_vol - old_vol
-    if delta:   # Is a volume change required?
-        if voice.volume_rate > 0:
-            # The new volume is to be applied over time per bar.
-            # Find out whether we are to increase or decrease.
-            if delta > 0:
-                # The volume is to be increased
-                new_vol = min(old_vol + voice.volume_rate, new_vol)
-            else:
-                new_vol = max(old_vol - voice.volume_rate, new_vol)
-
-        logging.debug(f'change volume channel:{voice.channel} level {voice.volume} -> {new_vol}')
-        voice.volume = new_vol
-
 def get_work(commands: midi_parse.Commands, name: str) -> Composition:
     """Assembles the components (compositions) of a work."""
     composition = Composition()
@@ -132,12 +115,13 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
             pitches = chord_to_pitches(new_chord, 4)
             old_chord = new_chord
             pitch_index = 0
+        volume = mv.get_volume(voice.channel, start)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitches[pitch_index],
                                    add_start_error(start),
                                    duration,
-                                   voice.volume)
+                                   volume)
         pitch_index = (pitch_index + 1) % len(pitches)
         start += duration
 
@@ -161,13 +145,14 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
         # Don't allow notes to extend beyond the bar.
         if note_length > remaining:
             note_length = remaining
+        volume = mv.get_volume(voice.channel, start)
         # logging.debug(f'Bass {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord}, duration {note_length}')
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitch,
                                    add_start_error(start),
                                    note_length,
-                                   voice.volume)
+                                   volume)
         start += note_length
 
 def make_chord(bar_info: BarInfo, voice: Voice,
@@ -177,12 +162,13 @@ def make_chord(bar_info: BarInfo, voice: Voice,
                     duration: int):
     start = add_start_error(start)
     for pitch in pitches:
+        volume = mv.get_volume(voice.channel, start)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitch,
                                    start,
                                    duration,
-                                   voice.volume)
+                                   volume)
 
 def make_error_table(amount: int) -> list[int]:
     """Makes an error table
@@ -270,12 +256,13 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
                 # Make a note for the next bar
                 voice.overlap = duration - remaining
         # logging.debug(f'Playing {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord} = {chord}, duration {duration}')
+        volume = mv.get_volume(voice.channel, start)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitch,
                                    add_start_error(start),
                                    duration,
-                                   voice.volume)
+                                   volume)
         start += duration
 
 def make_percussion_bar(bar_info: BarInfo, voice: Voice):
@@ -292,12 +279,13 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
         if note_length == 0:
             # A zero note length is to be extended to the end of the bar
             note_length = bar_end - start
+        volume = mv.get_volume(voice.channel, start)
         bar_info.midi_file.addNote(0,
                                    Channel.percussion,
                                    voice.voice,
                                    add_start_error(start),
                                    note_length,
-                                   voice.volume)
+                                   volume)
         start += note_length
 
 def make_rhythm_bar(bar_info: BarInfo,
@@ -327,36 +315,6 @@ def make_rhythm_bar(bar_info: BarInfo,
                    play_time,
                    )
         start += note_length
-
-def set_volume(voice: Voice, item: Volume):
-    """Adjust the volume of the voice in various ways.
-    case  abs  delta   rate  set level  set rate
-      1    Y     -      -     to abs       -
-      2    -     Y      -     by delta     -
-      3    -     Y      Y       -          Y
-      4    Y     Y      Y     to abs       Y
-    """
-    assert item.abs or item.delta
-    assert item.rate >= 0
-
-    # First set the current volume
-    old_vol = voice.volume
-    if item.abs:
-        new_vol = item.abs              # case 1 or 4
-    elif item.delta and not item.rate:
-        new_vol = old_vol + item.delta  # case 2
-    else:
-        new_vol = old_vol               # case 3
-    new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
-    voice.volume = new_vol
-    voice.volume_target = new_vol
-
-    # Then set up possible rate change
-    if item.delta and item.rate:        # case 3 or 4
-        new_vol += item.delta
-        new_vol = utils.make_in_range(new_vol, 128, 'Volume channel')
-        voice.volume_target = new_vol
-        voice.volume_rate = item.rate
 
 def make_midi(in_file: str, out_file: str, create: str):
     commands = midi_parse.Commands(in_file)
@@ -392,10 +350,6 @@ def make_midi(in_file: str, out_file: str, create: str):
         item = composition.items[item_number]
         if isinstance(item, Bar):
             bar_info.bar = item
-            # Handle volume changes.
-            for voice in voices:
-                if voice.channel != Channel.none:
-                    adjust_volume(voice)
             for _ in range(item.repeat):
                 logging.debug(item.chords)
                 for voice in voices:
@@ -438,12 +392,13 @@ def make_midi(in_file: str, out_file: str, create: str):
                 for note in tune:
                     # A pitch < 0 requests a period of silence.
                     if note.pitch >= 0:
+                        volume = mv.get_volume(voice.channel, start)
                         midi_file.addNote(0,
                                         item.voice.channel,
                                         note.pitch,
                                         add_start_error(start),
                                         note.duration,
-                                        voice.volume)
+                                        volume)
                     start += note.duration
 
         elif isinstance(item, Repeat):
@@ -472,10 +427,15 @@ def make_midi(in_file: str, out_file: str, create: str):
             # midi_parse is responsible for ensuring the following.
             assert item.abs or item.delta, 'Volume has no abs or delta'
             # The volume in the voice is not set directly because it may
-            # change over a period of time. Instead, info.adjust_volume()
-            # is called on all voices for every bar.
+            # change over a period of time. Instead, mv.set_volume()
+            # is called on all supplied voices and mv.get_volume() is
+            # called whenever a midi note is generated.
             for voice in item.voices:
-                set_volume(voice, item)
+                mv.set_volume(voice.channel,
+                              bar_info.start,
+                              item.abs,
+                              item.delta,
+                              item.rate)
 
         else:
             logging.error(f'Unrecognized item {item}')

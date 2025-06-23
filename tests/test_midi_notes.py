@@ -1,8 +1,6 @@
-import pytest
-
 from midi_notes import *
 
-bad_note: Note = Note(0, '', 0, 0)
+bad_note: Note = Note(0, '', 0, 0, 0)
 class TestGetDuration:
     def test_get_duration0(self):
         result = get_duration('')
@@ -14,7 +12,7 @@ class TestGetDuration:
 
     def test_get_duration2(self):
         result = get_duration('h')
-        assert result == NoteDuration.sixteenth
+        assert result == NoteDuration.half
 
     def test_get_duration3(self):
         result = get_duration('c.')

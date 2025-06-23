@@ -3,7 +3,6 @@ import logging
 from midi_channels import Channel
 from midi_notes import NoteDuration as n
 from midi_types import *
-import utils
 
 default_rhythm: Rhythm = [n.quarter, n.quarter, n.quarter, n.quarter,]
 
@@ -15,7 +14,6 @@ class Voice:
                  channel: Channel,
                  voice: int,
                  style: str,
-                 volume: int,
                  min_pitch:int=0,
                  max_pitch:int=127,
                  rate: int=n.quarter
@@ -24,7 +22,6 @@ class Voice:
         self.channel = channel
         self.voice = voice
         self.style = style
-        self.volume = volume
         self.min_pitch = min_pitch
         self.max_pitch = max_pitch
         self.rate = rate
@@ -35,9 +32,6 @@ class Voice:
         # Following is information for a channel (which includes percussion)
         # that can be adjusted dynamically.
         self.active = True
-        self.volume = utils.default_volume
-        self.volume_target = utils.default_volume
-        self.volume_rate = 0
         self.rhythms: Rhythms = [default_rhythm]
         self.rhythm_index = 0
 
