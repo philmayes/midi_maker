@@ -129,9 +129,7 @@ def parse_command_dict(command: str) -> CommandDict:
 
 class Commands:
     """Class that parses the .ini file."""
-    def __init__(self, in_file: str):
-        with open(in_file, "r") as f_in:
-            lines = f_in.readlines()
+    def __init__(self, lines: list[str]):
         # Remove leading & trailing whitespace and comments,
         # and validate the command.
         # Assemble command_list and command_dict for future use.

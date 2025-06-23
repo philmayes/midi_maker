@@ -317,7 +317,9 @@ def make_rhythm_bar(bar_info: BarInfo,
         start += note_length
 
 def make_midi(in_file: str, out_file: str, create: str):
-    commands = midi_parse.Commands(in_file)
+    with open(in_file, "r") as f_in:
+        lines = f_in.readlines()
+    commands = midi_parse.Commands(lines)
     voices: list[Voice] = commands.voices
 
     random.seed(1)
