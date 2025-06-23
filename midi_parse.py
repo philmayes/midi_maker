@@ -361,7 +361,7 @@ class Commands:
                 seed = get_signed_int(cmds, 'seed', -1)
                 silence = get_float(cmds, 'silence', 0.5)
                 repeat = get_float(cmds, 'repeat', 0.3)
-                notes = cmds.get('notes', '')
+                durations = cmds.get('durations', '')
                 if name and values:
                     for note in values.split(','):
                         duration: int = str_to_duration(note)
@@ -372,7 +372,7 @@ class Commands:
                     random = rando.Rando(int(seed))
                     # Construct a table of possible durations
                     probs: list[int] = []
-                    bits = notes.split(',')
+                    bits = durations.split(',')
                     for bit in bits:
                         match = re_rhythm.match(bit)
                         if match:

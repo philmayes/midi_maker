@@ -4,6 +4,7 @@
 ### Syntax
 The text file syntax is a list of commands with the format: `command param1=value1 param2=value2...`. Values are case-sensitive. 
 By convention, a param name is plural when it can take multiple values separated by commas.
+Some command names like `rhythm` are used twice: to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
 Comments start with`;`.
 
 ## Definition Commands
@@ -34,10 +35,16 @@ but you may want to make your own, e.g `chord name=sus4 notes=C,F,G`. The notes 
 ### rhythm
 This can take either of two formats:
 
-* Format1: `rhythm rname=rname values=d1,d2,d3,...`
-* Format2: `rhythm name=rname seed=integer silence=float repeat=float notes=n1,n2,n3...`
+* Format 1: `rhythm name=rname durations=d1,d2,d3,...`
+* Format 2: `rhythm name=rname seed=integer silence=float repeat=float durations=d1,d2,d3...`
 
-Rhythms are of two sorts: values are supplied or random using seed, silence, repeat, notes.
+Rhythms are of two sorts: for format 1, durations are a list of note durations or integers. Integers are a duration in ticks. 960 ticks = a quarter note. The durations can be negative to indicate a rest. For example, `q.,q.,q` is a calypso rhythm; `-q,q,-q,q` is an offbeat rhythm.
+
+Format 2 generates a random rhythm using:
+* `seed`: different seed values produce different rhythms.
+* `silence`: a decimal number less than 1; it is the chance of generating silence rather than a note.
+* `repeat`: a decimal number less than 1; the chance of repeating the previous note.
+* `durations`: a list of durations from which to pick. Each duration is followed by an integer probability, e.g. `q4,h1` means a quarter note is 4 times more likely than a half note.
 
 Use these rhythms in compositions with `rhythm voice=vname rhythms=rname1,rname2...`
 
@@ -53,16 +60,26 @@ These generate the actual MIDI output using the definitions that have been creat
 Format: `bar chords=chord1,chord2...`
 
 ### mute
-The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=voice1,voice2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 
+The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 
 
 ### hear
 If voices have been previously muted, turn one or more on with `hear voices=voice1,voice2...`. Turn all voices on with `hear voices=all`.
+
+### volume
+Format: `volume voices=vname1,vname2,... level=# delta=# rate=#`
+
+Change the volume level of one or more voices. Use `level` to set an absolute level
+or `delta` to make a change. (`level` takes precedence over `delta'.)
+Use `rate` to make the change happen over a period of time.
+For example, `rate=2` will change the volume level by 2 per beat.
 
 ### tune
 Format: `play voice=vname tunes=tune1,tune2...`
 
 Use tune commands with 
 
+### rhythm
+Format: `voice=vname rhythms=rhythm1,rhythm2...`
 
 ### composition
 Format: `composition name=cname`
@@ -81,21 +98,10 @@ Format: `timesig value=3/4` or any other time signature.
 ## Data Formats
 These describe the format of the values supplied to commands.
 
-### notes
-Format: `duration note octave`.
-* `duration` is a note abbreviation such as `c` for quarter (a quarter-note). It can be dotted to make it 50% longer. A duration can be assembled from multiple notes, e.g. `q.+n` is 5½ beats.
-* `note` is A-G with possible # or b e.g. `Eb`.
-* `octave` is 1-10.
-When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `cG5,A,B,C6,D,E,F#,G`. Note that the `C` must be declared in octave 6, otherwise the C below G5 will play.
+### note durations
 
-For example, `q.F#4` will play a dotted quarter-note F# in the 4th octave.
-
-### chords
-### names of notes
-midi_maker uses the English names because their initial letters are (almost) unique. `sixteenth` is the exception; think of `h` as `half`.
-
-| note name | 1/3 note | 2/3 note | abbrs |
-| --------- | -------- | -------- | ----- |
+| duration | 1/3 duration | 2/3 duration | abbreviations |
+| -------- | ------------ | ------------ | ------------- |
 | thirtysecondth | t_thirtysecondth | d_thirtysecondth | t, tt, dt |
 | sixteenth | t_sixteenth | d_sixteenth | s, ts, ds |
 | eighth | t_eighth | d_eighth | e, te, de |
@@ -103,3 +109,20 @@ midi_maker uses the English names because their initial letters are (almost) uni
 | half | t_half | d_half | h, th, dh |
 | note | t_note | d_note | n, tn dn |
 | doublenote | t_doublenote | d_doublenote | d, td, dd |
+
+### notes
+Format: `duration note octave`.
+* `duration` is an abbreviation such as `q` for quarter (a quarter note). It can be dotted to make it 50% longer. A duration can be assembled from multiple parts, e.g. `q.+n` is 5½ beats.
+* `note` is A-G with possible # or b e.g. `Eb`.
+* `octave` is 1-10.
+
+When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `qG5,A,B,C6,D,E,F#,G`. Note that the `C` must be declared in octave 6, otherwise the C below G5 will play.
+
+For example, `q.F#4` will play a dotted quarter note F# in the 4th octave.
+
+### chords
+Format: `[duration] key chord`.
+
+The chord can be one of `maj`,`min`,`m`,`dim`,`aug`,`maj7`,`min7`,`dom7`,`dim7`,`maj6`,`min6`,`maj9`,`min9`. `m` is a sysnomym for `min`, a minor chord. If the chord is omitted. `maj` is assumed.
+
+Some examples: `Eb`: Eb major; `Am`: A minor; `qF#maj7`: F# major 7th played for a quarter note; `h.Gaug`: G augmented for 3 beats.

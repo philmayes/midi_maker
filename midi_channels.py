@@ -18,12 +18,6 @@ class Channel(IntEnum):
     ch14 = 14
     ch15 = 15
     percussion = 9
-    # bass = 0
-    # rhythm = 1
-    # arpeggio = 2
-    # improv1 = 3
-    # improv2 = 4
-    # percussion = 9
     # Above are real MIDI channels;
     # below are pseudo-channels used as percussion tracks.
     perc1 = 16

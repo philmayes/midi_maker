@@ -24,14 +24,14 @@ log_levels = (
     )
 default_log_level = log_levels[2]
 
-def get_logging_level(args:argparse.Namespace) -> str:
+def get_logging_level(args:argparse.Namespace) -> int:
     """Gets the logging level: can be partial word, case-insensitive."""
     short_level = args.log.upper()
     for log_level in log_levels:
         if log_level.startswith(short_level):
-            return log_level
+            return getattr(logging, log_level)
     print(f"Invalid log level '{short_level}'. Defaulting to '{default_log_level}'.")
-    return default_log_level
+    return getattr(logging, default_log_level)
 
 def run(args:argparse.Namespace):
     if args.version:
