@@ -2,10 +2,12 @@
 ## Overview
 `midi_maker` interprets a text file (by convention using a .ini extension) and generates a midi file from it with the same filename in the same directory.
 ### Syntax
-The text file syntax is a list of commands with the format: `command param1=value1 param2=value2...`. Values are case-sensitive. 
-By convention, a param name is plural when it can take multiple values separated by commas.
-Some command names like `volume` or `rhythm` are used twice; e.g. to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
+The text file syntax is a list of commands with the format: `command param1=value1 param2=value2,value3...`. Values are case-sensitive. 
+By convention, a parameter name is plural when it can take multiple values separated by commas.
 Comments start with`;`.
+
+Commands fall into two categories: definitions and performance. Definition commands all have a `name=xxxxx` parameter, and this name is used by the performance commands.
+Some command names like `volume` or `rhythm` are used twice; e.g. to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
 
 ## Definition Commands
 These create the building blocks of a composition. They can occur in any order.
@@ -76,7 +78,7 @@ or `delta` to make a change. (`level` takes precedence over `delta'.)
 Use `rate` to make the change happen over a period of time.
 For example, `rate=2` will change the volume level by 2 per beat.
 
-### tune
+### play
 Format: `play voice=vname tunes=tune1,tune2...`
 
 Use tune commands with 

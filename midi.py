@@ -35,6 +35,7 @@ from midi_notes import NoteDuration as n, note_to_interval
 import midi_parse
 from midi_voice import Voice
 import midi_volume as mv
+import utils
 
 #             C  D  E  F  G  A  B
 major_ints = [0, 2, 4, 5, 7, 9, 11,]
@@ -395,10 +396,13 @@ def make_midi(in_file: str, out_file: str, create: str):
                     for note in tune:
                         # A pitch < 0 requests a period of silence.
                         if note.pitch >= 0:
+                            pitch = utils.make_in_range(note.pitch + item.trans,
+                                                        128,
+                                                        'Play note')
                             volume = mv.get_volume(voice.channel, start)
                             midi_file.addNote(0,
                                             item.voice.channel,
-                                            note.pitch,
+                                            pitch,
                                             add_start_error(start),
                                             note.duration,
                                             volume)

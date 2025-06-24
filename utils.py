@@ -2,7 +2,7 @@ import logging
 
 default_volume = 100
 
-def get_signed_number(text: str) -> int | None:
+def get_signed_int(text: str) -> int | None:
     """Returns possibly signed number as int or None."""
     assert text != '', f'Number is missing'
     neg = False

@@ -57,9 +57,10 @@ class Mute(Item):
 
 class Play(Item):
     """Play tune with voice."""
-    def __init__(self, voice: Voice, tunes: Tunes):
+    def __init__(self, voice: Voice, tunes: Tunes, trans: int):
         self.voice = voice
         self.tunes = tunes
+        self.trans = trans
 
 class Repeat(Item):
     start = -1

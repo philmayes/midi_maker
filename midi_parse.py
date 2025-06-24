@@ -49,21 +49,11 @@ def get_signed_int(cmds: CommandDict, param: str, default: int|str) -> int:
     if not value:
         logging.error(f'Bad signed number {value}')
         return int(default)
-    neg = False
-    if not value.isdigit():
-        sign = value[0]
-        value = value[1:]
-        if sign == '-':
-            neg = True
-        elif sign != '+':
-            logging.error(f'Bad signed number {value}')
-            return int(default)
-    if value.isdigit():
-        number = int(value)
-        if neg:
-            number = -number
-        return number
-    return int(default)
+    number = utils.get_signed_int(value)
+    if number is None:
+        logging.error(f'Bad signed number {value}')
+        return int(default)
+    return number
 
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
@@ -244,14 +234,19 @@ class Commands:
             elif item == 'play':
                 voice: Voice | None = None
                 tunes: Tunes = []
+                trans: int | None = 0
                 for param in params:
                     key, value = param
                     if key == 'voice':
                         voice = self.get_voice(value)
                     elif key == 'tunes':
                         tunes = self.get_tunes(value)
-                if tunes and voice:
-                    composition += Play(voice, tunes)
+                    elif key == 'transcribe':
+                        trans = utils.get_signed_int(value)
+                if tunes and voice and trans is not None:
+                    composition += Play(voice, tunes, trans)
+                else:
+                    logging.warning(f'Bad play command: "{command}"')
 
             elif item == 'repeat':
                 composition += Repeat()
@@ -287,7 +282,7 @@ class Commands:
                         # it is done by ChannelInfo.set_volume
                         key, value = param
                         if key == 'delta':
-                            number = utils.get_signed_number(value)
+                            number = utils.get_signed_int(value)
                             if number is not None:
                                 vol.delta = number
                         if key == 'level':
