@@ -4,7 +4,7 @@
 ### Syntax
 The text file syntax is a list of commands with the format: `command param1=value1 param2=value2...`. Values are case-sensitive. 
 By convention, a param name is plural when it can take multiple values separated by commas.
-Some command names like `rhythm` are used twice: to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
+Some command names like `volume` or `rhythm` are used twice; e.g. to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
 Comments start with`;`.
 
 ## Definition Commands
@@ -25,6 +25,9 @@ Format: `voice name=vname style=perc voice=high_tom volume=percussion`
 
 Each voice is assigned to a separate MIDI channel for a maximum 15 voices
 and an additional 10 `perc`[ussion] styles.
+
+### volume
+Format: `volume name=vname level=#`
 
 ### chord
 Format: `chord name=cname notes=C,E,G,Bb`
@@ -90,7 +93,7 @@ You can have one or more compositions in a file. By naming the composition on th
 Format: `opus name=oname parts=cname1,cname2...`
 
 ### tempo
-Format: `tempo bpm=96` or any other value for beats per minute.
+Format: `tempo bpm=#` supplies the number of beats per minute.
 
 ### timesig
 Format: `timesig value=3/4` or any other time signature.

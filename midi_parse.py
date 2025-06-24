@@ -148,7 +148,7 @@ class Commands:
             self.command_list.append(command)
             self.command_dicts.append(parse_command_dict(clean))
 
-        self.volumes = self.get_volumes()
+        self.volumes = self.get_all_volumes()
         self.voices: list[Voice] = self.get_all_voices()
         self.tunes = self.get_all_tunes()
         self.rhythms = self.get_all_rhythms()
@@ -524,6 +524,20 @@ class Commands:
             mv.set_volume(channel, 0, volume, 0, 0)
         return voices
 
+    def get_all_volumes(self):
+        """Get a dictionary of all volume names and values."""
+        volumes: dict[str, int] = {'default': utils.default_volume}
+        for cmd in self.command_dicts:
+            if cmd['command'] == 'volume':
+                if 'name' in cmd and 'level' in cmd:
+                    name = cmd['name']
+                    level = cmd['level']
+                    if level.isdigit():
+                        volumes[name] = utils.make_in_range(int(level), 128, 'volume name')
+                    else:
+                        logging.error(f'volume name level "{level}" is invalid')
+        return volumes
+
     def get_rhythms(self, value: str) -> Rhythms:
         """Return a list of all the rhythms supplied in param."""
         rhythms: Rhythms = []
@@ -573,22 +587,6 @@ class Commands:
                     else:
                         logging.error(f'Voice {voice_name} does not exist')
         return voices
-
-    def get_volumes(self):
-        """Get a dictionary of all volume names and values."""
-        volumes: dict[str, int] = {'default': utils.default_volume}
-        for command in self.commands:
-            cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
-            if item == 'volname':
-                if params:
-                    key, value = params[0]
-                    if is_text(key) and value.isdigit():
-                        volumes[key] = utils.make_in_range(int(value), 128, 'volname')
-                    else:
-                        logging.error(f'volname "{params[0]}" is invalid')
-        return volumes
 
     def get_works(self, name: str) -> list[str]:
         """Get a list of all opuses or compositions."""
