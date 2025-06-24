@@ -292,6 +292,9 @@ class Commands:
                             if value.isdigit():
                                 vol.rate = int(value)
                     if vol.delta or vol.level:
+                        if vol.delta and vol.level:
+                            logging.warning(f'Cannot specify both level and delta in "{command}"')
+                            vol.delta = 0
                         composition += vol
 
         return composition

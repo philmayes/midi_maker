@@ -90,7 +90,7 @@ def test_set_volume4(setup):
     channel = 0
     #             channel, tick, level, delta, rate
     mv.set_volume(channel,    0,   100,     0,    0)
-    mv.set_volume(channel, 1000,    40,    20,   20)
+    mv.set_volume(channel, 1000,    40,     0,   20)
 
 
 
@@ -114,7 +114,7 @@ def test_set_volume4neg(setup):
     assert vlist(-1).vol == level1
     tick = 500
     level2 = 40
-    delta = -20
+    delta = 0
     rate = 2
     mv.set_volume(channel, tick, level2, delta, rate)
     prev = vlist(-2)
@@ -146,7 +146,7 @@ def test_set_volume4_in_change(setup):
     mv.set_volume(channel,    0,   100,     0,    0)
     mv.set_volume(channel, 1000,    80,     0,    0)
     mv.set_volume(channel, 3000,     0,   -30,   10) # creates(6000,50,10)
-    mv.set_volume(channel, 4000,    90,   -40,   10)
+    mv.set_volume(channel, 4000,    90,     0,   10)
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == 4000

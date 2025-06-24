@@ -6,14 +6,17 @@ The text file syntax is a list of commands with the format: `command param1=valu
 By convention, a parameter name is plural when it can take multiple values separated by commas.
 Comments start with`;`.
 
-Commands fall into two categories: definitions and performance. Definition commands all have a `name=xxxxx` parameter, and this name is used by the performance commands.
+Commands fall into two categories: definitions and performance.
 Some command names like `volume` or `rhythm` are used twice; e.g. to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
 
 ## Definition Commands
-These create the building blocks of a composition. They can occur in any order.
+These create the building blocks of a composition.
+Definition commands all have a `name=xxxxx` parameter, and this name is used by the performance commands.
+They can occur in any order.
 
 ### voice
 Format: `voice name=vname style=perc voice=high_tom volume=percussion`
+
 * `name` is arbitrary.
 * `style` is one of 
   - `perc` A percussion voice
@@ -25,7 +28,8 @@ Format: `voice name=vname style=perc voice=high_tom volume=percussion`
 * `voice` is the General Midi name. If the style is `perc`, the voice should be a percussion name.
 * `volume` is TODO
 
-Each voice is assigned to a separate MIDI channel for a maximum 15 voices
+Voice encompasses both midi voices and midi percussion. 
+Each voice is assigned to a separate MIDI channel. There can be a maximum of 15 voices
 and an additional 10 `perc`[ussion] styles.
 
 ### volume
@@ -79,9 +83,9 @@ Use `rate` to make the change happen over a period of time.
 For example, `rate=2` will change the volume level by 2 per beat.
 
 ### play
-Format: `play voice=vname tunes=tune1,tune2...`
+Format: `play voice=vname tunes=tune1,tune2... transcribe=#`
 
-Use tune commands with 
+Play one or more `tunes` with the specified `voice`. If `transcribe` is supplied, raise or lower the notes by that number of semitones.
 
 ### rhythm
 Format: `voice=vname rhythms=rhythm1,rhythm2...`

@@ -22,7 +22,7 @@ def reset_volume() -> None:
 
 def set_volume(channel: int,
                tick: int,
-               absolute: int,
+               level: int,
                delta: int,
                rate:int) -> None:
     """Adjust the volume of the channel in various ways.
@@ -30,10 +30,10 @@ def set_volume(channel: int,
     case  level  delta   rate  set level  set rate
       1    Y       -      -     to level     -
       2    -       Y      -     by delta     -
-      3    -       Y      Y       -          Y
-      4    Y       Y      Y     to level     Y
-                   ^for case 4, delta is ignored as level takes preference
+      3    -       Y      Y     old vol      Y
+      4    Y              Y     old vol      Y
     There are only 4 cases because level or delta is a requirement
+    and they may not coexist.
     """
 
     global voice_dict
@@ -41,10 +41,11 @@ def set_volume(channel: int,
         voice_dict[channel] = []
     values: list[VolChange] = voice_dict[channel]
 
-    assert absolute or delta
+    assert level or delta
+    assert not (level and delta)
     assert rate >= 0
 
-    if not values and not absolute:
+    if not values and not level:
         logging.warning(f'First volume command should not be delta')
 
     # Remove any entries later than <tick> -- this handles the issue of a
@@ -53,24 +54,21 @@ def set_volume(channel: int,
         values.pop()
 
     old_vol = values[-1].vol if values else utils.default_volume
-    # old_vol = get_volume(channel, tick)
 
     # First set the current volume
-    if absolute and not rate:
-        new_vol = absolute          # case 1
+    if level and not rate:
+        new_vol = level             # case 1
     elif delta and not rate:
         new_vol = old_vol + delta   # case 2
-    elif not absolute:
-        new_vol = old_vol           # case 3
     else:
-        new_vol = old_vol           # case 4
+        new_vol = old_vol           # case 3 or4
     new_vol = utils.make_in_range(new_vol, 128, 'Volume channel1')
     values.append(VolChange(tick, new_vol, 0))
 
     # Then set up possible rate change
     if rate:                        # case 3 or 4
-        if absolute:                # case 4
-            end_vol = absolute
+        if level:                   # case 4
+            end_vol = level
         else:                       # case 3
             end_vol = new_vol + delta
         end_vol = utils.make_in_range(end_vol, 128, 'Volume channel2')
