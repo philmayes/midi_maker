@@ -355,18 +355,11 @@ class Commands:
             if cmds['command'] == 'rhythm':
                 rhythm: Rhythm = []
                 name: str = cmds.get('name', '')
-                values = cmds.get('values', '')
                 seed = get_signed_int(cmds, 'seed', -1)
                 silence = get_float(cmds, 'silence', 0.5)
                 repeat = get_float(cmds, 'repeat', 0.3)
                 durations = cmds.get('durations', '')
-                if name and values:
-                    for note in values.split(','):
-                        duration: int = str_to_duration(note)
-                        # TODO: error handling?
-                        rhythm.append(duration)
-                    rhythms[name] = rhythm
-                elif name and seed >= 0:
+                if name and seed >= 0:
                     random = rando.Rando(int(seed))
                     # Construct a table of possible durations
                     probs: list[int] = []
@@ -394,6 +387,12 @@ class Commands:
                             rhythm.append(dur)
                         tick += dur
                     logging.debug(f'random rhythm {rhythm}')
+                    rhythms[name] = rhythm
+                elif name and durations:
+                    for note in durations.split(','):
+                        duration: int = str_to_duration(note)
+                        # TODO: error handling?
+                        rhythm.append(duration)
                     rhythms[name] = rhythm
                 elif name:
                     logging.error(f'Bad rhythm command "{command}"')
