@@ -7,7 +7,14 @@ from midi_types import *
 default_rhythm: Rhythm = [n.quarter, n.quarter, n.quarter, n.quarter,]
 
 class Voice:
-    styles = ['perc', 'bass', 'rhythm', 'arpeggio', 'improv', 'lead']
+    styles = {
+        'arpeggio': 60,
+        'bass': 100,
+        'improv': 120,
+        'lead': 100,
+        'perc': 100,
+        'rhythm': 60,
+    }
 
     def __init__(self,
                  name: str,

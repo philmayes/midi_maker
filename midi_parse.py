@@ -521,12 +521,15 @@ class Commands:
                 logging.warning(f'No channel in "{command}"')
                 continue
             voices.append(Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
-            mv.set_volume(channel, 0, volume, 0, 0)
+            mv.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
     def get_all_volumes(self):
         """Get a dictionary of all volume names and values."""
         volumes: dict[str, int] = {'default': utils.default_volume}
+        # prime the volumes with defaults
+        for name, level in midi_voice.Voice.styles.items():
+            volumes[name] = level
         for cmd in self.command_dicts:
             if cmd['command'] == 'volume':
                 if 'name' in cmd and 'level' in cmd:
