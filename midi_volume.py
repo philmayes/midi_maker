@@ -28,10 +28,10 @@ def set_volume(channel: int,
     """Adjust the volume of the channel in various ways.
 
     case  level  delta   rate  set level  set rate
-      1    Y       -      -     to level     -
-      2    -       Y      -     by delta     -
-      3    -       Y      Y     old vol      Y
-      4    Y              Y     old vol      Y
+      1     Y      -      -    to level      -
+      2     -      Y      -    by delta      -
+      3     -      Y      Y    old level     Y
+      4     Y             Y    old level     Y
     There are only 4 cases because level or delta is a requirement
     and they may not coexist.
     """

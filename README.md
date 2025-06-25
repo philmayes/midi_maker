@@ -25,7 +25,7 @@ Format: `voice name=vname style=perc voice=high_tom volume=percussion`
   - `arpeggio` Plays choard as arpeggio. Can take extra parameter ` rate=q`.
   - `improv` Improvises based on the chord. Can take extra parameters ` min_pitch=40 max_pitch=60`.
   - `lead` Plays a supplied note list
-* `voice` is the General Midi name. If the style is `perc`, the voice should be a percussion name.
+* `voice` is the General Midi name. If the style is `perc`, the voice should be a percussion name. List all names with`midi_maker.py help voices` or `midi_maker help percussion`.
 * `volume` is TODO
 
 Voice encompasses both midi voices and midi percussion. 

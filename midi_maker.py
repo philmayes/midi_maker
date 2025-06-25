@@ -3,6 +3,7 @@ import logging
 import os
 
 from midi import make_midi
+import midi_help
 import midi_play
 
 major = 0
@@ -38,6 +39,9 @@ def run(args:argparse.Namespace):
         print(f'Version {version}')
         return
     in_file = args.ini
+    if in_file == 'help':
+        midi_help.help(args)
+        return
     if not os.path.exists(in_file):
         logging.critical(f'Input file "{in_file}" does not exist')
         return
@@ -52,6 +56,7 @@ def run(args:argparse.Namespace):
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Create MIDI file')
     parser.add_argument('ini', nargs='?', default='example.ini', help=f'Data to create MIDI file (default: example.ini)')
+    parser.add_argument('topic', nargs='?', help=f'Help topic')
     parser.add_argument('-v', '--version', action="store_true", help='version')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
     parser.add_argument('-c', '--create', default='', help='create composition or opus')
