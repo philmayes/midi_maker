@@ -7,6 +7,7 @@ from collections import namedtuple
 import logging
 
 import midi_notes
+from preferences import prefs
 import utils
 
 # When the change rate is 1, the volume should change by 1 every:
@@ -53,7 +54,7 @@ def set_volume(channel: int,
     while values and values[-1].tick > tick:
         values.pop()
 
-    old_vol = values[-1].vol if values else utils.default_volume
+    old_vol = values[-1].vol if values else prefs.default_volume
 
     # First set the current volume
     if level and not rate:
@@ -107,7 +108,7 @@ def get_volume(channel: int, tick: int) -> int:
     values: list[VolChange] = voice_dict[channel]
     if not values:
         logging.error(f'get_volume called when no volume set')
-        return utils.default_volume
+        return prefs.default_volume
     max_len = len(values)
     for n in range(max_len - 1, -1, -1):
         vc1 = values[n]
@@ -121,4 +122,4 @@ def get_volume(channel: int, tick: int) -> int:
                     return now * dv // dt + vc1.vol
             return vc1.vol
     assert 0, f'Cannot find time {tick} in volume table'
-    return utils.default_volume
+    return prefs.default_volume

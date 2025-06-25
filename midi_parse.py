@@ -11,6 +11,7 @@ from midi_types import *
 import midi_voice
 import midi_voices
 import midi_volume as mv
+from preferences import prefs
 import rando
 import utils
 
@@ -22,7 +23,7 @@ re_timesig = re.compile(r'(\d+)/(\d+)$')
 def clean_line(line: str) -> str:
     max_len = 250
     if len(line) > max_len:
-        logging.error(f'Line starting "{line[:16]}" is longer than ({max_len} chars)')
+        logging.error(f'Line starting "{line[:16]}..." is longer than ({max_len} chars)')
         return ''
     # Remove possible comment
     c = line.find(';')
@@ -354,8 +355,8 @@ class Commands:
                 rhythm: Rhythm = []
                 name: str = cmds.get('name', '')
                 seed = get_signed_int(cmds, 'seed', -1)
-                silence = get_float(cmds, 'silence', 0.5)
-                repeat = get_float(cmds, 'repeat', 0.3)
+                silence = get_float(cmds, 'silence', prefs.rhythm_silence)
+                repeat = get_float(cmds, 'repeat', prefs.rhythm_repeat)
                 durations = cmds.get('durations', '')
                 if name and seed >= 0:
                     random = rando.Rando(int(seed))
@@ -512,7 +513,7 @@ class Commands:
                         volume = utils.make_in_range(int(value), 128, 'Voice volume')
                     else:
                         logging.warning(f'Bad volume in "{command}"')
-                        volume = utils.default_volume
+                        volume = prefs.default_volume
 
             if channel == Channel.none:
                 logging.warning(f'No channel in "{command}"')
@@ -523,7 +524,7 @@ class Commands:
 
     def get_all_volumes(self):
         """Get a dictionary of all volume names and values."""
-        volumes: dict[str, int] = {'default': utils.default_volume}
+        volumes: dict[str, int] = {'default': prefs.default_volume}
         # prime the volumes with defaults
         for name, level in midi_voice.Voice.styles.items():
             volumes[name] = level

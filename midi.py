@@ -35,6 +35,7 @@ from midi_notes import NoteDuration as n, note_to_interval
 import midi_parse
 from midi_voice import Voice
 import midi_volume as mv
+from preferences import prefs
 import utils
 
 #             C  D  E  F  G  A  B
@@ -235,7 +236,7 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
         voice.prev_pitch = pitch
 
         # Choose a duration
-        if voice.prev_duration and random.random() < 0.3:
+        if voice.prev_duration and random.random() < prefs.improv_repeat:
             duration = voice.prev_duration
         else:
             duration = random.choice(durations1)
