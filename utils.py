@@ -3,7 +3,7 @@ import re
 
 re_float = re.compile(r'\d*\.?\d+$')
 
-def get_float(text: str, max_val: float=1.0, min_val: float=0.0) -> float | None:
+def get_float(text: str, min_val: float=0.0, max_val: float=1.0) -> float | None:
     """Returns string as float in range or None."""
     assert text != '', f'Float number is missing'
     if re_float.match(text):
@@ -11,7 +11,7 @@ def get_float(text: str, max_val: float=1.0, min_val: float=0.0) -> float | None
         if min_val <= result < max_val:
             return result 
 
-def get_int(text: str, max_val: int=128, min_val: int=0) -> int | None:
+def get_int(text: str, min_val: int=0, max_val: int=128) -> int | None:
     """Returns string as int in range or None."""
     assert text != '', f'Int number is missing'
     if text.isdigit():

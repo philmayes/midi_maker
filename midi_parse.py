@@ -31,9 +31,9 @@ def clean_line(line: str) -> str:
     # Remove leading & trailing whitespace
     return line.strip()
 
-def get_float(cmds: CommandDict, param: str, max_val: float, default: float|str) -> float:
+def get_float(cmds: CommandDict, param: str, min_val: float, max_val: float, default: float|str) -> float:
     value = cmds.get(param, str(default))
-    result = utils.get_float(value, max_val)
+    result = utils.get_float(value, min_val, max_val)
     if result is None:
         return 0.0
     return result
@@ -356,8 +356,8 @@ class Commands:
                 rhythm: Rhythm = []
                 name: str = cmds.get('name', '')
                 seed = get_signed_int(cmds, 'seed', -1)
-                silence = get_float(cmds, 'silence', 1.0, prefs.rhythm_silence)
-                repeat = get_float(cmds, 'repeat', 1.0, prefs.rhythm_repeat)
+                silence = get_float(cmds, 'silence', 0.0, 1.0, prefs.rhythm_silence)
+                repeat = get_float(cmds, 'repeat', 0.0, 1.0, prefs.rhythm_repeat)
                 durations = cmds.get('durations', '')
                 if name and seed >= 0:
                     random = rando.Rando(int(seed))

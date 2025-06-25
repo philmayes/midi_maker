@@ -11,7 +11,7 @@ Some command names like `volume` or `rhythm` are used twice; e.g. to define a rh
 
 ## Definition Commands
 These create the building blocks of a composition.
-Definition commands all have a `name=xxxxx` parameter, and this name is used by the performance commands.
+With the exception of `preferences`, all definition commands all have a `name=xxxxx` parameter, and this name is used by the performance commands.
 They can occur in any order.
 
 ### voice
@@ -61,6 +61,12 @@ Use these rhythms in compositions with `rhythm voice=vname rhythms=rname1,rname2
 Format: `tune name=tname notes=note1,note2...`
 
 Use tunes with the `play' command.
+
+### preferences
+Format: `preferences improv_repeat=probability rhythm_repeat=probability rhythm_silence=probability default_volume=#`
+
+Adjust various settings. Probability is a decimal number less than 1.0.
+
 
 ## Performance Commands
 These generate the actual MIDI output using the definitions that have been created.

@@ -4,6 +4,8 @@ def test_get_float():
     assert utils.get_float('11') == None
     assert utils.get_float('1') == None
     assert utils.get_float('0.11') == 0.11
+    assert utils.get_float('0.11', 0.0, 1.0) == 0.11
+    assert utils.get_float('0.11', 0.2, 1.0) == None
     assert utils.get_float('bad') == None
     assert utils.get_float('-5.4') == None
 
