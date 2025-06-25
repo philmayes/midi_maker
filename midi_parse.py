@@ -436,85 +436,90 @@ class Commands:
         voices: list[Voice] = []
         next_voice_channel = 1
         next_perc_channel = 1
-        for command in self.commands:
-            if not command:
+        for cmd in self.command_dicts:
+            if cmd['command'] != 'voice':
                 continue
-            words = command.split()
-            if words[0] != 'voice':
-                continue
+            # Create a simulacrum of the command for use in error messages.
+            command = ' '.join(f'{k}={v}' for k,v in cmd.items() if k != 'command')
+            command = 'voice ' + command
 
             # Set up default values
             name: str = ''
             channel: Channel = Channel.none
             voice: int = 0
             style: str = ''
-            volume: int = 0
             min_pitch: int = 0
             max_pitch: int = 127
             rate: int = NoteDuration.quarter
 
-            # parse parameters into the default values
-            for word in words[1:]:
-                if '=' not in word:
-                    logging.warning(f'Missing "=" in "{command}"')
-                    continue
-                key, value = word.split('=', 1)
-                if not value:
-                    logging.warning(f'Missing value in "{command}"')
-                    continue
+            if 'name' in cmd:
+                name = cmd['name']
 
-                if key == 'name':
-                    name = value
+            if 'min_pitch' in cmd:
+                value = utils.get_int(cmd['min_pitch'])
+                if value is None:
+                    logging.warning(f'Bad min_pitch in "{command}"')
+                else:
+                    min_pitch = value
 
-                elif key == 'min_pitch':
-                    if not value.isdigit() or not 0 <= int(value) <= 127:
-                        logging.warning(f'Bad min_pitch in "{command}"')
-                        continue
-                    min_pitch = int(value)
-
-                elif key == 'max_pitch':
-                    if not value.isdigit() or not 0 <= int(value) <= 127:
-                        logging.warning(f'Bad max_pitch in "{command}"')
-                        continue
-                    max_pitch = int(value)
-
-                elif key == 'rate':
-                    rate: int = str_to_duration(value)
-
-                elif key == 'style':
-                    if value in midi_voice.Voice.styles:
-                        style = value
+            if 'max_pitch' in cmd:
+                value = utils.get_int(cmd['max_pitch'])
+                if value is None:
+                    logging.warning(f'Bad max_pitch in "{command}"')
+                else:
+                    if value < min_pitch:
+                        logging.warning(f'max_pitch less than min_pitch in "{command}"')
+                        min_pitch = 0
                     else:
-                        style = 'bass'
-                        logging.warning(f'Bad style in "{command}", using {style}')
+                        max_pitch = value
 
-                elif key == 'voice':
-                    if value in midi_voices.voices:
-                        if next_voice_channel >= 16:
-                            logging.warning(f'Too many voice channels')
-                            continue
-                        voice = midi_voices.voices[value]
-                        channel = str_to_channel(f'ch{next_voice_channel}')
-                        next_voice_channel += 1
-                    elif value in midi_percussion.percussion:
-                        if next_perc_channel >= 10:
-                            logging.warning(f'Too many percussion channels')
-                            continue
+            if 'rate' in cmd:
+                value = cmd['rate']
+                rate: int = str_to_duration(value)
+
+            if 'style' in cmd:
+                value = cmd['style']
+                if value in midi_voice.Voice.styles:
+                    style = value
+                else:
+                    style = 'bass'
+                    logging.warning(f'Bad style in "{command}", using {style}')
+
+            if 'voice' in cmd:
+                value = cmd['voice']
+                if style == 'perc':
+                    if value in midi_percussion.percussion:
                         voice = midi_percussion.percussion[value]
-                        channel = str_to_channel(f'perc{next_perc_channel}')
-                        next_perc_channel += 1
+                    elif value.isdigit():
+                        voice = int(value)
+                        if not 35 <= voice <= 81:
+                            logging.warning(f'voice {voice} is not a valid percussion number')
+                            continue
                     else:
                         logging.warning(f'Bad voice in "{command}"')
                         continue
-
-                elif key == 'volume':
-                    if value in self.volumes:
-                        volume = self.volumes[value]
+                    if next_perc_channel >= 10:
+                        logging.warning(f'Too many percussion channels')
+                        continue
+                    channel = str_to_channel(f'perc{next_perc_channel}')
+                    next_perc_channel += 1
+                else:
+                    assert style
+                    if value in midi_voices.voices:
+                        voice = midi_voices.voices[value]
                     elif value.isdigit():
-                        volume = utils.make_in_range(int(value), 128, 'Voice volume')
+                        voice = int(value)
+                        if not 0 <= voice < 128:
+                            logging.warning(f'voice {voice} is not a valid voice number')
+                            continue
                     else:
-                        logging.warning(f'Bad volume in "{command}"')
-                        volume = prefs.default_volume
+                        logging.warning(f'Bad voice in "{command}"')
+                        continue
+                    if next_voice_channel >= 16:
+                        logging.warning(f'Too many voice channels')
+                        continue
+                    channel = str_to_channel(f'ch{next_voice_channel}')
+                    next_voice_channel += 1
 
             if channel == Channel.none:
                 logging.warning(f'No channel in "{command}"')

@@ -15,18 +15,19 @@ With the exception of `preferences`, all definition commands all have a `name=xx
 They can occur in any order.
 
 ### voice
-Format: `voice name=vname style=perc voice=high_tom volume=percussion`
+Format: `voice name=vname style=perc voice=high_tom`
 
+The `voice` command is used to specify both instruments and percussion.
 * `name` is arbitrary.
-* `style` is one of 
+* `style` is how the voice performs. It is one of 
   - `perc` A percussion voice
   - `rhythm` Plays entire chord
   - `bass` Plays tonic
-  - `arpeggio` Plays choard as arpeggio. Can take extra parameter ` rate=q`.
-  - `improv` Improvises based on the chord. Can take extra parameters ` min_pitch=40 max_pitch=60`.
+  - `arpeggio` Plays chord as arpeggio. Can take extra parameter `rate=q`.
+  - `improv` Improvises based on the chord. Can take extra parameters `min_pitch=# max_pitch=#`.
   - `lead` Plays a supplied note list
-* `voice` is the General Midi name. If the style is `perc`, the voice should be a percussion name. List all names with`midi_maker.py help voices` or `midi_maker help percussion`.
-* `volume` is TODO
+* `voice` is the [General MIDI](https://en.wikipedia.org/wiki/General_MIDI) name. If the style is `perc`, the voice should be a percussion name. You can find all names with`midi_maker.py help voices` or `midi_maker help percussion` or by looking in `midi_voices.py` and `midi_percussion.py`.\
+The voice can also be supplied as an integer. **NOTE** that it should be 0-based, not 1-based.
 
 Voice encompasses both midi voices and midi percussion. 
 Each voice is assigned to a separate MIDI channel. There can be a maximum of 15 voices
