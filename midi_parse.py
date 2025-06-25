@@ -15,7 +15,6 @@ from preferences import prefs
 import rando
 import utils
 
-re_float = re.compile(r'\d*\.?\d+$')
 re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_text = re.compile('[a-zA-Z_]')
 re_timesig = re.compile(r'(\d+)/(\d+)$')
@@ -32,11 +31,12 @@ def clean_line(line: str) -> str:
     # Remove leading & trailing whitespace
     return line.strip()
 
-def get_float(cmds: CommandDict, param: str, default: float|str) -> float:
+def get_float(cmds: CommandDict, param: str, max_val: float, default: float|str) -> float:
     value = cmds.get(param, str(default))
-    if re_float.match(value):
-        return float(value)
-    return 0.0
+    result = utils.get_float(value, max_val)
+    if result is None:
+        return 0.0
+    return result
 
 def get_int(cmds: CommandDict, param: str, default: int|str) -> int:
     value = cmds.get(param, str(default))
@@ -139,6 +139,7 @@ class Commands:
             self.command_list.append(command)
             self.command_dicts.append(parse_command_dict(clean))
 
+        self.get_preferences()
         self.volumes = self.get_all_volumes()
         self.voices: list[Voice] = self.get_all_voices()
         self.tunes = self.get_all_tunes()
@@ -355,8 +356,8 @@ class Commands:
                 rhythm: Rhythm = []
                 name: str = cmds.get('name', '')
                 seed = get_signed_int(cmds, 'seed', -1)
-                silence = get_float(cmds, 'silence', prefs.rhythm_silence)
-                repeat = get_float(cmds, 'repeat', prefs.rhythm_repeat)
+                silence = get_float(cmds, 'silence', 1.0, prefs.rhythm_silence)
+                repeat = get_float(cmds, 'repeat', 1.0, prefs.rhythm_repeat)
                 durations = cmds.get('durations', '')
                 if name and seed >= 0:
                     random = rando.Rando(int(seed))
@@ -538,6 +539,32 @@ class Commands:
                     else:
                         logging.error(f'volume name level "{level}" is invalid')
         return volumes
+
+    def get_preferences(self) -> None:
+        """Get changes to global preferences."""
+        prefs_dict = prefs.__dict__
+        for command in self.commands:
+            item, params = parse_command(command)
+            if item == 'preferences':
+                for key, value in params:
+                    if key in prefs_dict:
+                        pref_type = type(prefs_dict[key])
+                        if pref_type == float:
+                            result = utils.get_float(value, 1.0)
+                            if result is None:
+                                logging.warning(f'Preference out of range: "{key}={value}"')
+                            else:
+                                prefs_dict[key] = value
+                        elif pref_type == int:
+                            result = utils.get_int(value)
+                            if result is None:
+                                logging.warning(f'Preference is not a number: "{key}={value}"')
+                            else:
+                                prefs_dict[key] = value
+                        else:
+                            logging.error(f'Preference type {pref_type} not handled')
+                    else:
+                        logging.warning(f'Unknown preference: "{key}={value}"')
 
     def get_rhythms(self, value: str) -> Rhythms:
         """Return a list of all the rhythms supplied in param."""

@@ -1,4 +1,23 @@
 import logging
+import re
+
+re_float = re.compile(r'\d*\.?\d+$')
+
+def get_float(text: str, max_val: float=1.0, min_val: float=0.0) -> float | None:
+    """Returns string as float in range or None."""
+    assert text != '', f'Float number is missing'
+    if re_float.match(text):
+        result = float(text)
+        if min_val <= result < max_val:
+            return result 
+
+def get_int(text: str, max_val: int=128, min_val: int=0) -> int | None:
+    """Returns string as int in range or None."""
+    assert text != '', f'Int number is missing'
+    if text.isdigit():
+        result = int(text)
+        if min_val <= result < max_val:
+            return result 
 
 def get_signed_int(text: str) -> int | None:
     """Returns possibly signed number as int or None."""
