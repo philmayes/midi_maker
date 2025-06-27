@@ -228,7 +228,7 @@ class Commands:
 
             elif item == 'loop':
                 composition += mi.Loop()
-                pass
+
             elif item == 'mute':
                 voices = self.get_voices(params)
                 composition += mi.Mute(voices)
@@ -243,7 +243,7 @@ class Commands:
                         voice = self.get_voice(value)
                     elif key == 'tunes':
                         tunes = self.get_tunes(value)
-                    elif key == 'transcribe':
+                    elif key == 'transpose':
                         trans = utils.get_signed_int(value)
                 if tunes and voice and trans is not None:
                     composition += mi.Play(voice, tunes, trans)

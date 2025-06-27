@@ -90,9 +90,9 @@ Use `rate` to make the change happen over a period of time.
 For example, `rate=2` will change the volume level by 2 per beat.
 
 ### play
-Format: `play voice=vname tunes=tune1,tune2... transcribe=#`
+Format: `play voice=vname tunes=tune1,tune2... transpose=#`
 
-Play one or more `tunes` with the specified `voice`. If `transcribe` is supplied, raise or lower the notes by that number of semitones.
+Play one or more `tunes` with the specified `voice`. If `transpose` is supplied, raise or lower the notes by that number of semitones.
 
 ### rhythm
 Format: `voice=vname rhythms=rhythm1,rhythm2...`
