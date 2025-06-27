@@ -19,7 +19,7 @@ note_to_interval: dict[str, int] = {
 # The duration is one or more of the shorthand NoteDurations
 # with a possible dot suffix to add 50%. Durations can be added
 # together, e.g. q+n or q.+q and are parsed using a secondary regex.
-re_note = re.compile(r'([tseqhnd+\.]*)([A-G|X][#|b]?)(\d)?$')
+re_note = re.compile(r'([tseqhnd+-\.]*)([A-G|X][#|b]?)(\d)?$')
 
 n32 = prefs.ticks_per_beat // 8
 class NoteDuration:
@@ -171,25 +171,20 @@ def str_to_note(note_str: str) -> mt.Note:
 def str_to_notes(notes: str) -> mt.Tune:
     """Returns the notes (duration and pitch) described by the string."""
     tune: mt.Tune = []
-    last_duration = 0
-    last_octave = -1
-    first = True
+    # Defaults for the first note in case they are not supplied.
+    last_duration = NoteDuration.quarter
+    last_octave = 5
     for note_str in notes.split(','):
         note: mt.Note = str_to_note(note_str)
         if not note.name:
             logging.error(f'Bad note: "{note_str}"')
             continue
-        if first:
-            last_duration = note.duration
-            last_octave = note.octave
-            first = False
-        else:
-            if note.duration == 0:
-                note.duration = last_duration
-            if note.octave == 0:
-                note.octave = last_octave
-            last_duration = note.duration
-            last_octave = note.octave
+        if note.duration == 0:
+            note.duration = last_duration
+        if note.octave == 0:
+            note.octave = last_octave
+        last_duration = note.duration
+        last_octave = note.octave
         note.pitch = note.interval + note.octave * 12
         # print(note)
         tune.append(note)

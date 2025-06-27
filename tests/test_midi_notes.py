@@ -79,3 +79,47 @@ class TestStrToNote:
     def test_str_to_note4(self):
         result = mn.str_to_note('quarter')
         assert result == bad_note
+
+    def test_str_to_note5(self):
+        result = mn.str_to_note('h-qE')
+        assert result.name == 'E'
+        assert result.octave == 0
+        assert result.pitch == 4
+
+class TestStrToNotes:
+    def test_str_to_notes1(self):
+        tune: mt.Tune = mn.str_to_notes('nC5,h-qE,qA,C6')
+        note: mt.Note = tune[0]
+        assert note.duration == mn.NoteDuration.note
+        assert note.name == 'C'
+        assert note.octave == 5
+        assert note.pitch == 60
+        note: mt.Note = tune[1]
+        assert note.duration == mn.NoteDuration.quarter
+        assert note.name == 'E'
+        assert note.octave == 5
+        assert note.pitch == 64
+        note: mt.Note = tune[2]
+        assert note.duration == mn.NoteDuration.quarter
+        assert note.name == 'A'
+        assert note.octave == 5
+        assert note.pitch == 69
+        note: mt.Note = tune[3]
+        assert note.duration == mn.NoteDuration.quarter
+        assert note.name == 'C'
+        assert note.octave == 6
+        assert note.pitch == 72
+
+    def test_str_to_notes2(self):
+        """Test tune without duration or octave for first note."""
+        tune: mt.Tune = mn.str_to_notes('C,h-qE,qA,C6')
+        note: mt.Note = tune[0]
+        assert note.duration == mn.NoteDuration.quarter
+        assert note.name == 'C'
+        assert note.octave == 5
+        assert note.pitch == 60
+        note: mt.Note = tune[1]
+        assert note.duration == mn.NoteDuration.quarter
+        assert note.name == 'E'
+        assert note.octave == 5
+        assert note.pitch == 64
