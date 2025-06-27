@@ -74,16 +74,17 @@ class NoteDuration:
     dd = d_doublenote
     default = quarter  # used when duration is not supplied
 
-def get_duration(text: str) -> int:
+def get_neg_duration(text: str) -> int:
     """Translates the duration string into ticks.
 
     Expects one or more note names, possibly with a trailing dot,
-    and joined with "+" characters.
+    and joined with "-" characters.
     """
     total: int = 0
+    first = True
     if text:
         d = NoteDuration.__dict__
-        for bit in text.split('+'):
+        for bit in text.split('-'):
             dur = bit
             dot = dur[-1] == '.'
             if dot:
@@ -96,7 +97,27 @@ def get_duration(text: str) -> int:
             if dot:
                 duration *= 3
                 duration //= 2
-            total += duration
+            if first:
+                total = duration
+                first = False
+            else:
+                total -= duration
+    if total <= 0:
+        logging.error(f'Negative note duration: "{text}')
+        total = 0
+    return total
+
+def get_duration(text: str) -> int:
+    """Translates the duration string into ticks.
+
+    Expects one or more note names, possibly with a trailing dot,
+    and joined with "+" characters.
+    """
+    total: int = 0
+    if text:
+        d = NoteDuration.__dict__
+        for bit in text.split('+'):
+            total += get_neg_duration(bit)
     return total
 
 def str_to_duration(text: str) -> int:

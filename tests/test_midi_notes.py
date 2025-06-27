@@ -1,6 +1,7 @@
 import midi_notes as mn
+import midi_types as mt
 
-bad_note: mn.Note = mn.Note(0, '', 0, 0, 0)
+bad_note: mt.Note = mt.Note(0, '', 0, 0, 0)
 class TestGetDuration:
     def test_get_duration0(self):
         result = mn.get_duration('')
@@ -43,6 +44,18 @@ class TestGetDuration:
     def test_get_duration9(self):
         result = mn.get_duration('half.+quarter')
         assert result == mn.NoteDuration.note
+
+    def test_get_duration10(self):
+        result = mn.get_duration('n-q')
+        assert result == mn.NoteDuration.half + mn.NoteDuration.quarter
+
+    def test_get_duration11(self):
+        result = mn.get_duration('q+n-q')
+        assert result == mn.NoteDuration.note
+
+    def test_get_duration12(self):
+        result = mn.get_duration('half.-quarter')
+        assert result == mn.NoteDuration.half
 
 class TestStrToNote:
     def test_str_to_note1(self):

@@ -61,7 +61,8 @@ Use these rhythms in compositions with `rhythm voice=vname rhythms=rname1,rname2
 ### tune
 Format: `tune name=tname notes=note1,note2...`
 
-Use tunes with the `play' command.
+See **Data Formats** for the syntax of notes.
+Use tunes with the `play` command.
 
 ### preferences
 Format: `preferences improv_repeat=probability rhythm_repeat=probability rhythm_silence=probability default_volume=# ticks_per_beat=#`
@@ -116,7 +117,9 @@ Format: `timesig value=3/4` or any other time signature.
 ## Data Formats
 These describe the format of the values supplied to commands.
 
-### note durations
+### durations
+
+These are used in the `rhythm`, `tune`, and `bar` commands. 
 
 | duration | 1/3 duration | 2/3 duration | abbreviations |
 | -------- | ------------ | ------------ | ------------- |
@@ -130,7 +133,7 @@ These describe the format of the values supplied to commands.
 
 ### notes
 Format: `duration note octave`.
-* `duration` is an abbreviation such as `q` for quarter (a quarter note). It can be dotted to make it 50% longer. A duration can be assembled from multiple parts, e.g. `q.+n` is 5½ beats.
+* `duration` is an abbreviation such as `q` for quarter (a quarter note). It can be dotted to make it 50% longer. A duration can be assembled from multiple parts, e.g. `q.+n` is 5½ beats; `n-q` is 3 beats.
 * `note` is A-G with possible # or b e.g. `Eb`.
 * `octave` is 1-10.
 
