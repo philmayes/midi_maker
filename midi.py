@@ -309,8 +309,9 @@ def make_rhythm_bar(bar_info: BarInfo,
             # A zero note length is to be extended to the end of the bar.
             # Ignore any duration that has been supplied.
             note_length = bar_end - start
-            duration = 0
-        play_time = duration if duration else note_length
+            play_time = note_length
+        else:
+            play_time = voice.adjust_duration(note_length)
         make_chord(bar_info,
                    voice,
                    pitches,
@@ -377,6 +378,10 @@ def make_midi(in_file: str, out_file: str, create: str):
                 item.voice.rhythms = item.rhythms
             else:
                 logging.warning(f'Beat rhythms not supplied.')
+
+        elif isinstance(item, mi.Effects):
+            for voice in item.voices:
+                voice.staccato = item.staccato
 
         elif isinstance(item, mi.Hear):
             for voice in item.voices:

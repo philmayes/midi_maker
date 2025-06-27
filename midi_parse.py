@@ -204,23 +204,22 @@ class Commands:
                         if chords:
                             composition += mi.Bar(chords)
 
-            elif item == 'rhythm':
-                # syntax: rhythm voice=vvv rhythms=r1,r2,...
-                voice: mi.Voice | None = None
-                rhythms: mt.Rhythms = []
+            elif item == 'effects':
+                # syntax: effects voices=v1,v2 staccato=value
+                voices = self.get_voices(params)
                 for param in params:
                     key, value = param
-                    if key == 'voice':
-                        voice = self.get_voice(value)
-                    elif key == 'rhythms':
-                        rhythms = self.get_rhythms(value)
-                    elif key == 'name':
-                        # Not an error, but not a good .ini layout.
-                        logging.warning('Rhythm definition found within composition')
-                        voice = None
-                        break
-                if voice and rhythms:
-                    composition += mi.Beat(voice, rhythms)
+                    if key == 'staccato':
+                        # staccato can be:
+                        # * an integer that clips a note to that duration
+                        # * a float that reduces the duration by that factor
+                        stac: int | float | None
+                        if value.isdigit():
+                            stac = int(value)
+                        else:
+                            stac = utils.get_float(value, 0.0, 4.0)
+                        if stac is not None:
+                            composition += mi.Effects(voices, stac)
 
             elif item == 'hear':
                 voices = self.get_voices(params)
@@ -249,6 +248,24 @@ class Commands:
                     composition += mi.Play(voice, tunes, trans)
                 else:
                     logging.warning(f'Bad play command: "{command}"')
+
+            elif item == 'rhythm':
+                # syntax: rhythm voice=vvv rhythms=r1,r2,...
+                voice: mi.Voice | None = None
+                rhythms: mt.Rhythms = []
+                for param in params:
+                    key, value = param
+                    if key == 'voice':
+                        voice = self.get_voice(value)
+                    elif key == 'rhythms':
+                        rhythms = self.get_rhythms(value)
+                    elif key == 'name':
+                        # Not an error, but not a good .ini layout.
+                        logging.warning('Rhythm definition found within composition')
+                        voice = None
+                        break
+                if voice and rhythms:
+                    composition += mi.Beat(voice, rhythms)
 
             elif item == 'repeat':
                 composition += mi.Repeat()

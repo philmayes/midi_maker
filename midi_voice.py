@@ -41,6 +41,18 @@ class Voice:
         self.active = True
         self.rhythms: mt.Rhythms = [default_rhythm]
         self.rhythm_index = 0
+        # staccato can be:
+        # * an integer that clips a note to that duration
+        # * a float that reduces the duration by that factor
+        self.staccato: int | float = 0
+
+    def adjust_duration(self, duration: int) -> int:
+        if self.staccato:
+            if isinstance(self.staccato, int):
+                return min(duration, self.staccato)
+            else:
+                return int(duration * self.staccato)
+        return duration
 
     def constrain_pitch(self, pitch: int) -> int:
         """Limit the pitch to that described in the voice."""

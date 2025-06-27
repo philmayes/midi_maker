@@ -35,6 +35,12 @@ class Beat(Item):
         self.voice = voice
         self.rhythms = rhythms
 
+class Effects(Item):
+    """Miscellaneous effects."""
+    def __init__(self, voices: list[Voice], staccato: int | float):
+        self.voices = voices
+        self.staccato = staccato
+
 class Hear(Item):
     """Play (unmute) voice(s)."""
     def __init__(self, voices: list[Voice]):
