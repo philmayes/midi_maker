@@ -17,7 +17,7 @@ note    = whole note
 half    = half    (1/2) note
 quarter = quarter (1/4) note ♩
 eighth  = eighth  (1/8) note ♪
-See midi_notes.NoteDuration for full list.
+See midi_notes.Duration for full list.
 Time signature:
 The bottom number tells what sort of notes each bar is going to contain,
 The top one tells how many of them there will be (or equivalent).
@@ -31,7 +31,7 @@ from midiutil import MIDIFile
 from midi_channels import Channel
 from midi_chords import chord_to_pitches
 import midi_items as mi
-from midi_notes import NoteDuration as n, note_to_interval
+from midi_notes import Duration as n, note_to_interval
 import midi_parse
 import midi_types as mt
 from midi_voice import Voice

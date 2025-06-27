@@ -11,7 +11,7 @@ from preferences import prefs
 import utils
 
 # When the change rate is 1, the volume should change by 1 every:
-ticks_per_rate = midi_notes.NoteDuration.quarter
+ticks_per_rate = midi_notes.Duration.quarter
 
 VolChange = namedtuple('VolChange', 'tick, vol, rate')
 

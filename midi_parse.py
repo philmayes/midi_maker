@@ -190,7 +190,7 @@ class Commands:
                                 key = match.group(2)
                                 cho = match.group(3)
                                 mod = match.group(4)
-                                dur2 = mn.NoteDuration.default
+                                dur2 = mn.Duration.default
                                 if not cho:
                                     cho = 'maj'
                                 cho = cho + mod
@@ -375,7 +375,7 @@ class Commands:
                     # Build a rhythm. We don't know how long the bar is,
                     # could be 4/4, 7/4, etc., so construct for 8/4.
                     tick = 0
-                    end = mn.NoteDuration.doublenote
+                    end = mn.Duration.doublenote
                     dur = 0
                     while tick < end:
                         if tick == 0 or not random.test(repeat):
@@ -396,7 +396,7 @@ class Commands:
                         rhythm.append(duration)
                         total += abs(duration)
                     rhythms[name] = rhythm
-                    logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.NoteDuration.quarter} beats')
+                    logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.Duration.quarter} beats')
                 elif name:
                     logging.error(f'Bad rhythm command "{command}"')
                 else:
@@ -453,7 +453,7 @@ class Commands:
             style: str = ''
             min_pitch: int = 0
             max_pitch: int = 127
-            rate: int = mn.NoteDuration.quarter
+            rate: int = mn.Duration.quarter
 
             if 'name' in cmd:
                 name = cmd['name']

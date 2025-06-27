@@ -13,61 +13,61 @@ class TestGetDuration:
 
     def test_get_duration2(self):
         result = mn.get_duration('h')
-        assert result == mn.NoteDuration.half
+        assert result == mn.Duration.half
 
     def test_get_duration3(self):
         result = mn.get_duration('q.')
-        assert result == mn.NoteDuration.quarter + mn.NoteDuration.eighth
+        assert result == mn.Duration.quarter + mn.Duration.eighth
 
     def test_get_duration4(self):
         result = mn.get_duration('q+h')
-        assert result == mn.NoteDuration.quarter + mn.NoteDuration.half
+        assert result == mn.Duration.quarter + mn.Duration.half
 
     def test_get_duration5(self):
         result = mn.get_duration('q.+h')
-        assert result == mn.NoteDuration.quarter\
-                       + mn.NoteDuration.eighth\
-                       + mn.NoteDuration.half
+        assert result == mn.Duration.quarter\
+                       + mn.Duration.eighth\
+                       + mn.Duration.half
 
     def test_get_duration6(self):
         result = mn.get_duration('q+q')
-        assert result == mn.NoteDuration.half
+        assert result == mn.Duration.half
 
     def test_get_duration7(self):
         result = mn.get_duration('quarter')
-        assert result == mn.NoteDuration.quarter
+        assert result == mn.Duration.quarter
 
     def test_get_duration8(self):
         result = mn.get_duration('half.')
-        assert result == mn.NoteDuration.half +  mn.NoteDuration.quarter
+        assert result == mn.Duration.half +  mn.Duration.quarter
 
     def test_get_duration9(self):
         result = mn.get_duration('half.+quarter')
-        assert result == mn.NoteDuration.note
+        assert result == mn.Duration.note
 
     def test_get_duration10(self):
         result = mn.get_duration('n-q')
-        assert result == mn.NoteDuration.half + mn.NoteDuration.quarter
+        assert result == mn.Duration.half + mn.Duration.quarter
 
     def test_get_duration11(self):
         result = mn.get_duration('q+n-q')
-        assert result == mn.NoteDuration.note
+        assert result == mn.Duration.note
 
     def test_get_duration12(self):
         result = mn.get_duration('half.-quarter')
-        assert result == mn.NoteDuration.half
+        assert result == mn.Duration.half
 
 class TestStrToNote:
     def test_str_to_note1(self):
         result = mn.str_to_note('C')
-        assert result.duration == mn.NoteDuration.default
+        assert result.duration == mn.Duration.default
         assert result.name == 'C'
         assert result.octave == 0
         assert result.pitch == 0
 
     def test_str_to_note2(self):
         result = mn.str_to_note('eEb5')
-        assert result.duration == mn.NoteDuration.eighth
+        assert result.duration == mn.Duration.eighth
         assert result.name == 'Eb'
         assert result.octave == 5
         assert result.pitch == 63
@@ -90,22 +90,22 @@ class TestStrToNotes:
     def test_str_to_notes1(self):
         tune: mt.Tune = mn.str_to_notes('nC5,h-qE,qA,C6')
         note: mt.Note = tune[0]
-        assert note.duration == mn.NoteDuration.note
+        assert note.duration == mn.Duration.note
         assert note.name == 'C'
         assert note.octave == 5
         assert note.pitch == 60
         note: mt.Note = tune[1]
-        assert note.duration == mn.NoteDuration.quarter
+        assert note.duration == mn.Duration.quarter
         assert note.name == 'E'
         assert note.octave == 5
         assert note.pitch == 64
         note: mt.Note = tune[2]
-        assert note.duration == mn.NoteDuration.quarter
+        assert note.duration == mn.Duration.quarter
         assert note.name == 'A'
         assert note.octave == 5
         assert note.pitch == 69
         note: mt.Note = tune[3]
-        assert note.duration == mn.NoteDuration.quarter
+        assert note.duration == mn.Duration.quarter
         assert note.name == 'C'
         assert note.octave == 6
         assert note.pitch == 72
@@ -114,12 +114,12 @@ class TestStrToNotes:
         """Test tune without duration or octave for first note."""
         tune: mt.Tune = mn.str_to_notes('C,h-qE,qA,C6')
         note: mt.Note = tune[0]
-        assert note.duration == mn.NoteDuration.quarter
+        assert note.duration == mn.Duration.quarter
         assert note.name == 'C'
         assert note.octave == 5
         assert note.pitch == 60
         note: mt.Note = tune[1]
-        assert note.duration == mn.NoteDuration.quarter
+        assert note.duration == mn.Duration.quarter
         assert note.name == 'E'
         assert note.octave == 5
         assert note.pitch == 64

@@ -22,7 +22,7 @@ note_to_interval: dict[str, int] = {
 re_note = re.compile(r'([tseqhnd+-\.]*)([A-G|X][#|b]?)(\d)?$')
 
 n32 = prefs.ticks_per_beat // 8
-class NoteDuration:
+class Duration:
     # note durations
     thirtysecondth = n32    # thirtysecond note      120
     sixteenth = 2 * thirtysecondth # sixteenth note  240
@@ -83,7 +83,7 @@ def get_neg_duration(text: str) -> int:
     total: int = 0
     first = True
     if text:
-        d = NoteDuration.__dict__
+        d = Duration.__dict__
         for bit in text.split('-'):
             dur = bit
             dot = dur[-1] == '.'
@@ -115,7 +115,7 @@ def get_duration(text: str) -> int:
     """
     total: int = 0
     if text:
-        d = NoteDuration.__dict__
+        d = Duration.__dict__
         for bit in text.split('+'):
             total += get_neg_duration(bit)
     return total
@@ -135,7 +135,7 @@ def str_to_duration(text: str) -> int:
         if neg:
             duration = -duration
         return duration
-    return NoteDuration.default
+    return Duration.default
 
 def str_to_note(note_str: str) -> mt.Note:
     """Returns the note described by the string."""
@@ -145,7 +145,7 @@ def str_to_note(note_str: str) -> mt.Note:
         duration = match.group(1)
         ticks = get_duration(duration)
         if ticks == 0:
-            ticks = NoteDuration.default
+            ticks = Duration.default
 
         # process the note
         name = match.group(2)
@@ -172,7 +172,7 @@ def str_to_notes(notes: str) -> mt.Tune:
     """Returns the notes (duration and pitch) described by the string."""
     tune: mt.Tune = []
     # Defaults for the first note in case they are not supplied.
-    last_duration = NoteDuration.quarter
+    last_duration = Duration.quarter
     last_octave = 5
     for note_str in notes.split(','):
         note: mt.Note = str_to_note(note_str)

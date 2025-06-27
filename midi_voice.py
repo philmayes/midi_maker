@@ -1,7 +1,7 @@
 import logging
 
 from midi_channels import Channel
-from midi_notes import NoteDuration as n
+from midi_notes import Duration as n
 import midi_types as mt
 
 default_rhythm: mt.Rhythm = [n.quarter, n.quarter, n.quarter, n.quarter,]
