@@ -34,7 +34,7 @@ import midi_items as mi
 from midi_notes import Duration as n, note_to_interval
 import midi_parse
 import midi_types as mt
-from midi_voice import Voice
+from midi_voice import Voice, Voices
 import midi_volume as mv
 from preferences import prefs
 import utils
@@ -328,7 +328,7 @@ def make_midi(in_file: str, out_file: str, create: str):
     with open(in_file, "r") as f_in:
         lines = f_in.readlines()
     commands = midi_parse.Commands(lines)
-    voices: list[Voice] = commands.voices
+    voices: Voices = commands.voices
 
     random.seed(1)
     global start_error

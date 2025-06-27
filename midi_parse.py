@@ -8,7 +8,7 @@ import midi_items as mi
 import midi_notes as mn
 import midi_percussion
 import midi_types as mt
-import midi_voice
+from midi_voice import Voice, Voices
 import midi_voices
 import midi_volume as mv
 from preferences import prefs
@@ -141,7 +141,7 @@ class Commands:
 
         self.get_preferences()
         self.volumes = self.get_all_volumes()
-        self.voices: list[mi.Voice] = self.get_all_voices()
+        self.voices: Voices = self.get_all_voices()
         self.tunes = self.get_all_tunes()
         self.rhythms = self.get_all_rhythms()
         self.get_all_chords()
@@ -233,7 +233,7 @@ class Commands:
                 composition += mi.Mute(voices)
 
             elif item == 'play':
-                voice: mi.Voice | None = None
+                voice: Voice | None = None
                 tunes: mt.Tunes = []
                 trans: int | None = 0
                 for param in params:
@@ -251,7 +251,7 @@ class Commands:
 
             elif item == 'rhythm':
                 # syntax: rhythm voice=vvv rhythms=r1,r2,...
-                voice: mi.Voice | None = None
+                voice: Voice | None = None
                 rhythms: mt.Rhythms = []
                 for param in params:
                     key, value = param
@@ -451,9 +451,9 @@ class Commands:
 
         return tunes
 
-    def get_all_voices(self) -> list[mi.Voice]:
+    def get_all_voices(self) -> Voices:
         """Construct Voice() instances from the list of commands."""
-        voices: list[mi.Voice] = []
+        voices: Voices = []
         next_voice_channel = 1
         next_perc_channel = 1
         for cmd in self.command_dicts:
@@ -499,7 +499,7 @@ class Commands:
 
             if 'style' in cmd:
                 value = cmd['style']
-                if value in midi_voice.Voice.styles:
+                if value in Voice.styles:
                     style = value
                 else:
                     style = 'bass'
@@ -544,7 +544,7 @@ class Commands:
             if channel == Channel.none:
                 logging.warning(f'No channel in "{command}"')
                 continue
-            voices.append(mi.Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
+            voices.append(Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
             mv.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
@@ -552,7 +552,7 @@ class Commands:
         """Get a dictionary of all volume names and values."""
         volumes: dict[str, int] = {'default': prefs.default_volume}
         # prime the volumes with defaults
-        for name, level in midi_voice.Voice.styles.items():
+        for name, level in Voice.styles.items():
             volumes[name] = level
         for cmd in self.command_dicts:
             if cmd['command'] == 'volume':
@@ -613,7 +613,7 @@ class Commands:
                 logging.error(f'tune {tune_name} does not exist')
         return tunes
 
-    def get_voice(self, name: str) -> mi.Voice | None:
+    def get_voice(self, name: str) -> Voice | None:
         """Return the named voice."""
         for voice in self.voices:
             if voice.name == name:
@@ -621,9 +621,9 @@ class Commands:
         else:
             logging.error(f'Voice {name} does not exist')
 
-    def get_voices(self, params: mt.Params) -> list[mi.Voice]:
+    def get_voices(self, params: mt.Params) -> Voices:
         """Return a list of all the voices supplied in params."""
-        voices: list[mi.Voice] = []
+        voices: Voices = []
         for kv in params:
             if kv[0] == 'voices':
                 voice_names = kv[1].split(',')

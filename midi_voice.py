@@ -1,4 +1,5 @@
 import logging
+from typing import TypeAlias
 
 from midi_channels import Channel
 from midi_notes import Duration as n
@@ -70,3 +71,5 @@ class Voice:
         rhythm = self.rhythms[self.rhythm_index]
         self.rhythm_index += 1
         return rhythm
+
+Voices: TypeAlias = list[Voice]

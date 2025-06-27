@@ -1,5 +1,5 @@
 import midi_types as mt
-from midi_voice import Voice
+from midi_voice import Voice, Voices
 from preferences import prefs
 
 class Item:
@@ -37,13 +37,13 @@ class Beat(Item):
 
 class Effects(Item):
     """Miscellaneous effects."""
-    def __init__(self, voices: list[Voice], staccato: int | float):
+    def __init__(self, voices: Voices, staccato: int | float):
         self.voices = voices
         self.staccato = staccato
 
 class Hear(Item):
     """Play (unmute) voice(s)."""
-    def __init__(self, voices: list[Voice]):
+    def __init__(self, voices: Voices):
         self.voices = voices
 
 class Loop(Item):
@@ -59,7 +59,7 @@ class LoopItem:
 
 class Mute(Item):
     """Mute voice(s)."""
-    def __init__(self, voices: list[Voice]):
+    def __init__(self, voices: Voices):
         self.voices = voices
 
 class Play(Item):
@@ -94,7 +94,7 @@ class TimeSig(Item):
 
 class Volume(Item):
     """Adjust volume for voice(s)."""
-    def __init__(self, delta: int, level: int, rate: int, voices: list[Voice]):
+    def __init__(self, delta: int, level: int, rate: int, voices: Voices):
         self.delta = delta  # Amount by which to adjust volume
         self.level = level  # New setting for volume (takes precedence over delta)
         self.rate = rate
