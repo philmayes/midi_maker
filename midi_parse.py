@@ -217,7 +217,7 @@ class Commands:
                         if value.isdigit():
                             stac = int(value)
                         else:
-                            stac = utils.get_float(value, 0.0, 4.0)
+                            stac = utils.get_float(value, 0.0, 4.01)
                         if stac is not None:
                             composition += mi.Effects(voices, stac)
 

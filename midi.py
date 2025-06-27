@@ -119,11 +119,12 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
             old_chord = new_chord
             pitch_index = 0
         volume = mv.get_volume(voice.channel, start)
+        play_time = voice.adjust_duration(duration)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitches[pitch_index],
                                    add_start_error(start),
-                                   duration,
+                                   play_time,
                                    volume)
         pitch_index = (pitch_index + 1) % len(pitches)
         start += duration
@@ -150,11 +151,12 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
             note_length = remaining
         volume = mv.get_volume(voice.channel, start)
         # logging.debug(f'Bass {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord}, duration {note_length}')
+        play_time = voice.adjust_duration(note_length)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitch,
                                    add_start_error(start),
-                                   note_length,
+                                   play_time,
                                    volume)
         start += note_length
 
@@ -260,11 +262,12 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
                 voice.overlap = duration - remaining
         # logging.debug(f'Playing {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord} = {chord}, duration {duration}')
         volume = mv.get_volume(voice.channel, start)
+        play_time = voice.adjust_duration(duration)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitch,
                                    add_start_error(start),
-                                   duration,
+                                   play_time,
                                    volume)
         start += duration
 
@@ -283,11 +286,12 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
             # A zero note length is to be extended to the end of the bar
             note_length = bar_end - start
         volume = mv.get_volume(voice.channel, start)
+        play_time = voice.adjust_duration(note_length)
         bar_info.midi_file.addNote(0,
                                    Channel.percussion,
                                    voice.voice,
                                    add_start_error(start),
-                                   note_length,
+                                   play_time,
                                    volume)
         start += note_length
 
