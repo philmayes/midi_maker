@@ -1,7 +1,7 @@
 import logging
 import re
 
-from midi_types import *
+import midi_types as mt
 from preferences import prefs
 
 note_to_interval: dict[str, int] = {
@@ -116,7 +116,7 @@ def str_to_duration(text: str) -> int:
         return duration
     return NoteDuration.default
 
-def str_to_note(note_str: str) -> Note:
+def str_to_note(note_str: str) -> mt.Note:
     """Returns the note described by the string."""
     match = re_note.match(note_str)
     if match:
@@ -143,18 +143,18 @@ def str_to_note(note_str: str) -> Note:
         octave = int(octave)
 
         pitch = interval + octave * 12
-        return Note(ticks, name, interval, octave, pitch)
+        return mt.Note(ticks, name, interval, octave, pitch)
 
-    return Note(0, '', 0, 0, 0)
+    return mt.Note(0, '', 0, 0, 0)
 
-def str_to_notes(notes: str) -> Tune:
+def str_to_notes(notes: str) -> mt.Tune:
     """Returns the notes (duration and pitch) described by the string."""
-    tune: Tune = []
+    tune: mt.Tune = []
     last_duration = 0
     last_octave = -1
     first = True
     for note_str in notes.split(','):
-        note: Note = str_to_note(note_str)
+        note: mt.Note = str_to_note(note_str)
         if not note.name:
             logging.error(f'Bad note: "{note_str}"')
             continue

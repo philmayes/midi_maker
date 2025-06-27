@@ -1,4 +1,4 @@
-from midi_types import *
+import midi_types as mt
 from midi_voice import Voice
 from preferences import prefs
 
@@ -8,8 +8,8 @@ class Item:
 
 class Bar(Item):
     """Bar description of a composition."""
-    def __init__(self, chords: list[BarChord], repeat: int=1):
-        self.chords: list[BarChord] = chords
+    def __init__(self, chords: list[mt.BarChord], repeat: int=1):
+        self.chords: list[mt.BarChord] = chords
         self.repeat = repeat
         self.clip = False
 
@@ -31,7 +31,7 @@ class Beat(Item):
     """Supply rhythm(s) for voice.
     This is the internal representation of a composition rhythm command.
     """
-    def __init__(self, voice: Voice, rhythms: Rhythms):
+    def __init__(self, voice: Voice, rhythms: mt.Rhythms):
         self.voice = voice
         self.rhythms = rhythms
 
@@ -58,7 +58,7 @@ class Mute(Item):
 
 class Play(Item):
     """Play tune with voice."""
-    def __init__(self, voice: Voice, tunes: Tunes, trans: int):
+    def __init__(self, voice: Voice, tunes: mt.Tunes, trans: int):
         self.voice = voice
         self.tunes = tunes
         self.trans = trans

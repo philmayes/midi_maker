@@ -21,7 +21,7 @@ See midi_notes.NoteDuration for full list.
 Time signature:
 The bottom number tells what sort of notes each bar is going to contain,
 The top one tells how many of them there will be (or equivalent).
-e.g. for 6/8, each bar contains 6 quavers
+e.g. for 6/8, each bar contains 6 eighth notes
 """
 import logging
 import random
@@ -30,9 +30,10 @@ from midiutil import MIDIFile
 
 from midi_channels import Channel
 from midi_chords import chord_to_pitches
-from midi_items import *
+import midi_items as mi
 from midi_notes import NoteDuration as n, note_to_interval
 import midi_parse
+import midi_types as mt
 from midi_voice import Voice
 import midi_volume as mv
 from preferences import prefs
@@ -48,7 +49,7 @@ default_tempo = 120   # In BPM
 # Rhythms represent the timing of events within a bar.
 # Negative values represent a silence.
 # A zero value extends the event to the end of the bar.
-rhythms: dict[str, Rhythm] = {}
+rhythms: dict[str, mt.Rhythm] = {}
 
 # Durations are lists from which to pick a random duration.
 # Used by make_improv_bar().
@@ -59,8 +60,8 @@ class BarInfo:
     """Class that holds info for the current bar."""
     def __init__(self, midi_file: MIDIFile):
         self.midi_file = midi_file
-        self.timesig: TimeSig = TimeSig(4, 4)
-        self.bar: Bar = Bar([])
+        self.timesig: mi.TimeSig = mi.TimeSig(4, 4)
+        self.bar: mi.Bar = mi.Bar([])
         self.start = 0
 
     def bar_end(self) -> int:
@@ -83,9 +84,9 @@ def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
     return max(err, 0)
 
-def get_work(commands: midi_parse.Commands, name: str) -> Composition:
+def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
     """Assembles the components (compositions) of a work."""
-    composition = Composition()
+    composition = mi.Composition()
     works = commands.get_opus(name)
     if works:
         for work in works.split(','):
@@ -159,7 +160,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
 
 def make_chord(bar_info: BarInfo, voice: Voice,
                     # voice: Voice,
-                    pitches: Pitches,
+                    pitches: mt.Pitches,
                     start: int,
                     duration: int):
     start = add_start_error(start)
@@ -350,11 +351,11 @@ def make_midi(in_file: str, out_file: str, create: str):
     # Get a composition and process all the commands in it.
     # composition = commands.get_composition(args.play)
     composition = get_work(commands, create)
-    loop_stack: list[LoopItem] = []
+    loop_stack: list[mi.LoopItem] = []
     item_number = 0
     while item_number < len(composition.items):
         item = composition.items[item_number]
-        if isinstance(item, Bar):
+        if isinstance(item, mi.Bar):
             bar_info.bar = item
             for _ in range(item.repeat):
                 logging.debug(item.chords)
@@ -371,28 +372,28 @@ def make_midi(in_file: str, out_file: str, create: str):
                         make_improv_bar(bar_info, voice)
                 bar_info.start += bar_info.timesig.ticks_per_bar
 
-        elif isinstance(item, Beat):
+        elif isinstance(item, mi.Beat):
             if item.rhythms:
                 item.voice.rhythms = item.rhythms
             else:
                 logging.warning(f'Beat rhythms not supplied.')
 
-        elif isinstance(item, Hear):
+        elif isinstance(item, mi.Hear):
             for voice in item.voices:
                 if voice.channel is not Channel.none:
                     voice.active = True
 
-        elif isinstance(item, Loop):
+        elif isinstance(item, mi.Loop):
                 # This is the beginning of a loop. Save the location
                 # and mark the loop as not started.
-                loop_stack.append(LoopItem(item_number, -1))
+                loop_stack.append(mi.LoopItem(item_number, -1))
 
-        elif isinstance(item, Mute):
+        elif isinstance(item, mi.Mute):
             for voice in item.voices:
                 if voice.channel is not Channel.none:
                     voice.active = False
 
-        elif isinstance(item, Play):
+        elif isinstance(item, mi.Play):
             if item.voice.active:
                 start = bar_info.start
                 for tune in item.tunes:
@@ -411,11 +412,11 @@ def make_midi(in_file: str, out_file: str, create: str):
                                             volume)
                         start += note.duration
 
-        elif isinstance(item, Repeat):
+        elif isinstance(item, mi.Repeat):
             if not loop_stack:
                 logging.warning('Loop stack underflow')
             else:
-                loop_item: LoopItem = loop_stack[-1]
+                loop_item: mi.LoopItem = loop_stack[-1]
                 if loop_item.count == 0:
                     loop_stack.pop()
                     logging.debug('repeat done')
@@ -427,13 +428,13 @@ def make_midi(in_file: str, out_file: str, create: str):
                     loop_item.count -= 1
                     item_number = loop_item.item_no
 
-        elif isinstance(item, Tempo):
+        elif isinstance(item, mi.Tempo):
             midi_file.addTempo(0, bar_info.start, item.tempo)
 
-        elif isinstance(item, TimeSig):
+        elif isinstance(item, mi.TimeSig):
             bar_info.timesig = item
 
-        elif isinstance(item, Volume):
+        elif isinstance(item, mi.Volume):
             # midi_parse is responsible for ensuring the following.
             assert item.level or item.delta, 'Volume has no level or delta'
             # The volume in the voice is not set directly because it may

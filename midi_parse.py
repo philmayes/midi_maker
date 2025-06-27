@@ -4,10 +4,10 @@ import re
 
 from midi_channels import Channel, is_midi, str_to_channel
 import midi_chords
-from midi_items import *
-from midi_notes import *
+import midi_items as mi
+import midi_notes as mn
 import midi_percussion
-from midi_types import *
+import midi_types as mt
 import midi_voice
 import midi_voices
 import midi_volume as mv
@@ -31,20 +31,20 @@ def clean_line(line: str) -> str:
     # Remove leading & trailing whitespace
     return line.strip()
 
-def get_float(cmds: CommandDict, param: str, min_val: float, max_val: float, default: float|str) -> float:
+def get_float(cmds: mt.CmdDict, param: str, min_val: float, max_val: float, default: float|str) -> float:
     value = cmds.get(param, str(default))
     result = utils.get_float(value, min_val, max_val)
     if result is None:
         return 0.0
     return result
 
-def get_int(cmds: CommandDict, param: str, default: int|str) -> int:
+def get_int(cmds: mt.CmdDict, param: str, default: int|str) -> int:
     value = cmds.get(param, str(default))
     if value.isnumeric():
         return int(value)
     return int(default)
 
-def get_signed_int(cmds: CommandDict, param: str, default: int|str) -> int:
+def get_signed_int(cmds: mt.CmdDict, param: str, default: int|str) -> int:
     """Return possibly signed number as int."""
     value: str = cmds.get(param, str(default))
     if not value:
@@ -59,10 +59,10 @@ def get_signed_int(cmds: CommandDict, param: str, default: int|str) -> int:
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
 
-def parse_command(command: str) -> Command:
+def parse_command(command: str) -> mt.Cmd:
     """Parse command into verb and params."""
-    item: Verb = ''
-    params: Params = []
+    item: mt.Verb = ''
+    params: mt.Params = []
     assert command, 'Empty command'
     words = command.split()
 
@@ -90,9 +90,9 @@ def parse_command(command: str) -> Command:
         return item, params
     return '', []
 
-def parse_command_dict(command: str) -> CommandDict:
+def parse_command_dict(command: str) -> mt.CmdDict:
     """Parse command into dictionary."""
-    result: CommandDict = {'command': ''}
+    result: mt.CmdDict = {'command': ''}
     assert command, 'Empty command'
     words = command.split()
 
@@ -125,13 +125,13 @@ class Commands:
         # and validate the command.
         # Assemble command_list and command_dict for future use.
         self.commands: list[str] = []
-        self.command_list: list[Command] = [] # currently unused
-        self.command_dicts: list[CommandDict] = []
+        self.command_list: list[mt.Cmd] = [] # currently unused
+        self.command_dicts: list[mt.CmdDict] = []
         for line in lines:
             clean: str = clean_line(line)
             if not clean:
                 continue
-            command: Command = parse_command(clean)
+            command: mt.Cmd = parse_command(clean)
             if not command[0]:
                 logging.error(f'Bad command "{clean}"')
                 continue
@@ -141,24 +141,24 @@ class Commands:
 
         self.get_preferences()
         self.volumes = self.get_all_volumes()
-        self.voices: list[Voice] = self.get_all_voices()
+        self.voices: list[mi.Voice] = self.get_all_voices()
         self.tunes = self.get_all_tunes()
         self.rhythms = self.get_all_rhythms()
         self.get_all_chords()
 
-    def get_composition(self, name: str='') -> Composition:
+    def get_composition(self, name: str='') -> mi.Composition:
         """Get the list of items between named composition & the next one.
         
         However, if no name is supplied, return all items. This is done so
         that a beginner does not have to deal with composition syntax.
         """
-        composition: Composition = Composition()
+        composition: mi.Composition = mi.Composition()
         is_named: bool = name != ''
         in_composition = not is_named
         for command in self.commands:
             cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
+            item: mt.Verb = cmd[0]
+            params: mt.Params = cmd[1]
             assert item, 'Empty item'
 
             if item == 'composition' and is_named:
@@ -181,7 +181,7 @@ class Commands:
                 if params:
                     key, value = params[0]
                     if key == 'chords':
-                        chords: list[BarChord] = []
+                        chords: list[mt.BarChord] = []
                         tick = 0
                         for chord in value.split(','):
                             match = midi_chords.re_dur_chord.match(chord)
@@ -190,24 +190,24 @@ class Commands:
                                 key = match.group(2)
                                 cho = match.group(3)
                                 mod = match.group(4)
-                                dur2 = NoteDuration.default
+                                dur2 = mn.NoteDuration.default
                                 if not cho:
                                     cho = 'maj'
                                 cho = cho + mod
                                 if not cho in midi_chords.chords:
                                     logging.error(f'Bad chord {chord}')
                                     break
-                                chords.append(BarChord(tick, key, cho))
+                                chords.append(mt.BarChord(tick, key, cho))
                                 tick += dur2
                             else:
                                 logging.error(f'Bad bar chord "{chord}"')
                         if chords:
-                            composition += Bar(chords)
+                            composition += mi.Bar(chords)
 
             elif item == 'rhythm':
                 # syntax: rhythm voice=vvv rhythms=r1,r2,...
-                voice: Voice | None = None
-                rhythms: Rhythms = []
+                voice: mi.Voice | None = None
+                rhythms: mt.Rhythms = []
                 for param in params:
                     key, value = param
                     if key == 'voice':
@@ -220,22 +220,22 @@ class Commands:
                         voice = None
                         break
                 if voice and rhythms:
-                    composition += Beat(voice, rhythms)
+                    composition += mi.Beat(voice, rhythms)
 
             elif item == 'hear':
                 voices = self.get_voices(params)
-                composition += Hear(voices)
+                composition += mi.Hear(voices)
 
             elif item == 'loop':
-                composition += Loop()
+                composition += mi.Loop()
                 pass
             elif item == 'mute':
                 voices = self.get_voices(params)
-                composition += Mute(voices)
+                composition += mi.Mute(voices)
 
             elif item == 'play':
-                voice: Voice | None = None
-                tunes: Tunes = []
+                voice: mi.Voice | None = None
+                tunes: mt.Tunes = []
                 trans: int | None = 0
                 for param in params:
                     key, value = param
@@ -246,19 +246,19 @@ class Commands:
                     elif key == 'transcribe':
                         trans = utils.get_signed_int(value)
                 if tunes and voice and trans is not None:
-                    composition += Play(voice, tunes, trans)
+                    composition += mi.Play(voice, tunes, trans)
                 else:
                     logging.warning(f'Bad play command: "{command}"')
 
             elif item == 'repeat':
-                composition += Repeat()
+                composition += mi.Repeat()
 
             elif item == 'tempo':
                 if params:
                     key, value = params[0]
                     if key == 'bpm':
                         if value.isdigit():
-                            composition += Tempo(int(value))
+                            composition += mi.Tempo(int(value))
                             continue
                 logging.warning(f'Bad tempo in "{command}"')
 
@@ -271,14 +271,14 @@ class Commands:
                             top = int(match.group(1))
                             bottom = int(match.group(2))
                             if bottom.bit_count() == 1:
-                                composition += TimeSig(top, bottom)
+                                composition += mi.TimeSig(top, bottom)
                                 continue
                 logging.warning(f'Bad timesig in "{command}"')
 
             elif item == 'volume':
                 voices = self.get_voices(params)
                 if voices:
-                    vol = Volume(0, 0, 0, voices)
+                    vol = mi.Volume(0, 0, 0, voices)
                     for param in params:
                         # No need to range-check here;
                         # it is done by ChannelInfo.set_volume
@@ -306,8 +306,8 @@ class Commands:
         names: list[str] = []
         for command in self.commands:
             cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
+            item: mt.Verb = cmd[0]
+            params: mt.Params = cmd[1]
             assert item, 'Empty item'
 
             if item == 'opus':
@@ -326,7 +326,7 @@ class Commands:
     def get_all_chords(self):
         """Read and set up non-standard chords."""
         for command in self.commands:
-            cmds: CommandDict = parse_command_dict(command)
+            cmds: mt.CmdDict = parse_command_dict(command)
             if cmds['command'] == 'chord':
                 name: str = cmds.get('name', '')
                 notes = cmds.get('notes', '')
@@ -334,8 +334,8 @@ class Commands:
                     offsets: list[int] = []
                     last_value = -1
                     for note in notes.split(','):
-                        if note in note_to_interval:
-                            offset = note_to_interval[note]
+                        if note in mn.note_to_interval:
+                            offset = mn.note_to_interval[note]
                             while offset <= last_value:
                                 offset += 12
                             offsets.append(offset)
@@ -347,13 +347,13 @@ class Commands:
                 else:
                     logging.error(f'Bad format for command "{command}"')
 
-    def get_all_rhythms(self) -> RhythmDict:
+    def get_all_rhythms(self) -> mt.RhythmDict:
         """Construct Rhythm dictionary from the list of commands."""
-        rhythms: RhythmDict = {}
+        rhythms: mt.RhythmDict = {}
         for command in self.commands:
-            cmds: CommandDict = parse_command_dict(command)
+            cmds: mt.CmdDict = parse_command_dict(command)
             if cmds['command'] == 'rhythm':
-                rhythm: Rhythm = []
+                rhythm: mt.Rhythm = []
                 name: str = cmds.get('name', '')
                 seed = get_signed_int(cmds, 'seed', -1)
                 silence = get_float(cmds, 'silence', 0.0, 1.0, prefs.rhythm_silence)
@@ -367,7 +367,7 @@ class Commands:
                     for bit in bits:
                         match = re_rhythm.match(bit)
                         if match:
-                            dur = str_to_duration(match.group(1))
+                            dur = mn.str_to_duration(match.group(1))
                             for _ in range(int(match.group(2))):
                                 probs.append(dur)
                         else:
@@ -375,7 +375,7 @@ class Commands:
                     # Build a rhythm. We don't know how long the bar is,
                     # could be 4/4, 7/4, etc., so construct for 8/4.
                     tick = 0
-                    end = NoteDuration.doublenote
+                    end = mn.NoteDuration.doublenote
                     dur = 0
                     while tick < end:
                         if tick == 0 or not random.test(repeat):
@@ -391,12 +391,12 @@ class Commands:
                 elif name and durations:
                     total = 0
                     for note in durations.split(','):
-                        duration: int = str_to_duration(note)
+                        duration: int = mn.str_to_duration(note)
                         # TODO: error handling?
                         rhythm.append(duration)
                         total += abs(duration)
                     rhythms[name] = rhythm
-                    logging.debug(f'rhythm named {name} has duration {total} ticks = {total/NoteDuration.quarter} beats')
+                    logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.NoteDuration.quarter} beats')
                 elif name:
                     logging.error(f'Bad rhythm command "{command}"')
                 else:
@@ -405,18 +405,18 @@ class Commands:
                     pass
         return rhythms
 
-    def get_all_tunes(self) -> TuneDict:
+    def get_all_tunes(self) -> mt.TuneDict:
         """Construct Tune dictionary from the list of commands."""
-        tunes: TuneDict = {}
+        tunes: mt.TuneDict = {}
         for command in self.commands:
             cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
+            item: mt.Verb = cmd[0]
+            params: mt.Params = cmd[1]
 
             if item == 'tune':
                 name: str = ''
                 notes: str = ''
-                tune: Tune = []
+                tune: mt.Tune = []
                 for param in params:
                     if param[0] == 'name':
                         name = param[1]
@@ -424,7 +424,7 @@ class Commands:
                         notes = param[1]
 
                 if name and notes:
-                    tune = str_to_notes(notes)
+                    tune = mn.str_to_notes(notes)
                     if name in tunes:
                         logging.error(f'Tune "{name}" already used')
                     else:
@@ -434,9 +434,9 @@ class Commands:
 
         return tunes
 
-    def get_all_voices(self) -> list[Voice]:
+    def get_all_voices(self) -> list[mi.Voice]:
         """Construct Voice() instances from the list of commands."""
-        voices: list[Voice] = []
+        voices: list[mi.Voice] = []
         next_voice_channel = 1
         next_perc_channel = 1
         for cmd in self.command_dicts:
@@ -453,7 +453,7 @@ class Commands:
             style: str = ''
             min_pitch: int = 0
             max_pitch: int = 127
-            rate: int = NoteDuration.quarter
+            rate: int = mn.NoteDuration.quarter
 
             if 'name' in cmd:
                 name = cmd['name']
@@ -478,7 +478,7 @@ class Commands:
 
             if 'rate' in cmd:
                 value = cmd['rate']
-                rate: int = str_to_duration(value)
+                rate: int = mn.str_to_duration(value)
 
             if 'style' in cmd:
                 value = cmd['style']
@@ -527,7 +527,7 @@ class Commands:
             if channel == Channel.none:
                 logging.warning(f'No channel in "{command}"')
                 continue
-            voices.append(Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
+            voices.append(mi.Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
             mv.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
@@ -574,9 +574,9 @@ class Commands:
                     else:
                         logging.warning(f'Unknown preference: "{key}={value}"')
 
-    def get_rhythms(self, value: str) -> Rhythms:
+    def get_rhythms(self, value: str) -> mt.Rhythms:
         """Return a list of all the rhythms supplied in param."""
-        rhythms: Rhythms = []
+        rhythms: mt.Rhythms = []
         rhythm_names = value.split(',')
         for rhythm_name in rhythm_names:
             if rhythm_name in self.rhythms:
@@ -585,9 +585,9 @@ class Commands:
                 logging.error(f'rhythm {rhythm_name} does not exist')
         return rhythms
 
-    def get_tunes(self, value: str) -> Tunes:
+    def get_tunes(self, value: str) -> mt.Tunes:
         """Return a list of all the tunes supplied in param."""
-        tunes: Tunes = []
+        tunes: mt.Tunes = []
         tune_names = value.split(',')
         for tune_name in tune_names:
             if tune_name in self.tunes:
@@ -596,7 +596,7 @@ class Commands:
                 logging.error(f'tune {tune_name} does not exist')
         return tunes
 
-    def get_voice(self, name: str) -> Voice | None:
+    def get_voice(self, name: str) -> mi.Voice | None:
         """Return the named voice."""
         for voice in self.voices:
             if voice.name == name:
@@ -604,9 +604,9 @@ class Commands:
         else:
             logging.error(f'Voice {name} does not exist')
 
-    def get_voices(self, params: Params) -> list[Voice]:
+    def get_voices(self, params: mt.Params) -> list[mi.Voice]:
         """Return a list of all the voices supplied in params."""
-        voices: list[Voice] = []
+        voices: list[mi.Voice] = []
         for kv in params:
             if kv[0] == 'voices':
                 voice_names = kv[1].split(',')
@@ -629,8 +629,8 @@ class Commands:
         names: list[str] = []
         for command in self.commands:
             cmd = parse_command(command)
-            item: Verb = cmd[0]
-            params: Params = cmd[1]
+            item: mt.Verb = cmd[0]
+            params: mt.Params = cmd[1]
             assert item, 'Empty item'
 
             if item == name:

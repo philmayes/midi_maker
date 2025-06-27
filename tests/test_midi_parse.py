@@ -1,7 +1,7 @@
 import midi_items as mi
 from midi_notes import *
 import midi_parse as mp
-from midi_types import *
+import midi_types as mt
 from midi_voice import Voice
 import midi_voices
 
@@ -19,7 +19,7 @@ def test_bar1():
     assert len(comp.items) == 1
     item: mi.Item = comp.items[0]
     assert isinstance(item, mi.Bar)
-    bar_chord: BarChord = item.chords[0]
+    bar_chord: mt.BarChord = item.chords[0]
     assert bar_chord.start == 0
     assert bar_chord.key == 'C'
     assert bar_chord.chord == 'maj'

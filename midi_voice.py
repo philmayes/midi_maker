@@ -2,9 +2,9 @@ import logging
 
 from midi_channels import Channel
 from midi_notes import NoteDuration as n
-from midi_types import *
+import midi_types as mt
 
-default_rhythm: Rhythm = [n.quarter, n.quarter, n.quarter, n.quarter,]
+default_rhythm: mt.Rhythm = [n.quarter, n.quarter, n.quarter, n.quarter,]
 
 class Voice:
     styles = {
@@ -39,7 +39,7 @@ class Voice:
         # Following is information for a channel (which includes percussion)
         # that can be adjusted dynamically.
         self.active = True
-        self.rhythms: Rhythms = [default_rhythm]
+        self.rhythms: mt.Rhythms = [default_rhythm]
         self.rhythm_index = 0
 
     def constrain_pitch(self, pitch: int) -> int:
@@ -52,7 +52,7 @@ class Voice:
             pitch -= 12
         return pitch
 
-    def get_rhythm(self) -> Rhythm:
+    def get_rhythm(self) -> mt.Rhythm:
         if self.rhythm_index >= len(self.rhythms):
             self.rhythm_index = 0
         rhythm = self.rhythms[self.rhythm_index]
