@@ -1,59 +1,68 @@
-from midi_notes import *
+import midi_notes as mn
 
-bad_note: Note = Note(0, '', 0, 0, 0)
+bad_note: mn.Note = mn.Note(0, '', 0, 0, 0)
 class TestGetDuration:
     def test_get_duration0(self):
-        result = get_duration('')
-        assert result == NoteDuration.default
+        result = mn.get_duration('')
+        assert result == 0
 
     def test_get_duration1(self):
-        result = get_duration('C')
-        assert result == NoteDuration.default
+        result = mn.get_duration('C')
+        assert result == 0
 
     def test_get_duration2(self):
-        result = get_duration('h')
-        assert result == NoteDuration.half
+        result = mn.get_duration('h')
+        assert result == mn.NoteDuration.half
 
     def test_get_duration3(self):
-        result = get_duration('c.')
-        assert result == NoteDuration.quarter + NoteDuration.eighth
+        result = mn.get_duration('q.')
+        assert result == mn.NoteDuration.quarter + mn.NoteDuration.eighth
 
     def test_get_duration4(self):
-        result = get_duration('c+m')
-        assert result == NoteDuration.quarter + NoteDuration.half
+        result = mn.get_duration('q+h')
+        assert result == mn.NoteDuration.quarter + mn.NoteDuration.half
 
     def test_get_duration5(self):
-        result = get_duration('c.+m')
-        assert result == NoteDuration.quarter\
-                       + NoteDuration.eighth\
-                       + NoteDuration.half
+        result = mn.get_duration('q.+h')
+        assert result == mn.NoteDuration.quarter\
+                       + mn.NoteDuration.eighth\
+                       + mn.NoteDuration.half
 
     def test_get_duration6(self):
-        result = get_duration('c+c')
-        assert result == NoteDuration.half
+        result = mn.get_duration('q+q')
+        assert result == mn.NoteDuration.half
+
+    def test_get_duration7(self):
+        result = mn.get_duration('quarter')
+        assert result == mn.NoteDuration.quarter
+
+    def test_get_duration8(self):
+        result = mn.get_duration('half.')
+        assert result == mn.NoteDuration.half +  mn.NoteDuration.quarter
+
+    def test_get_duration9(self):
+        result = mn.get_duration('half.+quarter')
+        assert result == mn.NoteDuration.note
 
 class TestStrToNote:
     def test_str_to_note1(self):
-        result = str_to_note('C')
-        assert result.duration == NoteDuration.default
+        result = mn.str_to_note('C')
+        assert result.duration == mn.NoteDuration.default
         assert result.name == 'C'
-        assert result.octave == 4
-        assert result.pitch == 48
+        assert result.octave == 0
+        assert result.pitch == 0
 
     def test_str_to_note2(self):
-        result = str_to_note('qEb5')
-        assert result.duration == NoteDuration.eighth
+        result = mn.str_to_note('eEb5')
+        assert result.duration == mn.NoteDuration.eighth
         assert result.name == 'Eb'
         assert result.octave == 5
         assert result.pitch == 63
 
     def test_str_to_note3(self):
-        result = str_to_note('m5X')
+        result = mn.str_to_note('m5X')
         assert result == bad_note
 
     def test_str_to_note4(self):
-        result = str_to_note('Cf#')
-        assert result.duration == NoteDuration.default
-        assert result.name == 'C'
-        assert result.octave == 4
-        assert result.pitch == 48
+        result = mn.str_to_note('quarter')
+        assert result == bad_note

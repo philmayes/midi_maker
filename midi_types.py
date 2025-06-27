@@ -14,6 +14,13 @@ class Note:
     def __str__(self):
         return f'{self.duration:4} {self.name} {self.interval} {self.octave} {self.pitch}'
 
+    def __eq__(self, other):
+        return self.duration == other.duration and\
+               self.name == other.name and\
+               self.interval == other.interval and\
+               self.octave == other.octave and\
+               self.pitch == other.pitch
+
 # Used in midi.py
 Notes: TypeAlias = list[str]
 Pitches: TypeAlias = list[int]

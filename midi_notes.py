@@ -2,6 +2,7 @@ import logging
 import re
 
 from midi_types import *
+from preferences import prefs
 
 note_to_interval: dict[str, int] = {
     'Cb':11, 'C':  0, 'C#': 1,
@@ -19,11 +20,11 @@ note_to_interval: dict[str, int] = {
 # with a possible dot suffix to add 50%. Durations can be added
 # together, e.g. q+n or q.+q and are parsed using a secondary regex.
 re_note = re.compile(r'([tseqhnd+\.]*)([A-G|X][#|b]?)(\d)?$')
-re_duration = re.compile(r'([t|d]?[tseqhnd])?(\.)?$')
 
+n32 = prefs.ticks_per_beat // 8
 class NoteDuration:
     # note durations
-    thirtysecondth = 120    # thirtysecond note      120
+    thirtysecondth = n32    # thirtysecond note      120
     sixteenth = 2 * thirtysecondth # sixteenth note  240
     eighth = 2 * sixteenth  # eighth note            480
     quarter = 2 * eighth    # quarter note           960
@@ -74,17 +75,20 @@ class NoteDuration:
     default = quarter  # used when duration is not supplied
 
 def get_duration(text: str) -> int:
-    """Translates the duration string into ticks."""
+    """Translates the duration string into ticks.
+
+    Expects one or more note names, possibly with a trailing dot,
+    and joined with "+" characters.
+    """
     total: int = 0
     if text:
+        d = NoteDuration.__dict__
         for bit in text.split('+'):
-            match = re_duration.match(bit)
-            if match is None:
-                # logging.error(f'Bad duration: "{bit}')
-                break
-            dur = match.group(1)
-            dot = match.group(2)
-            d = NoteDuration.__dict__
+            dur = bit
+            dot = dur[-1] == '.'
+            if dot:
+                dur = dur[:-1]
+
             if dur not in d:
                 logging.error(f'Bad duration: "{bit}')
                 break
@@ -110,7 +114,6 @@ def str_to_duration(text: str) -> int:
         if neg:
             duration = -duration
         return duration
-        # logging.warning(f'Duration "{text}" not recognized')
     return NoteDuration.default
 
 def str_to_note(note_str: str) -> Note:

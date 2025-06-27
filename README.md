@@ -64,7 +64,7 @@ Format: `tune name=tname notes=note1,note2...`
 Use tunes with the `play' command.
 
 ### preferences
-Format: `preferences improv_repeat=probability rhythm_repeat=probability rhythm_silence=probability default_volume=#`
+Format: `preferences improv_repeat=probability rhythm_repeat=probability rhythm_silence=probability default_volume=# ticks_per_beat=#`
 
 Adjust various settings. Probability is a decimal number less than 1.0.
 
@@ -96,6 +96,8 @@ Play one or more `tunes` with the specified `voice`. If `transcribe` is supplied
 
 ### rhythm
 Format: `voice=vname rhythms=rhythm1,rhythm2...`
+
+If the voice style is percussion, bass or rhythm, it will use the rhythm supplied and repeat it for each bar. If multiple rhythms are supplied, they will be used in turn, one per bar. When all rhythms have been played, the first one is used again.
 
 ### composition
 Format: `composition name=cname`

@@ -389,11 +389,14 @@ class Commands:
                     logging.debug(f'random rhythm {rhythm}')
                     rhythms[name] = rhythm
                 elif name and durations:
+                    total = 0
                     for note in durations.split(','):
                         duration: int = str_to_duration(note)
                         # TODO: error handling?
                         rhythm.append(duration)
+                        total += abs(duration)
                     rhythms[name] = rhythm
+                    logging.debug(f'rhythm named {name} has duration {total} ticks = {total/NoteDuration.quarter} beats')
                 elif name:
                     logging.error(f'Bad rhythm command "{command}"')
                 else:
