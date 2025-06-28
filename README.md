@@ -76,6 +76,8 @@ These generate the actual MIDI output using the definitions that have been creat
 ### bar
 Format: `bar chords=chord1,chord2...`
 
+The chords can be preceded by a duration; if not, a quarter note is assumed.
+
 ### mute
 The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 
 

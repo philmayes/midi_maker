@@ -1,3 +1,5 @@
+"""General utility functions."""
+
 import logging
 import re
 

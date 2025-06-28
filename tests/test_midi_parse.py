@@ -12,6 +12,7 @@ lines: list[str] = [
 ]
 
 def test_bar1():
+    """Test a single chord."""
     lines: list[str] = [
         'bar chords=Cmaj',
     ]
@@ -26,6 +27,7 @@ def test_bar1():
     assert bar_chord.chord == 'maj'
 
 def test_bar2():
+    """Test two chords without duration."""
     lines: list[str] = [
         'bar chords=Cmaj,G',
     ]
@@ -44,6 +46,7 @@ def test_bar2():
     assert bar_chord.chord == 'maj'
 
 def test_bar3():
+    """Test two chords with duration."""
     lines: list[str] = [
         'bar chords=hCmaj,G',
     ]
@@ -60,6 +63,48 @@ def test_bar3():
     assert bar_chord.start == dur.half
     assert bar_chord.key == 'G'
     assert bar_chord.chord == 'maj'
+
+def test_bar4():
+    """Test two chords with dotted duration."""
+    lines: list[str] = [
+        'bar chords=h.Cmaj,G',
+    ]
+    commands = mp.Commands(lines)
+    comp: mi.Composition = commands.get_composition()
+    assert len(comp.items) == 1
+    item: mi.Item = comp.items[0]
+    assert isinstance(item, mi.Bar)
+    bar_chord: mt.BarChord = item.chords[0]
+    assert bar_chord.start == 0
+    assert bar_chord.key == 'C'
+    assert bar_chord.chord == 'maj'
+    bar_chord: mt.BarChord = item.chords[1]
+    assert bar_chord.start == dur.half + dur.quarter
+    assert bar_chord.key == 'G'
+    assert bar_chord.chord == 'maj'
+
+def loop1():
+    lines: list[str] = [
+        'loop',
+        'bar chords=G',
+        'bar chords=C',
+        'repeat',
+    ]
+    commands = mp.Commands(lines)
+    comp: mi.Composition = commands.get_composition()
+    assert len(comp.items) == 4
+    item: mi.Item = comp.items[0]
+    assert isinstance(item, mi.Bar)
+    assert item.chords[0].chord.key == 'G'
+    item: mi.Item = comp.items[0]
+    assert isinstance(item, mi.Bar)
+    assert item.chords[1].chord.key == 'C'
+    item: mi.Item = comp.items[0]
+    assert isinstance(item, mi.Bar)
+    assert item.chords[2].chord.key == 'G'
+    item: mi.Item = comp.items[0]
+    assert isinstance(item, mi.Bar)
+    assert item.chords[3].chord.key == 'C'
 
 def test_voice1():
     """Test normal voice command."""

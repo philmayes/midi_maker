@@ -1,4 +1,5 @@
 """Parse the input file."""
+
 import logging
 import re
 
@@ -30,6 +31,20 @@ def clean_line(line: str) -> str:
         line = line[:c]
     # Remove leading & trailing whitespace
     return line.strip()
+
+def expect(cmd: mt.Cmd, names: list[str]) -> None:
+    """Report any unexpected parameters in command."""
+    item: mt.Verb = cmd[0]
+    params: mt.Params = cmd[1]
+    unexpected: list[str] = []
+    for param in params:
+        key, value = param
+        if key not in names:
+            unexpected.append(key)
+    if unexpected:
+        command = ' '.join(f'{kv[0]}={kv[1]}' for kv in params)
+        logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{item} {command}"')
+    return
 
 def get_float(cmds: mt.CmdDict, param: str, min_val: float, max_val: float, default: float|str) -> float:
     value = cmds.get(param, str(default))
@@ -177,7 +192,7 @@ class Commands:
                 continue
 
             elif item == 'bar':
-                # syntax: bar chords=eCmaj,qGmaj7
+                expect(cmd, ['chords'])
                 for param in params:
                     key, value = param
                     if key == 'chords':
@@ -209,12 +224,10 @@ class Commands:
                         if chords:
                             composition += mi.Bar(chords)
                         break   # don't loop, find a 2nd 'chords' and over-write!
-                    else:
-                        logging.error(f'Bad parameter in "{command}"')
-                        continue
 
             elif item == 'effects':
                 # syntax: effects voices=v1,v2 staccato=value
+                expect(cmd, ['voices', 'staccato'])
                 voices = self.get_voices(params)
                 for param in params:
                     key, value = param
@@ -231,17 +244,21 @@ class Commands:
                             composition += mi.Effects(voices, stac)
 
             elif item == 'hear':
+                expect(cmd, ['voices'])
                 voices = self.get_voices(params)
                 composition += mi.Hear(voices)
 
             elif item == 'loop':
+                expect(cmd, [])
                 composition += mi.Loop()
 
             elif item == 'mute':
+                expect(cmd, ['voices'])
                 voices = self.get_voices(params)
                 composition += mi.Mute(voices)
 
             elif item == 'play':
+                expect(cmd, ['voice', 'tunes', 'transpose'])
                 voice: Voice | None = None
                 tunes: mt.Tunes = []
                 trans: int | None = 0
@@ -261,6 +278,7 @@ class Commands:
             elif item == 'rhythm':
                 # syntax: rhythm voices=v1,v2... rhythms=r1,r2,...
                 # Creates a Beat() instance, not a Rhythm() instance!
+                expect(cmd, ['voices', 'rhythms'])
                 voices = self.get_voices(params)
                 rhythms: mt.Rhythms = []
                 for param in params:
@@ -277,6 +295,7 @@ class Commands:
                         composition += mi.Beat(voices, rhythms)
 
             elif item == 'repeat':
+                expect(cmd, ['count'])
                 repeat = 2
                 for param in params:
                     key, value = param
@@ -289,6 +308,7 @@ class Commands:
                 composition += mi.Repeat(repeat)
 
             elif item == 'tempo':
+                expect(cmd, ['bpm'])
                 if params:
                     key, value = params[0]
                     if key == 'bpm':
@@ -298,6 +318,7 @@ class Commands:
                 logging.warning(f'Bad tempo in "{command}"')
 
             elif item == 'timesig':
+                expect(cmd, ['value'])
                 if params:
                     key, value = params[0]
                     if key == 'value':
@@ -311,6 +332,7 @@ class Commands:
                 logging.warning(f'Bad timesig in "{command}"')
 
             elif item == 'volume':
+                expect(cmd, ['voices', 'delta', 'level', 'rate'])
                 voices = self.get_voices(params)
                 if voices:
                     vol = mi.Volume(0, 0, 0, voices)
@@ -346,6 +368,7 @@ class Commands:
             assert item, 'Empty item'
 
             if item == 'opus':
+                expect(cmd, ['name', 'parts'])
                 found = False
                 parts = ''
                 for param in params:
@@ -363,6 +386,7 @@ class Commands:
         for command in self.commands:
             cmds: mt.CmdDict = parse_command_dict(command)
             if cmds['command'] == 'chord':
+                # expect(cmd, ['name', 'notes'])
                 name: str = cmds.get('name', '')
                 notes = cmds.get('notes', '')
                 if name and notes:
@@ -445,6 +469,7 @@ class Commands:
             params: mt.Params = cmd[1]
 
             if item == 'tune':
+                expect(cmd, ['name', 'notes'])
                 name: str = ''
                 notes: str = ''
                 tune: mt.Tune = []
@@ -666,6 +691,7 @@ class Commands:
 
             if item == name:
                 if params:
+                    expect(cmd, ['name'])
                     key, value = params[0]
                     if key == 'name':
                         names.append(value)

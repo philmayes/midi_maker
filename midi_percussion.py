@@ -1,4 +1,5 @@
-# General MIDI (GM 1) percussive sounds
+"""Names of the General MIDI (GM 1) percussive sounds."""
+
 percussion: dict[str, int] = {
     'acoustic_bass_drum': 35, # Acoustic Bass Drum or Low Bass Drum
     'electric_bass_drum': 36, # Electric Bass Drum or High Bass Drum

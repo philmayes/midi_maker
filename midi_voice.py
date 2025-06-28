@@ -1,3 +1,5 @@
+"""Class that handles MIDI voices."""
+
 import logging
 from typing import TypeAlias
 

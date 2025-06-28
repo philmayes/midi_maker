@@ -1,3 +1,5 @@
+"""Names of notes and functions for parsing strings of notes."""
+
 import logging
 import re
 

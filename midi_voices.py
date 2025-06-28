@@ -1,3 +1,5 @@
+"""Names of the General MIDI (GM 1) voices."""
+
 voices: dict[str, int] = {
     # General MIDI (GM 1) voices
     #_Piano
