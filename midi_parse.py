@@ -250,22 +250,22 @@ class Commands:
                     logging.warning(f'Bad play command: "{command}"')
 
             elif item == 'rhythm':
-                # syntax: rhythm voice=vvv rhythms=r1,r2,...
-                voice: Voice | None = None
+                # syntax: rhythm voices=v1,v2... rhythms=r1,r2,...
+                # Creates a Beat() instance, not a Rhythm() instance!
+                voices = self.get_voices(params)
                 rhythms: mt.Rhythms = []
                 for param in params:
                     key, value = param
-                    if key == 'voice':
-                        voice = self.get_voice(value)
-                    elif key == 'rhythms':
+                    if key == 'rhythms':
                         rhythms = self.get_rhythms(value)
                     elif key == 'name':
                         # Not an error, but not a good .ini layout.
                         logging.warning('Rhythm definition found within composition')
-                        voice = None
                         break
-                if voice and rhythms:
-                    composition += mi.Beat(voice, rhythms)
+                else:
+                    # That weird python sytax meaning the loop completed!
+                    if voices and rhythms:
+                        composition += mi.Beat(voices, rhythms)
 
             elif item == 'repeat':
                 composition += mi.Repeat()
@@ -377,7 +377,6 @@ class Commands:
                 repeat = get_float(cmds, 'repeat', 0.0, 1.0, prefs.rhythm_repeat)
                 durations = cmds.get('durations', '')
                 if name and seed >= 0:
-                    random = rando.Rando(int(seed))
                     # Construct a table of possible durations
                     probs: list[int] = []
                     bits = durations.split(',')
@@ -391,6 +390,7 @@ class Commands:
                             logging.debug(f'Bad note {bit} in rhythm')
                     # Build a rhythm. We don't know how long the bar is,
                     # could be 4/4, 7/4, etc., so construct for 8/4.
+                    random = rando.Rando(int(seed))
                     tick = 0
                     end = mn.Duration.doublenote
                     dur = 0
@@ -406,19 +406,15 @@ class Commands:
                     logging.debug(f'random rhythm {rhythm}')
                     rhythms[name] = rhythm
                 elif name and durations:
-                    total = 0
-                    for note in durations.split(','):
-                        duration: int = mn.str_to_duration(note)
-                        # TODO: error handling?
-                        rhythm.append(duration)
-                        total += abs(duration)
+                    rhythm = mn.str_to_durations(durations)
                     rhythms[name] = rhythm
+                    total = sum(rhythm)
                     logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.Duration.quarter} beats')
                 elif name:
                     logging.error(f'Bad rhythm command "{command}"')
                 else:
                     # This is a composition rhythm command. We are too lazy
-                    # to check that it actually live within a composition.
+                    # to check that it actually lives within a composition.
                     pass
         return rhythms
 

@@ -31,8 +31,8 @@ class Beat(Item):
     """Supply rhythm(s) for voice.
     This is the internal representation of a composition rhythm command.
     """
-    def __init__(self, voice: Voice, rhythms: mt.Rhythms):
-        self.voice = voice
+    def __init__(self, voices: Voices, rhythms: mt.Rhythms):
+        self.voices = voices
         self.rhythms = rhythms
 
 class Effects(Item):

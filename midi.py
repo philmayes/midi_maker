@@ -378,10 +378,8 @@ def make_midi(in_file: str, out_file: str, create: str):
                 bar_info.start += bar_info.timesig.ticks_per_bar
 
         elif isinstance(item, mi.Beat):
-            if item.rhythms:
-                item.voice.rhythms = item.rhythms
-            else:
-                logging.warning(f'Beat rhythms not supplied.')
+            for voice in item.voices:
+                voice.rhythms = item.rhythms
 
         elif isinstance(item, mi.Effects):
             for voice in item.voices:

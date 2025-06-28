@@ -135,7 +135,17 @@ def str_to_duration(text: str) -> int:
         if neg:
             duration = -duration
         return duration
-    return Duration.default
+    # return Duration.default
+    return 0
+
+def str_to_durations(text: str) -> list[int]:
+    """Returns the note durations described by the string."""
+    if not text:
+        return []   # because the code below would return [0]
+    durations: list[int] = []
+    for note in text.split(','):
+        durations.append(str_to_duration(note))
+    return durations
 
 def str_to_note(note_str: str) -> mt.Note:
     """Returns the note described by the string."""

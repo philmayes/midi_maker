@@ -56,7 +56,7 @@ Format 2 generates a random rhythm using:
 * `repeat`: a decimal number less than 1; the chance of repeating the previous note.
 * `durations`: a list of durations from which to pick. Each duration is followed by an integer probability, e.g. `q4,h1` means a quarter note is 4 times more likely than a half note.
 
-Use these rhythms in compositions with `rhythm voice=vname rhythms=rname1,rname2...`
+Use these rhythms in compositions with `rhythm voices=vname1,vname2... rhythms=rname1,rname2...`
 
 ### tune
 Format: `tune name=tname notes=note1,note2...`
@@ -93,12 +93,14 @@ For example, `rate=2` will change the volume level by 2 per beat.
 ### play
 Format: `play voice=vname tunes=tune1,tune2... transpose=#`
 
-Play one or more `tunes` with the specified `voice`. If `transpose` is supplied, raise or lower the notes by that number of semitones.
+Play one or more `tunes` in turn with the specified `voice`. If `transpose` is supplied, raise or lower the notes by that number of semitones.
 
 ### rhythm
-Format: `voice=vname rhythms=rhythm1,rhythm2...`
+Format: `rhythm voices=vname1,vname2... rhythms=rhythm1,rhythm2...`
 
-If the voice style is percussion, bass or rhythm, it will use the rhythm supplied and repeat it for each bar. If multiple rhythms are supplied, they will be used in turn, one per bar. When all rhythms have been played, the first one is used again.
+Note that the `rhythm` command is used both to define a rhythm (see above) and (here) to invoke it.
+
+If the voice style is `perc`, `bass` or `rhythm`, it will use the rhythm supplied and repeat it for each bar. If multiple rhythms are supplied, they will be used in turn, one per bar. When all rhythms have been played, the first one is used again.
 
 ### composition
 Format: `composition name=cname`

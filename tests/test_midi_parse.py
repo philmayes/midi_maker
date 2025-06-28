@@ -1,5 +1,6 @@
 import midi_items as mi
-from midi_notes import *
+# import midi_notes as mn
+from midi_notes import Duration as dur
 import midi_parse as mp
 import midi_types as mt
 from midi_voice import Voice
@@ -76,3 +77,26 @@ def test_voice5():
     voice: Voice = commands.voices[0]
     assert voice.min_pitch == 0
     assert voice.max_pitch == 127
+
+def test_rhythm1():
+    """Test rhythm command that generates a random list of durations."""
+    lines: list[str] = [
+        'rhythm name=r0 seed=11 silence=0.3 repeat=0.4 durations=d1,h1,q1,c1,m1'
+    ]
+    commands = mp.Commands(lines)
+    # It's impossible to assert anything about the randomly generated rhythm
+    # except that it exists.
+    assert len(commands.rhythms) == 1
+    rhythm: mt.Rhythm = commands.rhythms['r0']
+    assert isinstance(rhythm, list)
+    assert len(rhythm) > 0
+
+def test_rhythm2():
+    """Test rhythm command with supplied durations."""
+    lines: list[str] = [
+        'rhythm name=r0 durations=t_eighth,d_eighth,eighth,q,eighth,e,quarter'
+    ]
+    commands = mp.Commands(lines)
+    assert len(commands.rhythms) == 1
+    rhythm: mt.Rhythm = commands.rhythms['r0']
+    assert rhythm == [dur.te, dur.de, dur.e, dur.q, dur.e, dur.e, dur.q]
