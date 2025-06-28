@@ -389,6 +389,8 @@ def make_midi(in_file: str, out_file: str, create: str):
         elif isinstance(item, mi.Effects):
             for voice in item.voices:
                 voice.staccato = item.staccato
+                voice.overhang = item.overhang
+                voice.clip = item.clip
 
         elif isinstance(item, mi.Hear):
             for voice in item.voices:

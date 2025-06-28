@@ -8,10 +8,10 @@ class Item:
 
 class Bar(Item):
     """Bar description of a composition."""
-    def __init__(self, chords: list[mt.BarChord], repeat: int=1):
+    def __init__(self, chords: list[mt.BarChord], repeat: int=1, clip: bool=True):
         self.chords: list[mt.BarChord] = chords
         self.repeat = repeat
-        self.clip = False
+        self.clip = clip
 
     def get_chord(self, at: int) -> str:
         for chord in reversed(self.chords):
@@ -37,9 +37,14 @@ class Beat(Item):
 
 class Effects(Item):
     """Miscellaneous effects."""
-    def __init__(self, voices: Voices, staccato: int | float):
+    def __init__(self, voices: Voices,
+                 staccato: int | float | None,
+                 overhang: int | float | None,
+                 clip: bool):
         self.voices = voices
         self.staccato = staccato
+        self.overhang = overhang
+        self.clip = clip
 
 class Hear(Item):
     """Play (unmute) voice(s)."""

@@ -46,6 +46,21 @@ def expect(cmd: mt.Cmd, names: list[str]) -> None:
         logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{item} {command}"')
     return
 
+def get_effect(value: str, min_val: float, max_val: float) -> int | float | None:
+    """Get staccato or overhang value.
+
+    These can be:
+    * an integer that clips a note to that duration
+    * a float that changes the duration by that factor
+    * None if not active
+    """
+    result: int | float | None
+    if value.isdigit():
+        result = int(value)
+    else:
+        result = utils.get_float(value, min_val, max_val)
+    return result
+
 def get_float(cmds: mt.CmdDict, param: str, min_val: float, max_val: float, default: float|str) -> float:
     value = cmds.get(param, str(default))
     result = utils.get_float(value, min_val, max_val)
@@ -177,7 +192,7 @@ class Commands:
             assert item, 'Empty item'
 
             if item == 'composition' and is_named:
-                # syntax: composition name=foobar
+                expect(cmd, ['name'])
                 if in_composition:
                     break
                 if not name:
@@ -226,22 +241,24 @@ class Commands:
                         break   # don't loop, find a 2nd 'chords' and over-write!
 
             elif item == 'effects':
-                # syntax: effects voices=v1,v2 staccato=value
-                expect(cmd, ['voices', 'staccato'])
+                expect(cmd, ['voices', 'staccato', 'overhang', 'clip'])
                 voices = self.get_voices(params)
+                staccato: int | float | None = None
+                overhang: int | float | None = None
+                clip = True
                 for param in params:
                     key, value = param
                     if key == 'staccato':
-                        # staccato can be:
-                        # * an integer that clips a note to that duration
-                        # * a float that reduces the duration by that factor
-                        stac: int | float | None
-                        if value.isdigit():
-                            stac = int(value)
-                        else:
-                            stac = utils.get_float(value, 0.0, 4.01)
-                        if stac is not None:
-                            composition += mi.Effects(voices, stac)
+                        staccato = get_effect(value, 0.0, 1.0)
+                    elif key == 'overhang':
+                        overhang = get_effect(value, 1.0, 8.01)
+                    elif key == 'clip':
+                        clip = False
+                        pass# TODO
+                    if staccato and overhang:
+                        logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
+                        overhang = None
+                    composition += mi.Effects(voices, staccato, overhang, clip)
 
             elif item == 'hear':
                 expect(cmd, ['voices'])
@@ -276,7 +293,6 @@ class Commands:
                     logging.warning(f'Bad play command: "{command}"')
 
             elif item == 'rhythm':
-                # syntax: rhythm voices=v1,v2... rhythms=r1,r2,...
                 # Creates a Beat() instance, not a Rhythm() instance!
                 expect(cmd, ['voices', 'rhythms'])
                 voices = self.get_voices(params)

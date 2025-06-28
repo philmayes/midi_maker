@@ -44,17 +44,32 @@ class Voice:
         self.active = True
         self.rhythms: mt.Rhythms = [default_rhythm]
         self.rhythm_index = 0
-        # staccato can be:
+        # staccato and overhang can be:
         # * an integer that clips a note to that duration
-        # * a float that reduces the duration by that factor
-        self.staccato: int | float = 0
+        # * a float that changes the duration by that factor
+        # * None
+        self.staccato: int | float | None = None
+        self.overhang: int | float | None = None
+        self.clip = True    # Clip overhang to the end of the bar
 
     def adjust_duration(self, duration: int) -> int:
+        """Adjust the duration of a note by the effects command."""
         if self.staccato:
             if isinstance(self.staccato, int):
+                # A staccato integer clips the note to that value.
                 return min(duration, self.staccato)
             else:
+                # A staccato float is always < 1.0 and reduces
+                # the duration by that factor.
                 return int(duration * self.staccato)
+        elif self.overhang:
+            if isinstance(self.overhang, int):
+                # An overhang integer adds that value to the note.
+                return duration + self.overhang
+            else:
+                # An overhang float is always > 1.0 and increases
+                # the duration by that factor.
+                return int(duration * self.overhang)
         return duration
 
     def constrain_pitch(self, pitch: int) -> int:
