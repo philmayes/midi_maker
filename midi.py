@@ -112,12 +112,15 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     bar_end = bar_info.bar_end()
     duration = voice.rate
     old_chord = 'none'
+    pitch_index: int = 0
+    step: int = -1
     while start < bar_end:
         new_chord = bar_info.get_chord(start)
         if new_chord != old_chord:
             pitches = chord_to_pitches(new_chord, 4)
             old_chord = new_chord
-            pitch_index = 0
+            pitch_index: int = 0
+            step: int = -1
         volume = mv.get_volume(voice.channel, start)
         play_time = voice.adjust_duration(duration)
         bar_info.midi_file.addNote(0,
@@ -126,7 +129,9 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
                                    add_start_error(start),
                                    play_time,
                                    volume)
-        pitch_index = (pitch_index + 1) % len(pitches)
+        if pitch_index == 0 or pitch_index == len(pitches) - 1:
+            step = -step
+        pitch_index += step
         start += duration
 
 def make_bass_bar(bar_info: BarInfo, voice: Voice):
