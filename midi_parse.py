@@ -177,9 +177,9 @@ class Commands:
                 continue
 
             elif item == 'bar':
-                # syntax: bar key=cCmaj,qGmaj7
-                if params:
-                    key, value = params[0]
+                # syntax: bar chords=eCmaj,qGmaj7
+                for param in params:
+                    key, value = param
                     if key == 'chords':
                         chords: list[mt.BarChord] = []
                         tick = 0
@@ -190,7 +190,12 @@ class Commands:
                                 key = match.group(2)
                                 cho = match.group(3)
                                 mod = match.group(4)
-                                dur2 = mn.Duration.default
+                                if dur is None:
+                                    dur2 = mn.Duration.default
+                                else:
+                                    dur2 = mn.get_duration(dur)
+                                    if dur2 <= 0:
+                                        dur2 = mn.Duration.default
                                 if not cho:
                                     cho = 'maj'
                                 cho = cho + mod
@@ -203,6 +208,10 @@ class Commands:
                                 logging.error(f'Bad bar chord "{chord}"')
                         if chords:
                             composition += mi.Bar(chords)
+                        break   # don't loop, find a 2nd 'chords' and over-write!
+                    else:
+                        logging.error(f'Bad parameter in "{command}"')
+                        continue
 
             elif item == 'effects':
                 # syntax: effects voices=v1,v2 staccato=value

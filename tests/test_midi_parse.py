@@ -25,6 +25,42 @@ def test_bar1():
     assert bar_chord.key == 'C'
     assert bar_chord.chord == 'maj'
 
+def test_bar2():
+    lines: list[str] = [
+        'bar chords=Cmaj,G',
+    ]
+    commands = mp.Commands(lines)
+    comp: mi.Composition = commands.get_composition()
+    assert len(comp.items) == 1
+    item: mi.Item = comp.items[0]
+    assert isinstance(item, mi.Bar)
+    bar_chord: mt.BarChord = item.chords[0]
+    assert bar_chord.start == 0
+    assert bar_chord.key == 'C'
+    assert bar_chord.chord == 'maj'
+    bar_chord: mt.BarChord = item.chords[1]
+    assert bar_chord.start == dur.quarter
+    assert bar_chord.key == 'G'
+    assert bar_chord.chord == 'maj'
+
+def test_bar3():
+    lines: list[str] = [
+        'bar chords=hCmaj,G',
+    ]
+    commands = mp.Commands(lines)
+    comp: mi.Composition = commands.get_composition()
+    assert len(comp.items) == 1
+    item: mi.Item = comp.items[0]
+    assert isinstance(item, mi.Bar)
+    bar_chord: mt.BarChord = item.chords[0]
+    assert bar_chord.start == 0
+    assert bar_chord.key == 'C'
+    assert bar_chord.chord == 'maj'
+    bar_chord: mt.BarChord = item.chords[1]
+    assert bar_chord.start == dur.half
+    assert bar_chord.key == 'G'
+    assert bar_chord.chord == 'maj'
+
 def test_voice1():
     """Test normal voice command."""
     lines: list[str] = [

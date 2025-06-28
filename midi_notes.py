@@ -91,7 +91,7 @@ def get_neg_duration(text: str) -> int:
                 dur = dur[:-1]
 
             if dur not in d:
-                logging.error(f'Bad duration: "{bit}')
+                logging.error(f'Bad duration: "{bit}"')
                 break
             duration =  d[dur]
             if dot:
@@ -103,7 +103,7 @@ def get_neg_duration(text: str) -> int:
             else:
                 total -= duration
     if total <= 0:
-        logging.error(f'Negative note duration: "{text}')
+        logging.error(f'Negative note duration: "{text}"')
         total = 0
     return total
 
