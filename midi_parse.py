@@ -277,7 +277,16 @@ class Commands:
                         composition += mi.Beat(voices, rhythms)
 
             elif item == 'repeat':
-                composition += mi.Repeat()
+                repeat = 2
+                for param in params:
+                    key, value = param
+                    if key == 'count':
+                        count = utils.get_int(value)
+                        if count is not None:
+                            repeat = count
+                    else:
+                        logging.error(f'Bad parameter in "{command}"')
+                composition += mi.Repeat(repeat)
 
             elif item == 'tempo':
                 if params:
