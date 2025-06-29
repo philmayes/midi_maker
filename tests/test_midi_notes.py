@@ -117,6 +117,7 @@ class TestStrToDuration:
 
 class TestStrToDurations:
     def test_str_to_durations0(self):
+        """Test empty durations."""
         result = mn.str_to_durations('')
         assert result == []
 
@@ -125,8 +126,14 @@ class TestStrToDurations:
         assert result == [dur.q, dur.e, dur.e]
 
     def test_str_to_durations2(self):
-        result = mn.str_to_durations('h-q,q,h-q,q')
-        assert result == [dur.q, dur.q, dur.q, dur.q]
+        """Test arithmetic in durations."""
+        result = mn.str_to_durations('h-q,q,q+q,q')
+        assert result == [dur.q, dur.q, dur.h, dur.q]
+
+    def test_str_to_durations3(self):
+        """Test negative durations."""
+        result = mn.str_to_durations('-q,q,-h+h,h')
+        assert result == [-dur.q, dur.q, -dur.n, dur.h]
 
 class TestStrToNote:
     def test_str_to_note1(self):

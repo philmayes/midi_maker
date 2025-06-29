@@ -76,11 +76,14 @@ class Duration:
     dd = d_doublenote
     default = quarter  # used when duration is not supplied
 
-def get_neg_duration(text: str) -> int:
+def get_neg_duration(text: str, silent=False) -> int:
     """Translates the duration string into ticks.
 
     Expects one or more note names, possibly with a trailing dot,
     and joined with "-" characters.
+    The <silent> option is for the benefit of str_to_notes because a tune
+    can contain both notes and durations (indicating silences), and
+    parsing for durations first would generate error messages.
     """
     total: int = 0
     first = True
@@ -93,7 +96,8 @@ def get_neg_duration(text: str) -> int:
                 dur = dur[:-1]
 
             if dur not in d:
-                logging.error(f'Bad duration: "{bit}"')
+                if not silent:
+                    logging.error(f'Bad duration: "{bit}"')
                 break
             duration =  d[dur]
             if dot:
@@ -105,11 +109,12 @@ def get_neg_duration(text: str) -> int:
             else:
                 total -= duration
     if total <= 0:
-        logging.error(f'Negative note duration: "{text}"')
+        if not silent:
+            logging.error(f'Negative note duration: "{text}"')
         total = 0
     return total
 
-def get_duration(text: str) -> int:
+def get_duration(text: str, silent=False) -> int:
     """Translates the duration string into ticks.
 
     Expects one or more note names, possibly with a trailing dot,
@@ -119,10 +124,10 @@ def get_duration(text: str) -> int:
     if text:
         d = Duration.__dict__
         for bit in text.split('+'):
-            total += get_neg_duration(bit)
+            total += get_neg_duration(bit, silent)
     return total
 
-def str_to_duration(text: str) -> int:
+def str_to_duration(text: str, silent=False) -> int:
     """Returns the note duration described by the string."""
     if text:
         # A leading minus sign inverts the value of the note
@@ -133,7 +138,7 @@ def str_to_duration(text: str) -> int:
         if text.isdigit():
             return int(text)
         # Look up the name and return its value
-        duration = get_duration(text)
+        duration = get_duration(text, silent)
         if neg:
             duration = -duration
         return duration
@@ -188,6 +193,11 @@ def str_to_notes(notes: str) -> mt.Tune:
     last_octave = 5
     start = 0
     for note_str in notes.split(','):
+        duration = str_to_duration(note_str, True)
+        if duration != 0: # is a duration only
+            start += abs(duration)
+            continue
+
         # A "note" in a tune can consist of several notes joined by "+".
         # They all start at the same time. The first note supplies the
         # duration for the tune, but the subnotes can supply their own

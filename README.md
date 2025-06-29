@@ -61,7 +61,10 @@ Use these rhythms in compositions with `rhythm voices=vname1,vname2... rhythms=r
 ### tune
 Format: `tune name=tname notes=note1,note2...`
 
-See **Data Formats** for the syntax of notes.
+A tune is a list of notes and durations (which represent silences).
+See **Data Formats** for the syntax of notes. More than one note can be played at once; for example, `hD5+F#+A` would play a D major chord for two beats. (The `h` indicates a half note).
+Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` for two beats, `F#` for one beat, and `A` for four beats.
+
 Use tunes with the `play` command.
 
 ### preferences
