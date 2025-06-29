@@ -181,27 +181,53 @@ def str_to_note(note_str: str) -> mt.Note:
     return mt.Note(0, 0, '', 0, 0, 0)
 
 def str_to_notes(notes: str) -> mt.Tune:
-    """Returns the notes (duration and pitch) described by the string."""
+    """Returns a list of the notes described by the string."""
     tune: mt.Tune = []
     # Defaults for the first note in case they are not supplied.
     last_duration = Duration.quarter
     last_octave = 5
     start = 0
     for note_str in notes.split(','):
-        note: mt.Note = str_to_note(note_str)
-        if not note.name:
-            logging.error(f'Bad note: "{note_str}"')
-            continue
-        if note.duration == 0:
-            note.duration = last_duration
-        note.start = start
-        start += note.duration
-        if note.octave == 0:
-            note.octave = last_octave
-        last_duration = note.duration
-        last_octave = note.octave
-        note.pitch = note.interval + note.octave * 12
-        # print(note)
-        tune.append(note)
+        # A "note" in a tune can consist of several notes joined by "+".
+        # They all start at the same time. The first note supplies the
+        # duration for the tune, but the subnotes can supply their own
+        # durations, potentially overlapping any following notes.
+        first = True
+        for sub_note in note_str.split('+'):
+            note: mt.Note = str_to_note(sub_note)
+            if not note.name:
+                logging.error(f'Bad note: "{note_str}"')
+                continue
+
+            # Handle note start:
+            note.start = start
+
+            # Handle note duration:
+            if first:
+                # The first note's duration defaults to the previous note's.
+                if note.duration == 0:
+                    note.duration = last_duration
+                # Keep track of this for the following notes.
+                last_duration = note.duration
+            else:
+                # Subnotes are allowed to keep their duration.
+                # If none is supplied, use the duration of the first note.
+                if note.duration == 0:
+                    note.duration = last_duration
+
+            # Handle note octave:
+            if note.octave == 0:
+                note.octave = last_octave
+            if first:
+                # Keep track of this for the following notes.
+                last_octave = note.octave
+
+            # Handle note pitch:
+            note.pitch = note.interval + note.octave * 12
+
+            # print(note)
+            tune.append(note)
+            first = False
+        start += last_duration
 
     return tune
