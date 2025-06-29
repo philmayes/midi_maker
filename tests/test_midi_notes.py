@@ -4,7 +4,7 @@ import midi_notes as mn
 from midi_notes import Duration as dur
 import midi_types as mt
 
-bad_note: mt.Note = mt.Note(0, '', 0, 0, 0)
+bad_note: mt.Note = mt.Note(0, 0, '', 0, 0, 0)
 class TestGetDuration:
     def test_get_duration0(self):
         result = mn.get_duration('')

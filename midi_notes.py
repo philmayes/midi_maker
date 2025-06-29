@@ -176,9 +176,9 @@ def str_to_note(note_str: str) -> mt.Note:
         octave = int(octave)
 
         pitch = interval + octave * 12
-        return mt.Note(ticks, name, interval, octave, pitch)
+        return mt.Note(0, ticks, name, interval, octave, pitch)
 
-    return mt.Note(0, '', 0, 0, 0)
+    return mt.Note(0, 0, '', 0, 0, 0)
 
 def str_to_notes(notes: str) -> mt.Tune:
     """Returns the notes (duration and pitch) described by the string."""
@@ -186,6 +186,7 @@ def str_to_notes(notes: str) -> mt.Tune:
     # Defaults for the first note in case they are not supplied.
     last_duration = Duration.quarter
     last_octave = 5
+    start = 0
     for note_str in notes.split(','):
         note: mt.Note = str_to_note(note_str)
         if not note.name:
@@ -193,6 +194,8 @@ def str_to_notes(notes: str) -> mt.Tune:
             continue
         if note.duration == 0:
             note.duration = last_duration
+        note.start = start
+        start += note.duration
         if note.octave == 0:
             note.octave = last_octave
         last_duration = note.duration

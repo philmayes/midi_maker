@@ -163,7 +163,7 @@ Format: `duration note octave`.
 * `note` is A-G with possible # or b e.g. `Eb`.
 * `octave` is 1-10.
 
-When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `qG5,A,B,C6,D,E,F#,G`. Note that the `C` must be declared in octave 6, otherwise the C below G5 will play.
+When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `qG5,A,B,C6,D,E,F#,G`. Note that the `C` must be declared as being in octave 6, otherwise the C below G5 will play.
 
 For example, `q.F#4` will play a dotted quarter note F# in the 4th octave.
 

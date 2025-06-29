@@ -4,7 +4,13 @@ from typing import TypeAlias
 BarChord = namedtuple('BarChord', 'start key chord')
 
 class Note:
-    def __init__(self, duration: int, name: str, interval: int, octave: int, pitch: int):
+    def __init__(self,
+                 start: int,
+                 duration: int,
+                 name: str, interval: int,
+                 octave: int,
+                 pitch: int):
+        self.start = start
         self.duration = duration
         self.name = name
         self.interval = interval
@@ -12,10 +18,11 @@ class Note:
         self.pitch = pitch
 
     def __str__(self):
-        return f'{self.duration:4} {self.name} {self.interval} {self.octave} {self.pitch}'
+        return f'{self.start:5} {self.duration:4} {self.name} {self.interval} {self.octave} {self.pitch}'
 
     def __eq__(self, other):
-        return self.duration == other.duration and\
+        return self.start == other.start and\
+               self.duration == other.duration and\
                self.name == other.name and\
                self.interval == other.interval and\
                self.octave == other.octave and\
