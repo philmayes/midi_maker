@@ -252,9 +252,9 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
             else:
                 # Previous note is not in this scale, probably because of
                 # chord change, so find a note near it.
-                for prev in pitches:
+                for n, prev in enumerate(pitches):
                     if prev > prev_pitch:
-                        index = prev
+                        index = n
                         break
                 else:
                     assert 0, f'prev_pitch ouside range?!'

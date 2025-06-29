@@ -129,6 +129,16 @@ This turns various effects on or off for the named voices. The `staccato` value 
 
 See **Discussions: Clipping** for use of the `clip` parameter.
 
+## loop
+Format: `loop`.
+
+Loop marks the start of a passage that is to be played more than once, see `repeat`.
+It takes no parameters.
+
+## repeat
+Format: `repeat count=#`
+
+Repeat a section starting at the preceding `loop` command. `count` is optional; it is the total number of times the section will be played. Loops can be nested, e.g. `loop A loop B repeat C repeat` will play `A B B C A B B C`.
 
 ## Data Formats
 These describe the format of the values supplied to commands.
@@ -166,9 +176,12 @@ Some examples: `Eb`: Eb major; `Am`: A minor; `qF#maj7`: F# major 7th played for
 
 ## Discussions
 ### Clipping
-
 Normally for all styles except lead, notes are clipped at the end of the bar. For instance, using `rhythm name=half durations=q,q,q,h` as the 4/4 rhythm for a voice will normally clip the fourth half note to a quarter note.
 
 To inhibit this behavior and allow the note or chord to play for its full duration, use `clip=no` (can also be n, 0, f, false) with either:
 * a `bar` command, which will apply to all voices for one bar
 * an `effects` command, which will apply to the named voices until countermanded.
+
+### Playing
+midi_maker can play the MIDI file it has just generated. Use `-p` on the command line. You will probably need to edit `midi_play.py` for this to work on your system.
+
