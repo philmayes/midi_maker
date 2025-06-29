@@ -207,11 +207,13 @@ class Commands:
                 continue
 
             elif item == 'bar':
-                expect(cmd, ['chords'])
+                expect(cmd, ['chords', 'clip'])
+                chords: list[mt.BarChord] = []
+                repeat = 1
+                clip = True
                 for param in params:
                     key, value = param
                     if key == 'chords':
-                        chords: list[mt.BarChord] = []
                         tick = 0
                         for chord in value.split(','):
                             match = midi_chords.re_dur_chord.match(chord)
@@ -236,9 +238,10 @@ class Commands:
                                 tick += dur2
                             else:
                                 logging.error(f'Bad bar chord "{chord}"')
-                        if chords:
-                            composition += mi.Bar(chords)
-                        break   # don't loop, find a 2nd 'chords' and over-write!
+                    elif key == 'clip':
+                        clip = utils.truth(value)
+                    if chords:
+                        composition += mi.Bar(chords, repeat, clip)
 
             elif item == 'effects':
                 expect(cmd, ['voices', 'staccato', 'overhang', 'clip'])
@@ -253,8 +256,7 @@ class Commands:
                     elif key == 'overhang':
                         overhang = get_effect(value, 1.0, 8.01)
                     elif key == 'clip':
-                        clip = False
-                        pass# TODO
+                        clip = utils.truth(value)
                     if staccato and overhang:
                         logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
                         overhang = None

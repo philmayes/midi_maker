@@ -65,12 +65,50 @@ class BarInfo:
         self.start = 0
         self.position = 0
 
+    def adjust_note_time(self, voice: Voice, duration: int) -> int:
+        """Adjust how much time the note takes in the bar."""
+        remaining = self.bar_end() - self.position
+        # A negative note length is a silence; the called should handle it.
+        assert duration >= 0, 'adjust_note_time does not handle neg duration'
+        if duration == 0:
+            # A zero note length extends note to the end of the bar.
+            # extend note to end of bar
+            return remaining
+
+        clip = self.clip(voice)
+        if clip:
+            # Don't allow notes to extend beyond the bar.
+            if duration > remaining:
+                duration = remaining
+        return duration
+
+    def adjust_play_time(self, voice: Voice, duration: int) -> int:
+        """Adjust how much time the note plays for."""
+        remaining = self.bar_end() - self.position
+        assert remaining >= 0, 'neg remaining'
+        if duration == 0:
+            # A zero note length extends note to the end of the bar.
+            # extend note to end of bar
+            return remaining
+
+        clip = self.clip(voice)
+        if clip:
+            # Don't allow notes to extend beyond the bar.
+            if duration > remaining:
+                duration = remaining
+        return duration
+
     def bar_end(self) -> int:
         """Returns the time at the end of the bar in ticks."""
         return self.start + self.timesig.ticks_per_bar
 
-    def clip(self, voice: Voice, start: int, duration: int) -> int:
-        return duration
+    def bar_ended(self) -> bool:
+        """Returns TODO."""
+        return self.position >= self.bar_end()
+
+    def clip(self, voice: Voice) -> bool:
+        """Return True if note should be clipped to the end of the bar."""
+        return self.bar.clip and voice.clip
 
     def get_chord(self) -> str:
         """Returns the chord at current time within the bar."""
@@ -83,6 +121,9 @@ class BarInfo:
     def get_tonic_offset(self) -> int:
         """Returns the tonic offset (0-11) at current time within the bar."""
         return note_to_interval[self.get_tonic()]
+
+    def in_bar(self) -> bool:
+        return not self.bar_ended()
 
 def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
@@ -118,7 +159,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     old_chord = 'none'
     pitch_index: int = 0
     step: int = -1
-    while bar_info.position < bar_end:
+    while bar_info.in_bar():
         new_chord = bar_info.get_chord()
         if new_chord != old_chord:
             pitches = chord_to_pitches(new_chord, 4)
@@ -126,7 +167,8 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
             pitch_index: int = 0
             step: int = -1
         volume = mv.get_volume(voice.channel, bar_info.position)
-        play_time = voice.adjust_duration(duration)
+        duration = bar_info.adjust_note_time(voice, duration)
+        play_time = bar_info.adjust_play_time(voice, duration)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitches[pitch_index],
@@ -140,34 +182,26 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
 
 def make_bass_bar(bar_info: BarInfo, voice: Voice):
     bar_info.position = bar_info.start
-    bar_end = bar_info.bar_end()
     rhythm = voice.get_rhythm()
-    for note_length in rhythm:
+    for duration in rhythm:
         tonic: str = bar_info.get_tonic()
         pitch = note_to_interval[tonic] + 36
-        remaining = bar_end - bar_info.position
-        if remaining <= 0:
+        if bar_info.bar_ended():
             break
-        if note_length < 0:
+        if duration < 0:
             # A negative note length is a silence.
-            bar_info.position -= note_length
+            bar_info.position -= duration
             continue
-        if note_length == 0:
-            # A zero note length extends note to the end of the bar.
-            note_length = remaining
-        # Don't allow notes to extend beyond the bar.
-        if note_length > remaining:
-            note_length = remaining
         volume = mv.get_volume(voice.channel, bar_info.position)
-        # logging.debug(f'Bass {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord}, duration {note_length}')
-        play_time = voice.adjust_duration(note_length)
+        duration = bar_info.adjust_note_time(voice, duration)
+        play_time = bar_info.adjust_play_time(voice, duration)
         bar_info.midi_file.addNote(0,
                                    voice.channel,
                                    pitch,
                                    add_start_error(bar_info.position),
                                    play_time,
                                    volume)
-        bar_info.position += note_length
+        bar_info.position += duration
 
 def make_chord(bar_info: BarInfo, voice: Voice,
                     # voice: Voice,
@@ -184,20 +218,6 @@ def make_chord(bar_info: BarInfo, voice: Voice,
                                    duration,
                                    volume)
 
-def make_error_table(amount: int) -> list[int]:
-    """Makes an error table
-    Maximum error == ±<amount>.
-    Smaller errors are more probable.
-    """
-    table = []
-    for err in range(amount + 1):
-        for no in range(-err, err + 1):
-            table.append(no)
-    amount //= 2
-    if amount > 0:
-        table.extend(make_error_table(amount))
-    return table
-
 def make_improv_bar(bar_info: BarInfo, voice: Voice):
     bar_end = bar_info.bar_end()
     # If the last note in the previous bar extended beyond the bar,
@@ -206,7 +226,7 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
     voice.overlap = 0
     old_chord = 'none'
 
-    while bar_info.position < bar_end:
+    while bar_info.in_bar():
         # Get the name of the chord at this point in the bar.
         new_chord = bar_info.get_chord()
         if new_chord != old_chord:
@@ -269,7 +289,6 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
             else:
                 # Make a note for the next bar
                 voice.overlap = duration - remaining
-        # logging.debug(f'Playing {pitch} = {notes.int_to_note(pitch % 12):2} for chord {bar.chord} = {chord}, duration {duration}')
         volume = mv.get_volume(voice.channel, bar_info.position)
         play_time = voice.adjust_duration(duration)
         bar_info.midi_file.addNote(0,
@@ -281,57 +300,51 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
         bar_info.position += duration
 
 def make_percussion_bar(bar_info: BarInfo, voice: Voice):
-    bar_end = bar_info.bar_end()
+    # bar_end = bar_info.bar_end()
     bar_info.position = bar_info.start
     rhythm = voice.get_rhythm()
-    for note_length in rhythm:
-        if bar_info.position >= bar_end:
+    for duration in rhythm:
+        # if bar_info.position >= bar_end:
+        if bar_info.bar_ended():
             break
-        if note_length < 0:
+        if duration < 0:
             # A negative note length is a silence.
-            bar_info.position -= note_length
+            bar_info.position -= duration
             continue
-        if note_length == 0:
-            # A zero note length is to be extended to the end of the bar
-            note_length = bar_end - bar_info.position
         volume = mv.get_volume(voice.channel, bar_info.position)
-        play_time = voice.adjust_duration(note_length)
+        duration = bar_info.adjust_note_time(voice, duration)
+        play_time = bar_info.adjust_play_time(voice, duration)
         bar_info.midi_file.addNote(0,
                                    Channel.percussion,
                                    voice.voice,
                                    add_start_error(bar_info.position),
                                    play_time,
                                    volume)
-        bar_info.position += note_length
+        bar_info.position += duration
 
 def make_rhythm_bar(bar_info: BarInfo,
                     voice: Voice,
                     duration: int):
     bar_info.position = bar_info.start
-    bar_end = bar_info.bar_end()
+    # bar_end = bar_info.bar_end()
     rhythm = voice.get_rhythm()
-    for note_length in rhythm:
-        if bar_info.position >= bar_end:
+    for duration in rhythm:
+        if bar_info.bar_ended():
             break
-        if note_length < 0:
+        if duration < 0:
             # A negative note length is a silence.
-            bar_info.position -= note_length
+            bar_info.position -= duration
             continue
         pitches = chord_to_pitches(bar_info.get_chord(), 4)
-        if note_length == 0:
-            # A zero note length is to be extended to the end of the bar.
-            # Ignore any duration that has been supplied.
-            note_length = bar_end - bar_info.position
-            play_time = note_length
-        else:
-            play_time = voice.adjust_duration(note_length)
+        duration = bar_info.adjust_note_time(voice, duration)
+        play_time = bar_info.adjust_play_time(voice, duration)
         make_chord(bar_info,
                    voice,
                    pitches,
                    bar_info.position,
                    play_time,
                    )
-        bar_info.position += note_length
+        bar_info.position += duration
 
 def make_midi(in_file: str, out_file: str, create: str):
     with open(in_file, "r") as f_in:
@@ -341,9 +354,9 @@ def make_midi(in_file: str, out_file: str, create: str):
 
     random.seed(1)
     global start_error
-    start_error = make_error_table(10)
+    start_error = utils.make_error_table(10)
     global error7
-    error7 = make_error_table(7)
+    error7 = utils.make_error_table(7)
 
     # MIDIFile channel count does not include percussion voices as they are
     # pseudo-channels that map to track in the percussion channel.

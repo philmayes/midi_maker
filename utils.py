@@ -34,6 +34,20 @@ def get_signed_int(text: str) -> int | None:
             number = -number
         return number
 
+def make_error_table(amount: int) -> list[int]:
+    """Makes an error table
+    Maximum error == ±<amount>.
+    Smaller errors are more probable.
+    """
+    table = []
+    for err in range(amount + 1):
+        for no in range(-err, err + 1):
+            table.append(no)
+    amount //= 2
+    if amount > 0:
+        table.extend(make_error_table(amount))
+    return table
+
 def make_in_range(value: int, max_value: int, desc: str) -> int:
     """Coerces a value into range.
     
@@ -46,3 +60,12 @@ def make_in_range(value: int, max_value: int, desc: str) -> int:
         logging.warning(f'{desc} value {value} too low')
         value = 0
     return value
+
+def truth(text: str) -> bool:
+    lower = text.lower()
+    if lower in ['t', 'true', 'y', 'yes', '1']:
+        return True
+    if lower in ['f', 'false', 'n', 'no', '0']:
+        return False
+    logging.warning(f'Unknown truth value "{text}"')
+    return False
