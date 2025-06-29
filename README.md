@@ -74,9 +74,11 @@ Adjust various settings. Probability is a decimal number less than 1.0.
 These generate the actual MIDI output using the definitions that have been created.
 
 ### bar
-Format: `bar chords=chord1,chord2...`
+Format: `bar chords=chord1,chord2... clip=false`
 
-The chords can be preceded by a duration; if not, a quarter note is assumed.
+The chords can be preceded by a duration; if not, a quarter note is assumed. For example, `bar chords=C` is a C major bar; `bar chords=hC,Am,F` has two beats of C major, one beat of A minor and one beat of F major.
+
+See **Discussions: Clipping** for use of the `clip` parameter.
 
 ### mute
 The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 
@@ -85,10 +87,10 @@ The voices created with the `voice` command are initially all audible. Turn one 
 If voices have been previously muted, turn one or more on with `hear voices=voice1,voice2...`. Turn all voices on with `hear voices=all`.
 
 ### volume
-Format: `volume voices=vname1,vname2,... level=# delta=# rate=#`
+Format: `volume voices=vname1,vname2,... level=# rate=#`
 
-Change the volume level of one or more voices. Use `level` to set an absolute level
-or `delta` to make a change. (`level` takes precedence over `delta'.)
+Change the volume level of one or more voices. Use `level=80` to set the level to 80;
+`level=+20` to increase the level by 20, and `level=-10` to decrease the level by 10.
 Use `rate` to make the change happen over a period of time.
 For example, `rate=2` will change the volume level by 2 per beat.
 
@@ -117,6 +119,16 @@ Format: `tempo bpm=#` supplies the number of beats per minute.
 
 ### timesig
 Format: `timesig value=3/4` or any other time signature.
+
+### effects
+Format: `effects voices=v1,v2... staccato=# overhang=# clip=no`
+
+This turns various effects on or off for the named voices. The `staccato` value can either be the number of ticks for which the note should be played or a decimal fraction like 0.5 meaning the note will be played for half its time.
+
+`overhang` takes a number of ticks or a decimal number greater than 1.0 to cause the note to play for that much longer. It will overlap any following note. For instance, an arpeggio with a large `overhang` will progressively play a chord.
+
+See **Discussions: Clipping** for use of the `clip` parameter.
+
 
 ## Data Formats
 These describe the format of the values supplied to commands.
@@ -151,3 +163,12 @@ Format: `[duration] key chord`.
 The chord can be one of `maj`,`min`,`m`,`dim`,`aug`,`maj7`,`min7`,`dom7`,`dim7`,`maj6`,`min6`,`maj9`,`min9`. `m` is a sysnomym for `min`, a minor chord. If the chord is omitted. `maj` is assumed.
 
 Some examples: `Eb`: Eb major; `Am`: A minor; `qF#maj7`: F# major 7th played for a quarter note; `h.Gaug`: G augmented for 3 beats.
+
+## Discussions
+### Clipping
+
+Normally for all styles except lead, notes are clipped at the end of the bar. For instance, using `rhythm name=half durations=q,q,q,h` as the 4/4 rhythm for a voice will normally clip the fourth half note to a quarter note.
+
+To inhibit this behavior and allow the note or chord to play for its full duration, use `clip=no` (can also be n, 0, f, false) with either:
+* a `bar` command, which will apply to all voices for one bar
+* an `effects` command, which will apply to the named voices until countermanded.

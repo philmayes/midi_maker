@@ -47,7 +47,7 @@ def set_volume(channel: int,
     assert rate >= 0
 
     if not values and not level:
-        logging.warning(f'First volume command should not be delta')
+        logging.warning(f'First volume command should not not have a sign')
 
     # Remove any entries later than <tick> -- this handles the issue of a
     # volume change being requested while  a rate change is in progress.

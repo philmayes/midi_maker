@@ -101,7 +101,7 @@ class Volume(Item):
     """Adjust volume for voice(s)."""
     def __init__(self, delta: int, level: int, rate: int, voices: Voices):
         self.delta = delta  # Amount by which to adjust volume
-        self.level = level  # New setting for volume (takes precedence over delta)
+        self.level = level  # New setting for volume
         self.rate = rate
         self.voices = voices
 

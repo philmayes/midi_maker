@@ -350,7 +350,7 @@ class Commands:
                 logging.warning(f'Bad timesig in "{command}"')
 
             elif item == 'volume':
-                expect(cmd, ['voices', 'delta', 'level', 'rate'])
+                expect(cmd, ['voices', 'level', 'rate'])
                 voices = self.get_voices(params)
                 if voices:
                     vol = mi.Volume(0, 0, 0, voices)
@@ -358,21 +358,33 @@ class Commands:
                         # No need to range-check here;
                         # it is done by ChannelInfo.set_volume
                         key, value = param
-                        if key == 'delta':
-                            number = utils.get_signed_int(value)
-                            if number is not None:
-                                vol.delta = number
                         if key == 'level':
+                            # Might be a previosuly-defined volume name
+                            if value in self.volumes:
+                                vol.level = self.volumes[value]
+                                continue
+                            # 'level' without a sign is an absolute value;
+                            # with a sign it is a delta.
+                            sign = value[0]
+                            if sign in '+-':
+                                value = value[1:]
                             if value.isdigit():
-                                vol.level = int(value)
+                                level = int(value)
+                                if sign == '+':
+                                    vol.delta = level
+                                elif sign == '-':
+                                    vol.delta = -level
+                                else:
+                                    vol.level = level
+                            else:
+                                logging.warning(f'Bad level in "{command}"')
                         if key == 'rate':
                             if value.isdigit():
                                 vol.rate = int(value)
                     if vol.delta or vol.level:
-                        if vol.delta and vol.level:
-                            logging.warning(f'Cannot specify both level and delta in "{command}"')
-                            vol.delta = 0
                         composition += vol
+                    else:
+                        logging.warning(f'No level in "{command}"')
 
         return composition
 
