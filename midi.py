@@ -425,7 +425,8 @@ def make_midi(in_file: str, out_file: str, create: str):
                     voice.active = False
 
         elif isinstance(item, mi.Play):
-            if item.voice.active:
+            voice = item.voice
+            if voice.active:
                 bar_info.position = bar_info.start
                 for tune in item.tunes:
                     for note in tune:
@@ -436,7 +437,7 @@ def make_midi(in_file: str, out_file: str, create: str):
                                                         'Play note')
                             volume = mv.get_volume(voice.channel, bar_info.position)
                             midi_file.addNote(0,
-                                            item.voice.channel,
+                                            voice.channel,
                                             pitch,
                                             add_start_error(bar_info.position),
                                             note.duration,
