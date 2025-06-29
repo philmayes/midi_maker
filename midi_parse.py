@@ -240,8 +240,8 @@ class Commands:
                                 logging.error(f'Bad bar chord "{chord}"')
                     elif key == 'clip':
                         clip = utils.truth(value)
-                    if chords:
-                        composition += mi.Bar(chords, repeat, clip)
+                if chords:
+                    composition += mi.Bar(chords, repeat, clip)
 
             elif item == 'effects':
                 expect(cmd, ['voices', 'staccato', 'overhang', 'clip'])
