@@ -173,7 +173,6 @@ class Commands:
         # Remove leading & trailing whitespace and comments,
         # and validate the command.
         # Assemble command_list and command_dict for future use.
-        self.command_lines: list[str] = []
         self.command_list: list[mt.Cmd] = [] # currently unused
         self.command_dicts: list[mt.CmdDict] = []
         for line in lines:
@@ -184,7 +183,6 @@ class Commands:
             if not command[0]:
                 logging.error(f'Bad command "{clean}"')
                 continue
-            self.command_lines.append(clean)
             self.command_list.append(command)
             self.command_dicts.append(parse_command_dict(clean))
 
@@ -336,7 +334,7 @@ class Commands:
                 for param in params:
                     key, value = param
                     if key == 'count':
-                        count = utils.get_int(value)
+                        count = utils.get_int(value, 2, 100)
                         if count is not None:
                             repeat = count
                     else:
@@ -408,24 +406,11 @@ class Commands:
 
     def get_opus(self, name: str) -> str:
         """Get parts of the named opus."""
-        names: list[str] = []
-        for command in self.command_lines:
-            cmd = parse_command(command)
-            item: mt.Verb = cmd[0]
-            params: mt.Params = cmd[1]
-            assert item, 'Empty item'
-
-            if item == 'opus':
-                expect(cmd, ['name', 'parts'])
-                found = False
-                parts = ''
-                for param in params:
-                    key, value = param
-                    if key == 'name' and value == name:
-                        found = True
-                    elif key == 'parts':
-                        parts = value
-                if found:
+        for cmd in self.command_dicts:
+            if cmd['command'] == 'opus':
+                name2: str = cmd.get('name', '')
+                parts = cmd.get('parts', '')
+                if name == name2:
                     return parts
         return ''
 
@@ -509,21 +494,11 @@ class Commands:
     def get_all_tunes(self) -> mt.TuneDict:
         """Construct Tune dictionary from the list of commands."""
         tunes: mt.TuneDict = {}
-        for command in self.command_lines:
-            cmd = parse_command(command)
-            item: mt.Verb = cmd[0]
-            params: mt.Params = cmd[1]
-
-            if item == 'tune':
-                expect(cmd, ['name', 'notes'])
-                name: str = ''
-                notes: str = ''
+        for cmd in self.command_dicts:
+            if cmd['command'] == 'tune':
+                name: str = cmd.get('name', '')
+                notes = cmd.get('notes', '')
                 tune: mt.Tune = []
-                for param in params:
-                    if param[0] == 'name':
-                        name = param[1]
-                    elif param[0] == 'notes':
-                        notes = param[1]
 
                 if name and notes:
                     tune = mn.str_to_notes(notes)
@@ -650,10 +625,11 @@ class Commands:
     def get_preferences(self) -> None:
         """Get changes to global preferences."""
         prefs_dict = prefs.__dict__
-        for command in self.command_lines:
-            item, params = parse_command(command)
-            if item == 'preferences':
-                for key, value in params:
+        for cmd in self.command_dicts:
+            if cmd['command'] == 'preferences':
+                for key, value in cmd.items():
+                    if key in ('command', _ln):
+                        continue
                     if key in prefs_dict:
                         pref_type = type(prefs_dict[key])
                         if pref_type == float:
@@ -661,13 +637,13 @@ class Commands:
                             if result is None:
                                 logging.warning(f'Preference out of range: "{key}={value}"')
                             else:
-                                prefs_dict[key] = value
+                                prefs_dict[key] = result
                         elif pref_type == int:
-                            result = utils.get_int(value)
+                            result = utils.get_int(value, 0, 4000)
                             if result is None:
                                 logging.warning(f'Preference is not a number: "{key}={value}"')
                             else:
-                                prefs_dict[key] = value
+                                prefs_dict[key] = result
                         else:
                             logging.error(f'Preference type {pref_type} not handled')
                     else:
@@ -722,20 +698,3 @@ class Commands:
                     else:
                         logging.error(f'Voice {voice_name} does not exist')
         return voices
-
-    def get_works(self, name: str) -> list[str]:
-        """Get a list of all opuses or compositions."""
-        names: list[str] = []
-        for command in self.command_lines:
-            cmd = parse_command(command)
-            item: mt.Verb = cmd[0]
-            params: mt.Params = cmd[1]
-            assert item, 'Empty item'
-
-            if item == name:
-                if params:
-                    expect(cmd, ['name'])
-                    key, value = params[0]
-                    if key == 'name':
-                        names.append(value)
-        return names
