@@ -414,11 +414,11 @@ class Commands:
     def get_all_chords(self):
         """Read and set up non-standard chords."""
         for command in self.command_lines:
-            cmds: mt.CmdDict = parse_command_dict(command)
-            if cmds['command'] == 'chord':
+            cmd: mt.CmdDict = parse_command_dict(command)
+            if cmd['command'] == 'chord':
                 # expect(cmd, ['name', 'notes'])
-                name: str = cmds.get('name', '')
-                notes = cmds.get('notes', '')
+                name: str = cmd.get('name', '')
+                notes = cmd.get('notes', '')
                 if name and notes:
                     offsets: list[int] = []
                     last_value = -1
@@ -440,14 +440,14 @@ class Commands:
         """Construct Rhythm dictionary from the list of commands."""
         rhythms: mt.RhythmDict = {}
         for command in self.command_lines:
-            cmds: mt.CmdDict = parse_command_dict(command)
-            if cmds['command'] == 'rhythm':
+            cmd: mt.CmdDict = parse_command_dict(command)
+            if cmd['command'] == 'rhythm':
                 rhythm: mt.Rhythm = []
-                name: str = cmds.get('name', '')
-                seed = get_signed_int(cmds, 'seed', -1)
-                silence = get_float(cmds, 'silence', 0.0, 1.0, prefs.rhythm_silence)
-                repeat = get_float(cmds, 'repeat', 0.0, 1.0, prefs.rhythm_repeat)
-                durations = cmds.get('durations', '')
+                name: str = cmd.get('name', '')
+                seed = get_signed_int(cmd, 'seed', -1)
+                silence = get_float(cmd, 'silence', 0.0, 1.0, prefs.rhythm_silence)
+                repeat = get_float(cmd, 'repeat', 0.0, 1.0, prefs.rhythm_repeat)
+                durations = cmd.get('durations', '')
                 if name and seed >= 0:
                     # Construct a table of possible durations
                     probs: list[int] = []
