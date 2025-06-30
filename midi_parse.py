@@ -154,7 +154,7 @@ class Commands:
         # Remove leading & trailing whitespace and comments,
         # and validate the command.
         # Assemble command_list and command_dict for future use.
-        self.commands: list[str] = []
+        self.command_lines: list[str] = []
         self.command_list: list[mt.Cmd] = [] # currently unused
         self.command_dicts: list[mt.CmdDict] = []
         for line in lines:
@@ -165,7 +165,7 @@ class Commands:
             if not command[0]:
                 logging.error(f'Bad command "{clean}"')
                 continue
-            self.commands.append(clean)
+            self.command_lines.append(clean)
             self.command_list.append(command)
             self.command_dicts.append(parse_command_dict(clean))
 
@@ -185,7 +185,7 @@ class Commands:
         composition: mi.Composition = mi.Composition()
         is_named: bool = name != ''
         in_composition = not is_named
-        for command in self.commands:
+        for command in self.command_lines:
             cmd = parse_command(command)
             item: mt.Verb = cmd[0]
             params: mt.Params = cmd[1]
@@ -391,7 +391,7 @@ class Commands:
     def get_opus(self, name: str) -> str:
         """Get parts of the named opus."""
         names: list[str] = []
-        for command in self.commands:
+        for command in self.command_lines:
             cmd = parse_command(command)
             item: mt.Verb = cmd[0]
             params: mt.Params = cmd[1]
@@ -413,7 +413,7 @@ class Commands:
 
     def get_all_chords(self):
         """Read and set up non-standard chords."""
-        for command in self.commands:
+        for command in self.command_lines:
             cmds: mt.CmdDict = parse_command_dict(command)
             if cmds['command'] == 'chord':
                 # expect(cmd, ['name', 'notes'])
@@ -439,7 +439,7 @@ class Commands:
     def get_all_rhythms(self) -> mt.RhythmDict:
         """Construct Rhythm dictionary from the list of commands."""
         rhythms: mt.RhythmDict = {}
-        for command in self.commands:
+        for command in self.command_lines:
             cmds: mt.CmdDict = parse_command_dict(command)
             if cmds['command'] == 'rhythm':
                 rhythm: mt.Rhythm = []
@@ -493,7 +493,7 @@ class Commands:
     def get_all_tunes(self) -> mt.TuneDict:
         """Construct Tune dictionary from the list of commands."""
         tunes: mt.TuneDict = {}
-        for command in self.commands:
+        for command in self.command_lines:
             cmd = parse_command(command)
             item: mt.Verb = cmd[0]
             params: mt.Params = cmd[1]
@@ -637,7 +637,7 @@ class Commands:
     def get_preferences(self) -> None:
         """Get changes to global preferences."""
         prefs_dict = prefs.__dict__
-        for command in self.commands:
+        for command in self.command_lines:
             item, params = parse_command(command)
             if item == 'preferences':
                 for key, value in params:
@@ -713,7 +713,7 @@ class Commands:
     def get_works(self, name: str) -> list[str]:
         """Get a list of all opuses or compositions."""
         names: list[str] = []
-        for command in self.commands:
+        for command in self.command_lines:
             cmd = parse_command(command)
             item: mt.Verb = cmd[0]
             params: mt.Params = cmd[1]
