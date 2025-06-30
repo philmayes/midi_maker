@@ -20,6 +20,8 @@ re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_text = re.compile('[a-zA-Z_]')
 re_timesig = re.compile(r'(\d+)/(\d+)$')
 
+_ln = '$line'  # Key for the original command line. Used for error reports.
+
 def clean_line(line: str) -> str:
     max_len = 250
     if len(line) > max_len:
@@ -34,17 +36,30 @@ def clean_line(line: str) -> str:
 
 def expect(cmd: mt.Cmd, names: list[str]) -> None:
     """Report any unexpected parameters in command."""
-    item: mt.Verb = cmd[0]
     params: mt.Params = cmd[1]
     unexpected: list[str] = []
+    line = '??!'
     for param in params:
         key, value = param
+        if key == _ln:
+            line = value
+            continue
         if key not in names:
             unexpected.append(key)
     if unexpected:
-        command = ' '.join(f'{kv[0]}={kv[1]}' for kv in params)
-        logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{item} {command}"')
+        logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{line}"')
     return
+
+def cmd2text(cmd: mt.Cmd) -> str:
+    item: mt.Verb = cmd[0]
+    params: mt.Params = cmd[1]
+    line: str
+    for param in params:
+        key, value = param
+        if key == _ln:
+            line = value
+            break
+    return f'"{item} {line}"'
 
 def get_effect(value: str, min_val: float, max_val: float) -> int | float | None:
     """Get staccato or overhang value.
@@ -116,7 +131,9 @@ def parse_command(command: str) -> mt.Cmd:
                 break
             params.append([key, value])
     else:
-        # Weird python syntax: the loop finished without a break
+        # Weird python syntax: the loop finished without a break.
+        # Add the original command line for use in error reports.
+        params.append([_ln, command])
         return item, params
     return '', []
 
@@ -146,6 +163,8 @@ def parse_command_dict(command: str) -> mt.CmdDict:
                 break
             # params.append([key, value])
             result[key] = value
+    # Add the original command line for use in error reports.
+    result[_ln] = command
     return result
 
 class Commands:
@@ -185,8 +204,7 @@ class Commands:
         composition: mi.Composition = mi.Composition()
         is_named: bool = name != ''
         in_composition = not is_named
-        for command in self.command_lines:
-            cmd = parse_command(command)
+        for cmd in self.command_list:
             item: mt.Verb = cmd[0]
             params: mt.Params = cmd[1]
             assert item, 'Empty item'
@@ -292,7 +310,7 @@ class Commands:
                 if tunes and voice and trans is not None:
                     composition += mi.Play(voice, tunes, trans)
                 else:
-                    logging.warning(f'Bad play command: "{command}"')
+                    logging.warning(f'Bad play command: "{cmd2text(cmd)}"')
 
             elif item == 'rhythm':
                 # Creates a Beat() instance, not a Rhythm() instance!
@@ -322,7 +340,7 @@ class Commands:
                         if count is not None:
                             repeat = count
                     else:
-                        logging.error(f'Bad parameter in "{command}"')
+                        logging.error(f'Bad parameter in "{cmd2text(cmd)}"')
                 composition += mi.Repeat(repeat)
 
             elif item == 'tempo':
@@ -333,7 +351,7 @@ class Commands:
                         if value.isdigit():
                             composition += mi.Tempo(int(value))
                             continue
-                logging.warning(f'Bad tempo in "{command}"')
+                logging.warning(f'Bad tempo in "{cmd2text(cmd)}"')
 
             elif item == 'timesig':
                 expect(cmd, ['value'])
@@ -347,7 +365,7 @@ class Commands:
                             if bottom.bit_count() == 1:
                                 composition += mi.TimeSig(top, bottom)
                                 continue
-                logging.warning(f'Bad timesig in "{command}"')
+                logging.warning(f'Bad timesig in "{cmd2text(cmd)}"')
 
             elif item == 'volume':
                 expect(cmd, ['voices', 'level', 'rate'])
@@ -377,14 +395,14 @@ class Commands:
                                 else:
                                     vol.level = level
                             else:
-                                logging.warning(f'Bad level in "{command}"')
+                                logging.warning(f'Bad level in "{cmd2text(cmd)}"')
                         if key == 'rate':
                             if value.isdigit():
                                 vol.rate = int(value)
                     if vol.delta or vol.level:
                         composition += vol
                     else:
-                        logging.warning(f'No level in "{command}"')
+                        logging.warning(f'No level in "{cmd2text(cmd)}"')
 
         return composition
 
@@ -413,8 +431,7 @@ class Commands:
 
     def get_all_chords(self):
         """Read and set up non-standard chords."""
-        for command in self.command_lines:
-            cmd: mt.CmdDict = parse_command_dict(command)
+        for cmd in self.command_dicts:
             if cmd['command'] == 'chord':
                 # expect(cmd, ['name', 'notes'])
                 name: str = cmd.get('name', '')
@@ -430,17 +447,16 @@ class Commands:
                             offsets.append(offset)
                             last_value = offset
                         else:
-                            logging.error(f'Bad note in chord "{command}"')
+                            logging.error(f'Bad note in chord "{cmd[_ln]}"')
                             break
                     midi_chords.chords[name] = offsets
                 else:
-                    logging.error(f'Bad format for command "{command}"')
+                    logging.error(f'Bad format for command "{cmd[_ln]}"')
 
     def get_all_rhythms(self) -> mt.RhythmDict:
         """Construct Rhythm dictionary from the list of commands."""
         rhythms: mt.RhythmDict = {}
-        for command in self.command_lines:
-            cmd: mt.CmdDict = parse_command_dict(command)
+        for cmd in self.command_dicts:
             if cmd['command'] == 'rhythm':
                 rhythm: mt.Rhythm = []
                 name: str = cmd.get('name', '')
@@ -483,7 +499,7 @@ class Commands:
                     total = sum(rhythm)
                     logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.Duration.quarter} beats')
                 elif name:
-                    logging.error(f'Bad rhythm command "{command}"')
+                    logging.error(f'Bad rhythm command "{cmd[_ln]}"')
                 else:
                     # This is a composition rhythm command. We are too lazy
                     # to check that it actually lives within a composition.
@@ -528,9 +544,6 @@ class Commands:
         for cmd in self.command_dicts:
             if cmd['command'] != 'voice':
                 continue
-            # Create a simulacrum of the command for use in error messages.
-            command = ' '.join(f'{k}={v}' for k,v in cmd.items() if k != 'command')
-            command = 'voice ' + command
 
             # Set up default values
             name: str = ''
@@ -547,17 +560,17 @@ class Commands:
             if 'min_pitch' in cmd:
                 value = utils.get_int(cmd['min_pitch'])
                 if value is None:
-                    logging.warning(f'Bad min_pitch in "{command}"')
+                    logging.warning(f'Bad min_pitch in "{cmd[_ln]}"')
                 else:
                     min_pitch = value
 
             if 'max_pitch' in cmd:
                 value = utils.get_int(cmd['max_pitch'])
                 if value is None:
-                    logging.warning(f'Bad max_pitch in "{command}"')
+                    logging.warning(f'Bad max_pitch in "{cmd[_ln]}"')
                 else:
                     if value < min_pitch:
-                        logging.warning(f'max_pitch less than min_pitch in "{command}"')
+                        logging.warning(f'max_pitch less than min_pitch in "{cmd[_ln]}"')
                         min_pitch = 0
                     else:
                         max_pitch = value
@@ -572,7 +585,7 @@ class Commands:
                     style = value
                 else:
                     style = 'bass'
-                    logging.warning(f'Bad style in "{command}", using {style}')
+                    logging.warning(f'Bad style in "{cmd[_ln]}", using {style}')
 
             if 'voice' in cmd:
                 value = cmd['voice']
@@ -585,7 +598,7 @@ class Commands:
                             logging.warning(f'voice {voice} is not a valid percussion number')
                             continue
                     else:
-                        logging.warning(f'Bad voice in "{command}"')
+                        logging.warning(f'Bad voice in "{cmd[_ln]}"')
                         continue
                     if next_perc_channel >= 10:
                         logging.warning(f'Too many percussion channels')
@@ -602,7 +615,7 @@ class Commands:
                             logging.warning(f'voice {voice} is not a valid voice number')
                             continue
                     else:
-                        logging.warning(f'Bad voice in "{command}"')
+                        logging.warning(f'Bad voice in "{cmd[_ln]}"')
                         continue
                     if next_voice_channel >= 16:
                         logging.warning(f'Too many voice channels')
@@ -611,7 +624,7 @@ class Commands:
                     next_voice_channel += 1
 
             if channel == Channel.none:
-                logging.warning(f'No channel in "{command}"')
+                logging.warning(f'No channel in "{cmd[_ln]}"')
                 continue
             voices.append(Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
             mv.set_volume(channel, 0, self.volumes[style], 0, 0)
