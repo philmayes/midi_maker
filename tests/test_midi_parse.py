@@ -79,10 +79,9 @@ class TestBar:
         assert bar_chord.chord == 'maj'
 
 class TestComposition:
-    lines: list[str] = [
-        'voice name=bass style=bass     voice=electric_bass_picked',
+    lines1: list[str] = [
+        'voice name=bass style=bass voice=electric_bass_picked',
         'rhythm name=bass durations=h,q,q',
-        'tune name=wb1 notes=G5,G,q.C6,eD,qE,hG,eE,E,E,D,C,h.F5,eA,A',
         'composition name=wabash',
         'timesig value=4/4',
         'tempo  bpm=140',
@@ -91,24 +90,82 @@ class TestComposition:
         'bar    chords=C',
         'bar    chords=G',
     ]
+    lines2: list[str] = [
+        'voice name=bass style=bass voice=electric_bass_picked',
+        'rhythm name=bass durations=h,q,q',
+        'composition name=one',
+        'bar    chords=C',
+        'composition name=two',
+        'bar    chords=G',
+        'bar    chords=A',
+    ]
+    lines3: list[str] = [
+        'voice name=bass style=bass voice=electric_bass_picked',
+        'rhythm name=bass durations=h,q,q',
+        'bar    chords=C',
+        'composition name=two',
+        'bar    chords=G',
+        'bar    chords=A',
+    ]
+
+    def expect(self, comp: mi.Composition, length: int, key: str):
+        """Assert that the item list has correct length and key."""
+        assert len(comp.items) == length
+        item: mi.Item = comp.items[0]
+        assert isinstance(item, mi.Bar)
+        assert item.chords[0].key == key
+
     def test_composition1(self):
-        commands = mp.Commands(TestComposition.lines)
+        """Test that a composition is found when no name supplied."""
+        commands = mp.Commands(TestComposition.lines1)
         comp: mi.Composition = commands.get_composition()
         assert len(comp.items) == 6
         item: mi.Item = comp.items[0]
         assert isinstance(item, mi.TimeSig)
 
     def test_composition2(self):
-        commands = mp.Commands(TestComposition.lines)
+        """Test that a composition is found when name is supplied."""
+        commands = mp.Commands(TestComposition.lines1)
         comp: mi.Composition = commands.get_composition('wabash')
         assert len(comp.items) == 6
         item: mi.Item = comp.items[0]
         assert isinstance(item, mi.TimeSig)
 
     def test_composition3(self):
-        commands = mp.Commands(TestComposition.lines)
+        """Test that no composition is found when wrong name supplied."""
+        commands = mp.Commands(TestComposition.lines1)
         comp: mi.Composition = commands.get_composition('wrong')
         assert len(comp.items) == 0
+
+    def test_composition4(self):
+        """Two named compositions; get the 1st one."""
+        commands = mp.Commands(TestComposition.lines2)
+        comp: mi.Composition = commands.get_composition('one')
+        self.expect(comp, 1, 'C')
+
+    def test_composition5(self):
+        """Two named compositions; get the 2nd one."""
+        commands = mp.Commands(TestComposition.lines2)
+        comp: mi.Composition = commands.get_composition('two')
+        self.expect(comp, 2, 'G')
+
+    def test_composition6(self):
+        """Two named compositions; get unnamed one."""
+        commands = mp.Commands(TestComposition.lines2)
+        comp: mi.Composition = commands.get_composition('')
+        self.expect(comp, 1, 'C')
+
+    def test_composition7(self):
+        """Two compositions, 1st unnamed; get unnamed one."""
+        commands = mp.Commands(TestComposition.lines3)
+        comp: mi.Composition = commands.get_composition('')
+        self.expect(comp, 1, 'C')
+
+    def test_composition8(self):
+        """Two compositions, 1st unnamed; get named one."""
+        commands = mp.Commands(TestComposition.lines3)
+        comp: mi.Composition = commands.get_composition('two')
+        self.expect(comp, 2, 'G')
 
 class TestLoop:
     def test_loop1(self):

@@ -59,7 +59,7 @@ def cmd2text(cmd: mt.Cmd) -> str:
         if key == _ln:
             line = value
             break
-    return f'"{item} {line}"'
+    return line
 
 def get_effect(value: str, min_val: float, max_val: float) -> int | float | None:
     """Get staccato or overhang value.
@@ -100,6 +100,13 @@ def get_signed_int(cmds: mt.CmdDict, param: str, default: int|str) -> int:
         logging.error(f'Bad signed number {value}')
         return int(default)
     return number
+
+def get_value(params: mt.Params, key: str) -> str:
+    for param in params:
+        k, value = param
+        if k == key:
+            return value
+    return ''
 
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
@@ -200,29 +207,47 @@ class Commands:
         that a beginner does not have to deal with composition syntax.
         """
         composition: mi.Composition = mi.Composition()
-        is_named: bool = name != ''
-        in_composition = not is_named
+        in_composition = False
+        found_composition = False
         for cmd in self.command_list:
             item: mt.Verb = cmd[0]
             params: mt.Params = cmd[1]
             assert item, 'Empty item'
 
-            if item == 'composition' and is_named:
+            # Skip all definition commands. Some definition commands and
+            # performance commands have the same verb (rhythm, for instance),
+            # and this avoids parsing failures.
+            if item != 'composition':
+                if item == 'preferences':
+                    continue
+                if get_value(params, 'name'):
+                    continue
+
+            if item == 'composition':
+                found_composition = True
                 expect(cmd, ['name'])
                 if in_composition:
+                    # We've come to the end of the composition, so exit.
                     break
                 if not name:
+                    # If a name is not supplied, use any composition.
                     in_composition = True
-                elif params:
-                    key, value = params[0]
-                    if key == 'name' and value == name:
-                        in_composition = True
+                elif get_value(params, 'name') == name:
+                    # If this composition matches the supplied name, use it.
+                    in_composition = True
                 continue
 
+            if name == '' and not found_composition:
+                # If no name has been supplied and there was no composition
+                # command before finding performance commands (bar etc),
+                # then start one.
+                in_composition = True
+
+            # Avoid adding composition commands until we are in a composition.
             if not in_composition:
                 continue
 
-            elif item == 'bar':
+            if item == 'bar':
                 expect(cmd, ['chords', 'clip'])
                 chords: list[mt.BarChord] = []
                 repeat = 1
@@ -333,6 +358,8 @@ class Commands:
                 repeat = 2
                 for param in params:
                     key, value = param
+                    if key == _ln:
+                        continue
                     if key == 'count':
                         count = utils.get_int(value, 2, 100)
                         if count is not None:
