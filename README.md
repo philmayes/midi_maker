@@ -77,11 +77,11 @@ Adjust various settings. Probability is a decimal number less than 1.0.
 These generate the actual MIDI output using the definitions that have been created.
 
 ### bar
-Format: `bar chords=chord1,chord2... clip=false`
+Format: `bar chords=chord1,chord2... repeat=# clip=false`
 
 The chords can be preceded by a duration; if not, a quarter note is assumed. For example, `bar chords=C` is a C major bar; `bar chords=hC,Am,F` has two beats of C major, one beat of A minor and one beat of F major.
 
-See **Discussions: Clipping** for use of the `clip` parameter.
+Use `repeat` to play the bar more than once. See **Discussions: Clipping** for use of the `clip` parameter.
 
 ### mute
 The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 

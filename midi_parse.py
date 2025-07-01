@@ -279,6 +279,12 @@ class Commands:
                                 tick += dur2
                             else:
                                 logging.error(f'Bad bar chord "{chord}"')
+                    elif key == 'repeat':
+                        repeat2 = utils.get_int(value)
+                        if repeat2 is None:
+                            logging.warning(f'Bad repeat in command: "{cmd2text(cmd)}"')
+                        else:
+                            repeat = repeat2
                     elif key == 'clip':
                         clip = utils.truth(value)
                 if chords:
