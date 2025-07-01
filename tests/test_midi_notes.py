@@ -1,8 +1,6 @@
-import pytest
-
-import midi_notes as mn
-from midi_notes import Duration as dur
-import midi_types as mt
+from src import midi_notes as mn
+from src.midi_notes import Duration as dur
+from src import midi_types as mt
 
 bad_note: mt.Note = mt.Note(0, 0, '', 0, 0, 0)
 class TestGetDuration:

@@ -2,14 +2,14 @@ import random
 
 from midiutil import MIDIFile
 
-import midi
-import midi_voice as mv
-from midi_channels import Channel
-import midi_items as mi
-import midi_types as mt
-from midi_voice import Voice
-import midi_volume as mv
-import utils
+from src import midi
+from src import midi_voice as mv
+from src.midi_channels import Channel
+from src import midi_items as mi
+from src import midi_types as mt
+from src.midi_voice import Voice
+from src import midi_volume as mv
+from src import utils
 
 def test_1(mocker):
     """Test note/bar clipping."""

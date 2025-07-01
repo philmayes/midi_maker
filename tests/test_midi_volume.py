@@ -1,6 +1,6 @@
 import pytest
 
-import midi_volume as mv
+from src import midi_volume as mv
 
 @pytest.fixture
 def setup():

@@ -1,9 +1,9 @@
-import midi_items as mi
-from midi_notes import Duration as dur
-import midi_parse as mp
-import midi_types as mt
-from midi_voice import Voice
-import midi_voices
+from src import midi_items as mi
+from src.midi_notes import Duration as dur
+from src import midi_parse as mp
+from src import midi_types as mt
+from src.midi_voice import Voice
+from src import midi_voices
 
 class TestBar:
     def test_bar1(self):
