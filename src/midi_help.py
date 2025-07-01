@@ -1,12 +1,7 @@
 import argparse
-import logging
-import os
 
-from midi import make_midi
-import midi_play
 import midi_voices as mv
 import midi_percussion as mp
-
 
 topics = """\
 voices
@@ -21,7 +16,6 @@ def print_2cols(items: dict[str, int], by8: bool=False):
     max_len = 0
     names = list(items.keys())
     max_len = max(len(vv) for vv in names)
-    print(max_len)
     row_count = (len(names)+ 1) // 2
     for n in range(row_count):
         if by8 and n > 0 and n % 8 == 0:

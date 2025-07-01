@@ -619,7 +619,7 @@ class Commands:
                         voice = midi_voices.voices[value]
                     elif value.isdigit():
                         voice = int(value)
-                        if not 0 <= voice < 128:
+                        if not 1 <= voice <= 128:
                             logging.warning(f'voice {voice} is not a valid voice number')
                             continue
                     else:
@@ -634,7 +634,7 @@ class Commands:
             if channel == Channel.none:
                 logging.warning(f'No channel in "{cmd[_ln]}"')
                 continue
-            voices.append(Voice(name, channel, voice, style, min_pitch, max_pitch, rate))
+            voices.append(Voice(name, channel, voice - 1, style, min_pitch, max_pitch, rate))
             mv.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
