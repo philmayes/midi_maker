@@ -3,7 +3,7 @@
 import logging
 import re
 
-from midi_channels import Channel, is_midi, str_to_channel
+from midi_channels import Channel, str_to_channel
 import midi_chords
 import midi_items as mi
 import midi_notes as mn
@@ -34,32 +34,16 @@ def clean_line(line: str) -> str:
     # Remove leading & trailing whitespace
     return line.strip()
 
-def expect(cmd: mt.Cmd, names: list[str]) -> None:
+def expect(cmd: mt.CmdDict, names: list[str]) -> None:
     """Report any unexpected parameters in command."""
-    params: mt.Params = cmd[1]
     unexpected: list[str] = []
-    line = '??!'
-    for param in params:
-        key, value = param
-        if key == _ln:
-            line = value
-            continue
-        if key not in names:
+    for key in cmd.keys():
+        # Ignore the command and the text line.
+        if key != 'command' and key != _ln and key not in names:
             unexpected.append(key)
     if unexpected:
-        logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{line}"')
+        logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{cmd[_ln]}"')
     return
-
-def cmd2text(cmd: mt.Cmd) -> str:
-    item: mt.Verb = cmd[0]
-    params: mt.Params = cmd[1]
-    line: str
-    for param in params:
-        key, value = param
-        if key == _ln:
-            line = value
-            break
-    return line
 
 def get_effect(value: str, min_val: float, max_val: float) -> int | float | None:
     """Get staccato or overhang value.
@@ -100,13 +84,6 @@ def get_signed_int(cmds: mt.CmdDict, param: str, default: int|str) -> int:
         logging.error(f'Bad signed number {value}')
         return int(default)
     return number
-
-def get_value(params: mt.Params, key: str) -> str:
-    for param in params:
-        k, value = param
-        if k == key:
-            return value
-    return ''
 
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
@@ -179,8 +156,7 @@ class Commands:
     def __init__(self, lines: list[str]):
         # Remove leading & trailing whitespace and comments,
         # and validate the command.
-        # Assemble command_list and command_dict for future use.
-        self.command_list: list[mt.Cmd] = [] # currently unused
+        # Assemble a list of CmdDict instances for future use.
         self.command_dicts: list[mt.CmdDict] = []
         for line in lines:
             clean: str = clean_line(line)
@@ -190,7 +166,6 @@ class Commands:
             if not command[0]:
                 logging.error(f'Bad command "{clean}"')
                 continue
-            self.command_list.append(command)
             self.command_dicts.append(parse_command_dict(clean))
 
         self.get_preferences()
@@ -209,9 +184,8 @@ class Commands:
         composition: mi.Composition = mi.Composition()
         in_composition = False
         found_composition = False
-        for cmd in self.command_list:
-            item: mt.Verb = cmd[0]
-            params: mt.Params = cmd[1]
+        for cmd in self.command_dicts:
+            item: mt.Verb = cmd['command']
             assert item, 'Empty item'
 
             # Skip all definition commands. Some definition commands and
@@ -220,7 +194,7 @@ class Commands:
             if item != 'composition':
                 if item == 'preferences':
                     continue
-                if get_value(params, 'name'):
+                if cmd.get('name'):
                     continue
 
             if item == 'composition':
@@ -232,7 +206,7 @@ class Commands:
                 if not name:
                     # If a name is not supplied, use any composition.
                     in_composition = True
-                elif get_value(params, 'name') == name:
+                elif cmd.get('name') == name:
                     # If this composition matches the supplied name, use it.
                     in_composition = True
                 continue
@@ -248,70 +222,66 @@ class Commands:
                 continue
 
             if item == 'bar':
-                expect(cmd, ['chords', 'clip'])
+                expect(cmd, ['chords', 'repeat', 'clip'])
                 chords: list[mt.BarChord] = []
                 repeat = 1
                 clip = True
-                for param in params:
-                    key, value = param
-                    if key == 'chords':
-                        tick = 0
-                        for chord in value.split(','):
-                            match = midi_chords.re_dur_chord.match(chord)
-                            if match:
-                                dur = match.group(1)
-                                key = match.group(2)
-                                cho = match.group(3)
-                                mod = match.group(4)
-                                if dur is None:
-                                    dur2 = mn.Duration.default
-                                else:
-                                    dur2 = mn.get_duration(dur)
-                                    if dur2 <= 0:
-                                        dur2 = mn.Duration.default
-                                if not cho:
-                                    cho = 'maj'
-                                cho = cho + mod
-                                if not cho in midi_chords.chords:
-                                    logging.error(f'Bad chord {chord}')
-                                    break
-                                chords.append(mt.BarChord(tick, key, cho))
-                                tick += dur2
+                if value := cmd.get('chords'):
+                    tick = 0
+                    for chord in value.split(','):
+                        match = midi_chords.re_dur_chord.match(chord)
+                        if match:
+                            dur = match.group(1)
+                            key = match.group(2)
+                            cho = match.group(3)
+                            mod = match.group(4)
+                            if dur is None:
+                                dur2 = mn.Duration.default
                             else:
-                                logging.error(f'Bad bar chord "{chord}"')
-                    elif key == 'repeat':
-                        repeat2 = utils.get_int(value)
-                        if repeat2 is None:
-                            logging.warning(f'Bad repeat in command: "{cmd2text(cmd)}"')
+                                dur2 = mn.get_duration(dur)
+                                if dur2 <= 0:
+                                    dur2 = mn.Duration.default
+                            if not cho:
+                                cho = 'maj'
+                            cho = cho + mod
+                            if not cho in midi_chords.chords:
+                                logging.error(f'Bad chord {chord}')
+                                break
+                            chords.append(mt.BarChord(tick, key, cho))
+                            tick += dur2
                         else:
-                            repeat = repeat2
-                    elif key == 'clip':
-                        clip = utils.truth(value)
+                            logging.error(f'Bad bar chord "{chord}"')
+                if value := cmd.get('repeat'):
+                    repeat2 = utils.get_int(value)
+                    if repeat2 is None:
+                        logging.warning(f'Bad repeat in command: "{cmd[_ln]}"')
+                    else:
+                        repeat = repeat2
+                if value := cmd.get('clip'):
+                    clip = utils.truth(value)
                 if chords:
                     composition += mi.Bar(chords, repeat, clip)
 
             elif item == 'effects':
                 expect(cmd, ['voices', 'staccato', 'overhang', 'clip'])
-                voices = self.get_voices(params)
+                voices = self.get_voices(cmd)
                 staccato: int | float | None = None
                 overhang: int | float | None = None
                 clip = True
-                for param in params:
-                    key, value = param
-                    if key == 'staccato':
-                        staccato = get_effect(value, 0.0, 1.0)
-                    elif key == 'overhang':
-                        overhang = get_effect(value, 1.0, 8.01)
-                    elif key == 'clip':
-                        clip = utils.truth(value)
-                    if staccato and overhang:
-                        logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
-                        overhang = None
-                    composition += mi.Effects(voices, staccato, overhang, clip)
+                if value := cmd.get('staccato'):
+                    staccato = get_effect(value, 0.0, 1.0)
+                if value := cmd.get('overhang'):
+                    overhang = get_effect(value, 1.0, 8.01)
+                if value := cmd.get('clip'):
+                    clip = utils.truth(value)
+                if staccato and overhang:
+                    logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
+                    overhang = None
+                composition += mi.Effects(voices, staccato, overhang, clip)
 
             elif item == 'hear':
                 expect(cmd, ['voices'])
-                voices = self.get_voices(params)
+                voices = self.get_voices(cmd)
                 composition += mi.Hear(voices)
 
             elif item == 'loop':
@@ -320,7 +290,7 @@ class Commands:
 
             elif item == 'mute':
                 expect(cmd, ['voices'])
-                voices = self.get_voices(params)
+                voices = self.get_voices(cmd)
                 composition += mi.Mute(voices)
 
             elif item == 'play':
@@ -328,112 +298,94 @@ class Commands:
                 voice: Voice | None = None
                 tunes: mt.Tunes = []
                 trans: int | None = 0
-                for param in params:
-                    key, value = param
-                    if key == 'voice':
-                        voice = self.get_voice(value)
-                    elif key == 'tunes':
-                        tunes = self.get_tunes(value)
-                    elif key == 'transpose':
-                        trans = utils.get_signed_int(value)
+                if value := cmd.get('voice'):
+                    voice = self.get_voice(value)
+                if value := cmd.get('tunes'):
+                    tunes = self.get_tunes(value)
+                if value := cmd.get('transpose'):
+                    trans = utils.get_signed_int(value)
                 if tunes and voice and trans is not None:
                     composition += mi.Play(voice, tunes, trans)
                 else:
-                    logging.warning(f'Bad play command: "{cmd2text(cmd)}"')
+                    logging.warning(f'Bad play command: "{cmd[_ln]}"')
 
             elif item == 'rhythm':
                 # Creates a Beat() instance, not a Rhythm() instance!
                 expect(cmd, ['voices', 'rhythms'])
-                voices = self.get_voices(params)
+                voices = self.get_voices(cmd)
                 rhythms: mt.Rhythms = []
-                for param in params:
-                    key, value = param
-                    if key == 'rhythms':
-                        rhythms = self.get_rhythms(value)
-                    elif key == 'name':
-                        # Not an error, but not a good .ini layout.
-                        logging.warning('Rhythm definition found within composition')
-                        break
-                else:
-                    # That weird python sytax meaning the loop completed!
-                    if voices and rhythms:
-                        composition += mi.Beat(voices, rhythms)
+                if value := cmd.get('rhythms'):
+                    rhythms = self.get_rhythms(value)
+                if value := cmd.get('name'):
+                    # Not an error, but not a good .ini layout.
+                    logging.warning('Rhythm definition found within composition')
+                    continue
+                if voices and rhythms:
+                    composition += mi.Beat(voices, rhythms)
 
             elif item == 'repeat':
                 expect(cmd, ['count'])
                 repeat = 2
-                for param in params:
-                    key, value = param
-                    if key == _ln:
-                        continue
-                    if key == 'count':
-                        count = utils.get_int(value, 2, 100)
-                        if count is not None:
-                            repeat = count
+                if value := cmd.get('count'):
+                    count = utils.get_int(value, 2, 100)
+                    if count is not None:
+                        repeat = count
                     else:
-                        logging.error(f'Bad parameter in "{cmd2text(cmd)}"')
+                        logging.error(f'Bad parameter in "{cmd[_ln]}"')
                 composition += mi.Repeat(repeat)
 
             elif item == 'tempo':
                 expect(cmd, ['bpm'])
-                if params:
-                    key, value = params[0]
-                    if key == 'bpm':
-                        if value.isdigit():
-                            composition += mi.Tempo(int(value))
-                            continue
-                logging.warning(f'Bad tempo in "{cmd2text(cmd)}"')
+                if value := cmd.get('bpm'):
+                    if value.isdigit():
+                        composition += mi.Tempo(int(value))
+                        continue
+                logging.warning(f'Bad tempo in "{cmd[_ln]}"')
 
             elif item == 'timesig':
                 expect(cmd, ['value'])
-                if params:
-                    key, value = params[0]
-                    if key == 'value':
-                        match = re_timesig.match(value)
-                        if match:
-                            top = int(match.group(1))
-                            bottom = int(match.group(2))
-                            if bottom.bit_count() == 1:
-                                composition += mi.TimeSig(top, bottom)
-                                continue
-                logging.warning(f'Bad timesig in "{cmd2text(cmd)}"')
+                if value := cmd.get('value'):
+                    match = re_timesig.match(value)
+                    if match:
+                        top = int(match.group(1))
+                        bottom = int(match.group(2))
+                        if bottom.bit_count() == 1:
+                            composition += mi.TimeSig(top, bottom)
+                            continue
+                logging.warning(f'Bad timesig in "{cmd[_ln]}"')
 
             elif item == 'volume':
                 expect(cmd, ['voices', 'level', 'rate'])
-                voices = self.get_voices(params)
+                voices = self.get_voices(cmd)
                 if voices:
                     vol = mi.Volume(0, 0, 0, voices)
-                    for param in params:
-                        # No need to range-check here;
-                        # it is done by ChannelInfo.set_volume
-                        key, value = param
-                        if key == 'level':
-                            # Might be a previosuly-defined volume name
-                            if value in self.volumes:
-                                vol.level = self.volumes[value]
-                                continue
-                            # 'level' without a sign is an absolute value;
-                            # with a sign it is a delta.
-                            sign = value[0]
-                            if sign in '+-':
-                                value = value[1:]
-                            if value.isdigit():
-                                level = int(value)
-                                if sign == '+':
-                                    vol.delta = level
-                                elif sign == '-':
-                                    vol.delta = -level
-                                else:
-                                    vol.level = level
+                    if value := cmd.get('level'):
+                        # Might be a previously-defined volume name
+                        if value in self.volumes:
+                            vol.level = self.volumes[value]
+                            continue
+                        # 'level' without a sign is an absolute value;
+                        # with a sign it is a delta.
+                        sign = value[0]
+                        if sign in '+-':
+                            value = value[1:]
+                        if value.isdigit():
+                            level = int(value)
+                            if sign == '+':
+                                vol.delta = level
+                            elif sign == '-':
+                                vol.delta = -level
                             else:
-                                logging.warning(f'Bad level in "{cmd2text(cmd)}"')
-                        if key == 'rate':
-                            if value.isdigit():
-                                vol.rate = int(value)
+                                vol.level = level
+                        else:
+                            logging.warning(f'Bad level in "{cmd[_ln]}"')
+                    if value := cmd.get('rate'):
+                        if value.isdigit():
+                            vol.rate = int(value)
                     if vol.delta or vol.level:
                         composition += vol
                     else:
-                        logging.warning(f'No level in "{cmd2text(cmd)}"')
+                        logging.warning(f'No level in "{cmd[_ln]}"')
 
         return composition
 
@@ -451,7 +403,7 @@ class Commands:
         """Read and set up non-standard chords."""
         for cmd in self.command_dicts:
             if cmd['command'] == 'chord':
-                # expect(cmd, ['name', 'notes'])
+                expect(cmd, ['name', 'notes'])
                 name: str = cmd.get('name', '')
                 notes = cmd.get('notes', '')
                 if name and notes:
@@ -712,22 +664,21 @@ class Commands:
         else:
             logging.error(f'Voice {name} does not exist')
 
-    def get_voices(self, params: mt.Params) -> Voices:
-        """Return a list of all the voices supplied in params."""
+    def get_voices(self, cmd: mt.CmdDict) -> Voices:
+        """Return a list of all the voices supplied in cmd."""
         voices: Voices = []
-        for kv in params:
-            if kv[0] == 'voices':
-                voice_names = kv[1].split(',')
-                if 'all' in voice_names:
-                    return self.voices
-                for voice_name in voice_names:
-                    for voice in self.voices:
-                        if voice.name == voice_name:
-                            if voice not in voices:
-                                voices.append(voice)
-                            else:
-                                logging.error(f'{voice_name} repeated')
-                            break
-                    else:
-                        logging.error(f'Voice {voice_name} does not exist')
+        if 'voices' in cmd:
+            voice_names = cmd['voices'].split(',')
+            if 'all' in voice_names:
+                return self.voices
+            for voice_name in voice_names:
+                for voice in self.voices:
+                    if voice.name == voice_name:
+                        if voice not in voices:
+                            voices.append(voice)
+                        else:
+                            logging.error(f'{voice_name} repeated')
+                        break
+                else:
+                    logging.error(f'Voice {voice_name} does not exist')
         return voices
