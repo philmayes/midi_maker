@@ -1,4 +1,13 @@
 import re
+# from collections import namedtuple
+import midi_notes as mn
+
+# BarChord = namedtuple('BarChord', 'start key chord')
+class BarChord:
+    def __init__(self, start: int, key: str, chord: str):
+        self.start = start
+        self.key = key
+        self.chord = chord
 
 from midi_notes import note_to_interval
 
@@ -10,7 +19,6 @@ re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
 chords: dict[str, list[int]]  = {
     'maj':  [0, 4, 7],        # C E  G
     'min':  [0, 3, 7],        # C Eb G
-    'm':    [0, 3, 7],        # C Eb G
     'dim':  [0, 3, 6],        # C Eb Gb
     'aug':  [0, 4, 8],        # C E  G#
     'maj7': [0, 4, 7, 11],    # C E  G  B
@@ -41,3 +49,27 @@ def chord_to_pitches(chord: str, octave: int) -> list[int]:
     intervals: list[int] = chord_to_intervals(chord)
     result: list[int] = [interval + octave for interval in intervals]
     return result
+
+def get_barchord(chord: str) -> tuple[int, BarChord]:
+
+    match = re_dur_chord.match(chord)
+    if match:
+        dur = match.group(1)
+        key = match.group(2)
+        cho = match.group(3)
+        mod = match.group(4)
+        if dur is None:
+            dur2 = mn.Duration.default
+        else:
+            dur2 = mn.get_duration(dur)
+            if dur2 <= 0:
+                dur2 = mn.Duration.default
+        if not cho:
+            cho = 'maj'
+        elif cho == 'm':
+            cho = 'min'
+        cho = cho + mod
+        if cho in chords:
+            return dur2, BarChord(0, key, cho)
+
+    return (0, BarChord(0,'',''))

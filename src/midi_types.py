@@ -1,7 +1,4 @@
-from collections import namedtuple
 from typing import TypeAlias
-
-BarChord = namedtuple('BarChord', 'start key chord')
 
 class Note:
     def __init__(self,

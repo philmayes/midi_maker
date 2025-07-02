@@ -1,3 +1,4 @@
+from midi_chords import BarChord
 import midi_types as mt
 from midi_voice import Voice, Voices
 from preferences import prefs
@@ -8,8 +9,8 @@ class Item:
 
 class Bar(Item):
     """Bar description of a composition."""
-    def __init__(self, chords: list[mt.BarChord], repeat: int=1, clip: bool=True):
-        self.chords: list[mt.BarChord] = chords
+    def __init__(self, chords: list[BarChord], repeat: int=1, clip: bool=True):
+        self.chords: list[BarChord] = chords
         self.repeat = repeat
         self.clip = clip
 

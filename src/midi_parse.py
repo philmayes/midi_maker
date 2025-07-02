@@ -4,7 +4,7 @@ import logging
 import re
 
 from midi_channels import Channel, str_to_channel
-import midi_chords
+import midi_chords as mc
 import midi_items as mi
 import midi_notes as mn
 import midi_percussion
@@ -223,32 +223,17 @@ class Commands:
 
             if item == 'bar':
                 expect(cmd, ['chords', 'repeat', 'clip'])
-                chords: list[mt.BarChord] = []
+                chords: list[mc.BarChord] = []
                 repeat = 1
                 clip = True
                 if value := cmd.get('chords'):
                     tick = 0
                     for chord in value.split(','):
-                        match = midi_chords.re_dur_chord.match(chord)
-                        if match:
-                            dur = match.group(1)
-                            key = match.group(2)
-                            cho = match.group(3)
-                            mod = match.group(4)
-                            if dur is None:
-                                dur2 = mn.Duration.default
-                            else:
-                                dur2 = mn.get_duration(dur)
-                                if dur2 <= 0:
-                                    dur2 = mn.Duration.default
-                            if not cho:
-                                cho = 'maj'
-                            cho = cho + mod
-                            if not cho in midi_chords.chords:
-                                logging.error(f'Bad chord {chord}')
-                                break
-                            chords.append(mt.BarChord(tick, key, cho))
-                            tick += dur2
+                        duration, bar  = mc.get_barchord(chord)
+                        if duration:
+                            bar.start = tick
+                            chords.append(bar)
+                            tick += duration
                         else:
                             logging.error(f'Bad bar chord "{chord}"')
                 if value := cmd.get('repeat'):
@@ -419,7 +404,7 @@ class Commands:
                         else:
                             logging.error(f'Bad note in chord "{cmd[_ln]}"')
                             break
-                    midi_chords.chords[name] = offsets
+                    mc.chords[name] = offsets
                 else:
                     logging.error(f'Bad format for command "{cmd[_ln]}"')
 
