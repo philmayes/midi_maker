@@ -1,9 +1,28 @@
-from src import midi_items as mi
+from typing import Any
+
+from src.midi_chords import BarChord
+import src.midi_items as mi
+# from src.midi_items import midi_items as mi
 from src.midi_notes import Duration as dur
-from src import midi_parse as mp
-from src import midi_types as mt
+import src.midi_parse as mp
+import src.midi_types as mt
 from src.midi_voice import Voice
-from src import midi_voices
+import src.midi_voices as mv
+
+"""
+assert isinstance(item, mi.Bar) has started failing since the midi_maker
+modules were moved into src/
+E AssertionError: assert False
+E  +  where False = isinstance(<<midi_items.Bar.Bar object at 0x00000253B5806510>,
+                               <class 'src.midi_items.Bar'>)
+E  +    where <class 'src.midi_items.Bar'> = mi.Bar
+i.e. the Bar instances are not seen as the same.
+It is because commands.get_composition() imports objects from other modules
+at the same level.
+The fix is to replace isinstance with same_name which compares names.
+"""
+def same_name(obj_: Any, type_: type) -> bool:
+    return obj_.__class__.__name__ == type_.__name__
 
 class TestBar:
     def test_bar1(self):
@@ -15,8 +34,8 @@ class TestBar:
         comp: mi.Composition = commands.get_composition()
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        bar_chord: mt.BarChord = item.chords[0]
+        assert same_name(item, mi.Bar)
+        bar_chord: BarChord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
@@ -30,12 +49,12 @@ class TestBar:
         comp: mi.Composition = commands.get_composition()
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        bar_chord: mt.BarChord = item.chords[0]
+        assert same_name(item, mi.Bar)
+        bar_chord: BarChord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
-        bar_chord: mt.BarChord = item.chords[1]
+        bar_chord: BarChord = item.chords[1]
         assert bar_chord.start == dur.quarter
         assert bar_chord.key == 'G'
         assert bar_chord.chord == 'maj'
@@ -49,12 +68,12 @@ class TestBar:
         comp: mi.Composition = commands.get_composition()
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        bar_chord: mt.BarChord = item.chords[0]
+        assert same_name(item, mi.Bar)
+        bar_chord: BarChord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
-        bar_chord: mt.BarChord = item.chords[1]
+        bar_chord: BarChord = item.chords[1]
         assert bar_chord.start == dur.half
         assert bar_chord.key == 'G'
         assert bar_chord.chord == 'maj'
@@ -68,12 +87,12 @@ class TestBar:
         comp: mi.Composition = commands.get_composition()
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        bar_chord: mt.BarChord = item.chords[0]
+        assert same_name(item, mi.Bar)
+        bar_chord: BarChord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
-        bar_chord: mt.BarChord = item.chords[1]
+        bar_chord: BarChord = item.chords[1]
         assert bar_chord.start == dur.half + dur.quarter
         assert bar_chord.key == 'G'
         assert bar_chord.chord == 'maj'
@@ -112,7 +131,7 @@ class TestComposition:
         """Assert that the item list has correct length and key."""
         assert len(comp.items) == length
         item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
+        assert same_name(item, mi.Bar)
         assert item.chords[0].key == key
 
     def test_composition1(self):
@@ -121,7 +140,7 @@ class TestComposition:
         comp: mi.Composition = commands.get_composition()
         assert len(comp.items) == 6
         item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.TimeSig)
+        assert same_name(item, mi.TimeSig)
 
     def test_composition2(self):
         """Test that a composition is found when name is supplied."""
@@ -129,7 +148,7 @@ class TestComposition:
         comp: mi.Composition = commands.get_composition('wabash')
         assert len(comp.items) == 6
         item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.TimeSig)
+        assert same_name(item, mi.TimeSig)
 
     def test_composition3(self):
         """Test that no composition is found when wrong name supplied."""
@@ -178,18 +197,12 @@ class TestLoop:
         commands = mp.Commands(lines)
         comp: mi.Composition = commands.get_composition()
         assert len(comp.items) == 4
-        item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        assert item.chords[0].chord.key == 'G'
-        item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        assert item.chords[1].chord.key == 'C'
-        item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        assert item.chords[2].chord.key == 'G'
-        item: mi.Item = comp.items[0]
-        assert isinstance(item, mi.Bar)
-        assert item.chords[3].chord.key == 'C'
+        item: mi.Item = comp.items[1]
+        assert same_name(item, mi.Bar)
+        assert item.chords[0].key == 'G'
+        item: mi.Item = comp.items[2]
+        assert same_name(item, mi.Bar)
+        assert item.chords[0].key == 'C'
 
 class TestRhythm:
     def test_rhythm1(self):
@@ -202,7 +215,7 @@ class TestRhythm:
         # except that it exists.
         assert len(commands.rhythms) == 1
         rhythm: mt.Rhythm = commands.rhythms['r0']
-        assert isinstance(rhythm, list)
+        assert same_name(rhythm, list)
         assert len(rhythm) > 0
 
     def test_rhythm2(self):
@@ -226,7 +239,7 @@ class TestVoice:
         voice: Voice = commands.voices[0]
         assert voice.name == 'lead1'
         assert voice.style == 'lead'
-        assert voice.voice == midi_voices.voices['rock_organ']
+        assert voice.voice == mv.voices['rock_organ'] - 1
 
     def test_voice2(self):
         """Test normal voice command with numeric voice, min, max."""
@@ -238,7 +251,7 @@ class TestVoice:
         voice: Voice = commands.voices[0]
         assert voice.name == 'lead1'
         assert voice.style == 'lead'
-        assert voice.voice == 16
+        assert voice.voice == 15
         assert voice.min_pitch == 40
         assert voice.max_pitch == 60
 

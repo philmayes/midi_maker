@@ -3,6 +3,8 @@ import random
 from midiutil import MIDIFile
 
 from src import midi
+from src.midi_chords import BarChord
+from src import midi_parse
 from src import midi_voice as mv
 from src.midi_channels import Channel
 from src import midi_items as mi
@@ -13,6 +15,10 @@ from src import utils
 
 def test_1(mocker):
     """Test note/bar clipping."""
+    lines: list[str] = [
+        'voice name=lead1 style=lead voice=rock_organ',
+    ]
+    commands = midi_parse.Commands(lines)
     random.seed(1)
     global start_error
     start_error = utils.make_error_table(10)
@@ -22,9 +28,9 @@ def test_1(mocker):
     mv.set_volume(channel, 0, 100, 0, 0) # channel, tick, level, delta, rate
     midi_file = MIDIFile()
     mock_add_note = mocker.patch.object(midi_file, 'addNote')
-    mocker.patch('midi.add_start_error')
+    mocker.patch('src.midi.add_start_error')
     bar_info: midi.BarInfo = midi.BarInfo(midi_file)
-    chords: list[mt.BarChord] = [mt.BarChord(0, 'C', 'maj')]
+    chords: list[BarChord] = [BarChord(0, 'C', 'maj')]
     # Set 3rd param to True to remove clipping.
     # This will make the last assertion 1000, not 840.
     bar_info.bar = mi.Bar(chords, 1)
