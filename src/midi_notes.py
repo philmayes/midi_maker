@@ -21,6 +21,7 @@ note_to_interval: dict[str, int] = {
 # The duration is one or more of the shorthand NoteDurations
 # with a possible dot suffix to add 50%. Durations can be added
 # together, e.g. q+n or q.+q and are parsed using a secondary regex.
+re_durs = re.compile(r'[tseqhnd+-\.]*$')
 re_note = re.compile(r'([tseqhnd+-\.]*)([A-G|X][#|b]?)(\d)?$')
 
 n32 = prefs.ticks_per_beat // 8
@@ -193,10 +194,12 @@ def str_to_notes(notes: str) -> mt.Tune:
     last_octave = 5
     start = 0
     for note_str in notes.split(','):
-        duration = str_to_duration(note_str, True)
-        if duration != 0: # is a duration only
-            start += abs(duration)
-            continue
+        match = re_durs.match(note_str)
+        if match:
+            duration = str_to_duration(note_str, True)
+            if duration != 0: # is a duration only
+                start += abs(duration)
+                continue
 
         # A "note" in a tune can consist of several notes joined by "+".
         # They all start at the same time. The first note supplies the
