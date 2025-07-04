@@ -38,15 +38,27 @@ def run(args:argparse.Namespace):
     if args.version:
         print(f'Version {version}')
         return
-    in_file = args.ini
+    in_file = args.input
+    # The first parameter does double duty as input filename and help request.
     if in_file == 'help':
         midi_help.help(args)
         return
     if not os.path.exists(in_file):
         logging.critical(f'Input file "{in_file}" does not exist')
         return
-    fname, _ = os.path.splitext(in_file)
-    out_file =fname + '.mid'
+
+    # Assemble the output filename:
+    #   if 2nd param is a directory, use the input filename there
+    #   if 2nd param is a filename, use it
+    #   else use the input filename in the input directory
+    out_file = args.output
+    if out_file == '':
+        fname, _ = os.path.splitext(in_file)
+        out_file =fname + '.mid'
+    elif os.path.isdir(out_file):
+        base = os.path.basename(in_file)
+        fname, _ = os.path.splitext(base)
+        out_file = os.path.join(out_file, fname + '.mid')
 
     make_midi(in_file, out_file, args.create)
 
@@ -54,9 +66,10 @@ def run(args:argparse.Namespace):
         midi_play.play(out_file)
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Create MIDI file')
-    parser.add_argument('ini', nargs='?', default='example.ini', help=f'Data to create MIDI file (default: example.ini)')
-    parser.add_argument('topic', nargs='?', help=f'Help topic')
+    parser = argparse.ArgumentParser(description='Create MIDI file',
+                                     epilog='The positional arguments can also be "help [option]"')
+    parser.add_argument('input', nargs='?', default='example.ini', help=f'Data to create MIDI file (default: example.ini)')
+    parser.add_argument('output', nargs='?', default='', help=f'Output file or folder (defaults to input filename & location)')
     parser.add_argument('-v', '--version', action="store_true", help='version')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
     parser.add_argument('-c', '--create', default='', help='create composition or opus')

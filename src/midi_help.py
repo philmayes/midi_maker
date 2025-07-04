@@ -56,8 +56,8 @@ See README.md for details.
 
 def help(args:argparse.Namespace):
     gbls = globals()
-    if args.topic:
-        topic = args.topic
+    if args.output:
+        topic = args.output
         if topic in gbls:
             t2 = gbls[topic]
             if isinstance(t2, str):
