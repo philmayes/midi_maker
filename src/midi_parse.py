@@ -9,9 +9,9 @@ import midi_items as mi
 import midi_notes as mn
 import midi_percussion
 import midi_types as mt
-from midi_voice import Voice, Voices
+import midi_voice as mv
 import midi_voices
-import midi_volume as mv
+import midi_volume
 from preferences import prefs
 import rando
 import utils
@@ -60,22 +60,27 @@ def get_effect(value: str, min_val: float, max_val: float) -> int | float | None
         result = utils.get_float(value, min_val, max_val)
     return result
 
-def get_float(cmds: mt.CmdDict, param: str, min_val: float, max_val: float, default: float|str) -> float:
-    value = cmds.get(param, str(default))
+def get_float(cmd: mt.CmdDict, param: str, min_val: float, max_val: float, default: float|str) -> float:
+    value = cmd.get(param, str(default))
     result = utils.get_float(value, min_val, max_val)
     if result is None:
         return 0.0
     return result
 
-def get_int(cmds: mt.CmdDict, param: str, default: int|str) -> int:
-    value = cmds.get(param, str(default))
-    if value.isnumeric():
-        return int(value)
-    return int(default)
+def get_int(cmd: mt.CmdDict,
+            param: str,
+            default: int|str,
+            min_val: int=0,
+            max_val: int=128) -> int:
+    value = cmd.get(param, str(default))
+    result = utils.get_int(value, min_val, max_val)
+    if result is None:
+        result = int(default)
+    return result
 
-def get_signed_int(cmds: mt.CmdDict, param: str, default: int|str) -> int:
+def get_signed_int(cmd: mt.CmdDict, param: str, default: int|str) -> int:
     """Return possibly signed number as int."""
-    value: str = cmds.get(param, str(default))
+    value: str = cmd.get(param, str(default))
     if not value:
         logging.error(f'Bad signed number {value}')
         return int(default)
@@ -170,7 +175,7 @@ class Commands:
 
         self.get_preferences()
         self.volumes = self.get_all_volumes()
-        self.voices: Voices = self.get_all_voices()
+        self.voices: mv.Voices = self.get_all_voices()
         self.tunes = self.get_all_tunes()
         self.rhythms = self.get_all_rhythms()
         self.get_all_chords()
@@ -243,26 +248,34 @@ class Commands:
                     else:
                         repeat = repeat2
                 if value := cmd.get('clip'):
-                    clip = utils.truth(value)
+                    new_clip = utils.truth(value)
+                    if new_clip is not None:
+                        clip = new_clip
                 if chords:
                     composition += mi.Bar(chords, repeat, clip)
 
             elif item == 'effects':
-                expect(cmd, ['voices', 'staccato', 'overhang', 'clip'])
+                expect(cmd, ['voices', 'staccato', 'overhang', 'clip', 'octave', 'rate'])
                 voices = self.get_voices(cmd)
                 staccato: int | float | None = None
                 overhang: int | float | None = None
                 clip = True
+                octave = None
+                rate = 0
                 if value := cmd.get('staccato'):
                     staccato = get_effect(value, 0.0, 1.0)
                 if value := cmd.get('overhang'):
                     overhang = get_effect(value, 1.0, 8.01)
                 if value := cmd.get('clip'):
                     clip = utils.truth(value)
+                if value := cmd.get('octave'):
+                    octave = utils.get_int(value, 0, 10)
+                if value := cmd.get('rate'):
+                    rate = mn.str_to_duration(value)
                 if staccato and overhang:
                     logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
                     overhang = None
-                composition += mi.Effects(voices, staccato, overhang, clip)
+                composition += mi.Effects(voices, staccato, overhang, clip, octave, rate)
 
             elif item == 'hear':
                 expect(cmd, ['voices'])
@@ -280,7 +293,7 @@ class Commands:
 
             elif item == 'play':
                 expect(cmd, ['voice', 'tunes', 'transpose'])
-                voice: Voice | None = None
+                voice: mv.Voice | None = None
                 tunes: mt.Tunes = []
                 trans: int | None = 0
                 if value := cmd.get('voice'):
@@ -378,6 +391,7 @@ class Commands:
         """Get parts of the named opus."""
         for cmd in self.command_dicts:
             if cmd['command'] == 'opus':
+                expect(cmd, ['name', 'parts'])
                 name2: str = cmd.get('name', '')
                 parts = cmd.get('parts', '')
                 if name == name2:
@@ -413,6 +427,7 @@ class Commands:
         rhythms: mt.RhythmDict = {}
         for cmd in self.command_dicts:
             if cmd['command'] == 'rhythm':
+                expect(cmd, ['name', 'voices', 'rhythms', 'seed', 'silence', 'repeat', 'durations'])
                 rhythm: mt.Rhythm = mt.Rhythm()
                 name: str = cmd.get('name', '')
                 seed = get_signed_int(cmd, 'seed', -1)
@@ -442,16 +457,16 @@ class Commands:
                             index = int(len(probs) * random.number)
                             dur = probs[index]
                         if random.test(silence):
-                            rhythm.durations.append(-dur)
+                            rhythm.append(-dur)
                         else:
-                            rhythm.durations.append(dur)
+                            rhythm.append(dur)
                         tick += dur
                     logging.debug(f'random rhythm {rhythm}')
                     rhythms[name] = rhythm
                 elif name and durations:
-                    rhythm.durations = mn.str_to_durations(durations)
+                    rhythm = mn.str_to_durations(durations)
                     rhythms[name] = rhythm
-                    total = sum(rhythm.durations)
+                    total = sum(rhythm)
                     logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.Duration.quarter} beats')
                 elif name:
                     logging.error(f'Bad rhythm command "{cmd[_ln]}"')
@@ -466,6 +481,7 @@ class Commands:
         tunes: mt.TuneDict = {}
         for cmd in self.command_dicts:
             if cmd['command'] == 'tune':
+                expect(cmd, ['name', 'notes'])
                 name: str = cmd.get('name', '')
                 notes = cmd.get('notes', '')
                 tune: mt.Tune = []
@@ -481,15 +497,16 @@ class Commands:
 
         return tunes
 
-    def get_all_voices(self) -> Voices:
+    def get_all_voices(self) -> mv.Voices:
         """Construct Voice() instances from the list of commands."""
-        voices: Voices = []
+        voices: mv.Voices = []
         next_voice_channel = 1
         next_perc_channel = 1
         for cmd in self.command_dicts:
             if cmd['command'] != 'voice':
                 continue
 
+            expect(cmd, ['name', 'style', 'voice', 'min_pitch', 'max_pitch'])
             # Set up default values
             name: str = ''
             channel: Channel = Channel.none
@@ -497,7 +514,6 @@ class Commands:
             style: str = ''
             min_pitch: int = 0
             max_pitch: int = 127
-            rate: int = mn.Duration.quarter
 
             if 'name' in cmd:
                 name = cmd['name']
@@ -520,13 +536,9 @@ class Commands:
                     else:
                         max_pitch = value
 
-            if 'rate' in cmd:
-                value = cmd['rate']
-                rate: int = mn.str_to_duration(value)
-
             if 'style' in cmd:
                 value = cmd['style']
-                if value in Voice.styles:
+                if value in mv.styles:
                     style = value
                 else:
                     style = 'bass'
@@ -571,19 +583,20 @@ class Commands:
             if channel == Channel.none:
                 logging.warning(f'No channel in "{cmd[_ln]}"')
                 continue
-            voices.append(Voice(name, channel, voice - 1, style, min_pitch, max_pitch, rate))
-            mv.set_volume(channel, 0, self.volumes[style], 0, 0)
+            voices.append(mv.Voice(name, channel, voice - 1, style, min_pitch, max_pitch))
+            midi_volume.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
     def get_all_volumes(self):
         """Get a dictionary of all volume names and values."""
         volumes: dict[str, int] = {'default': prefs.default_volume}
         # prime the volumes with defaults
-        for name, level in Voice.styles.items():
+        for name, level in mv.volume.items():
             volumes[name] = level
         for cmd in self.command_dicts:
             if cmd['command'] == 'volume':
                 if 'name' in cmd and 'level' in cmd:
+                    expect(cmd, ['name', 'level'])
                     name = cmd['name']
                     level = cmd['level']
                     if level.isdigit():
@@ -641,17 +654,17 @@ class Commands:
                 logging.error(f'tune {tune_name} does not exist')
         return tunes
 
-    def get_voice(self, name: str) -> Voice | None:
+    def get_voice(self, name: str) -> mv.Voice | None:
         """Return the named voice."""
         for voice in self.voices:
             if voice.name == name:
                 return voice
         else:
-            logging.error(f'Voice {name} does not exist')
+            logging.error(f'mv.Voice {name} does not exist')
 
-    def get_voices(self, cmd: mt.CmdDict) -> Voices:
+    def get_voices(self, cmd: mt.CmdDict) -> mv.Voices:
         """Return a list of all the voices supplied in cmd."""
-        voices: Voices = []
+        voices: mv.Voices = []
         if 'voices' in cmd:
             voice_names = cmd['voices'].split(',')
             if 'all' in voice_names:
@@ -665,5 +678,5 @@ class Commands:
                             logging.error(f'{voice_name} repeated')
                         break
                 else:
-                    logging.error(f'Voice {voice_name} does not exist')
+                    logging.error(f'mv.Voice {voice_name} does not exist')
         return voices

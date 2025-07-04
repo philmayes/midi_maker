@@ -25,14 +25,10 @@ class Note:
                self.octave == other.octave and\
                self.pitch == other.pitch
 
-class Rhythm:
-    def __init__(self):
-        self.durations: list[int] = []
-        self.pitch: int = 4
-
 # Used in midi.py
 Notes: TypeAlias = list[str]
 Pitches: TypeAlias = list[int]
+Rhythm: TypeAlias = list[int]
 RhythmDict: TypeAlias = dict[str, Rhythm]
 Rhythms: TypeAlias = list[Rhythm]
 

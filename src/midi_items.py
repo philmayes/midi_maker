@@ -41,11 +41,15 @@ class Effects(Item):
     def __init__(self, voices: Voices,
                  staccato: int | float | None,
                  overhang: int | float | None,
-                 clip: bool):
+                 clip: bool | None,
+                 octave: int | None,
+                 rate: int | None):
         self.voices = voices
         self.staccato = staccato
         self.overhang = overhang
         self.clip = clip
+        self.octave = octave
+        self.rate = rate
 
 class Hear(Item):
     """Play (unmute) voice(s)."""

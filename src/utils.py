@@ -61,11 +61,11 @@ def make_in_range(value: int, max_value: int, desc: str) -> int:
         value = 0
     return value
 
-def truth(text: str) -> bool:
+def truth(text: str) -> bool | None:
     lower = text.lower()
     if lower in ['t', 'true', 'y', 'yes', '1']:
         return True
     if lower in ['f', 'false', 'n', 'no', '0']:
         return False
     logging.warning(f'Unknown truth value "{text}"')
-    return False
+    return None

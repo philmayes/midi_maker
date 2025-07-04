@@ -23,7 +23,7 @@ The `voice` command is used to specify both instruments and percussion.
   - `perc` A percussion voice
   - `rhythm` Plays entire chord
   - `bass` Plays tonic
-  - `arpeggio` Plays chord as arpeggio. Can take extra parameter `rate=q`.
+  - `arpeggio` Plays chord as arpeggio.
   - `improv` Improvises based on the chord. Can take extra parameters `min_pitch=# max_pitch=#`.
   - `lead` Plays a supplied note list
 * `voice` is the [General MIDI](https://en.wikipedia.org/wiki/General_MIDI) name. If the style is `perc`, the voice should be a percussion name. You can find all names with`midi_maker.py help voices` or `midi_maker help percussion` or by looking in `midi_voices.py` and `midi_percussion.py`.\
@@ -124,13 +124,26 @@ Format: `tempo bpm=#` supplies the number of beats per minute.
 Format: `timesig value=3/4` or any other time signature.
 
 ### effects
-Format: `effects voices=v1,v2... staccato=# overhang=# clip=no`
+Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=#`
 
 This turns various effects on or off for the named voices. The `staccato` value can either be the number of ticks for which the note should be played or a decimal fraction like 0.5 meaning the note will be played for half its time.
 
 `overhang` takes a number of ticks or a decimal number greater than 1.0 to cause the note to play for that much longer. It will overlap any following note. For instance, an arpeggio with a large `overhang` will progressively play a chord.
 
 See **Discussions: Clipping** for use of the `clip` parameter.
+
+`rate` is how quickly an arpeggio is played. The default is a quarter note.
+
+Some of the effects only apply to particular styles:
+
+| style | clip | octave | rate |
+| :---- | :--: | :----: | :----: |
+| arpeggio | Y | Y | Y |
+| bass     | Y | Y | - |
+| improv   | - | - | _ |
+| lead     | - | - | _ |
+| perc     | Y | - | - |
+| rhythm   | Y | Y | - |
 
 ## loop
 Format: `loop`.

@@ -183,7 +183,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
 def make_bass_bar(bar_info: BarInfo, voice: Voice):
     bar_info.position = bar_info.start
     rhythm = voice.get_rhythm()
-    for duration in rhythm.durations:
+    for duration in rhythm:
         tonic: str = bar_info.get_tonic()
         pitch = note_to_interval[tonic] + 36
         if bar_info.bar_ended():
@@ -303,7 +303,7 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
     # bar_end = bar_info.bar_end()
     bar_info.position = bar_info.start
     rhythm = voice.get_rhythm()
-    for duration in rhythm.durations:
+    for duration in rhythm:
         # if bar_info.position >= bar_end:
         if bar_info.bar_ended():
             break
@@ -322,19 +322,18 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
                                    volume)
         bar_info.position += duration
 
-def make_rhythm_bar(bar_info: BarInfo,
-                    voice: Voice):
+def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
     bar_info.position = bar_info.start
     # bar_end = bar_info.bar_end()
     rhythm = voice.get_rhythm()
-    for duration in rhythm.durations:
+    for duration in rhythm:
         if bar_info.bar_ended():
             break
         if duration < 0:
             # A negative note length is a silence.
             bar_info.position -= duration
             continue
-        pitches = chord_to_pitches(bar_info.get_chord(), 4)
+        pitches = chord_to_pitches(bar_info.get_chord(), voice.octave)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         make_chord(bar_info,
@@ -406,7 +405,12 @@ def make_midi(in_file: str, out_file: str, create: str):
             for voice in item.voices:
                 voice.staccato = item.staccato
                 voice.overhang = item.overhang
-                voice.clip = item.clip
+                if item.clip is not None:
+                    voice.clip = item.clip
+                if item.octave is not None:
+                    voice.octave = item.octave
+                if item.rate is not None:
+                    voice.rate = item.rate
 
         elif isinstance(item, mi.Hear):
             for voice in item.voices:
