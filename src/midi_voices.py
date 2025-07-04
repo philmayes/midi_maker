@@ -146,7 +146,7 @@ voices: dict[str, int] = {
 
     # Percussive
     'tinkle_bell': 113,
-    'agogô_or_cowbell': 114,
+    'agogo_or_cowbell': 114,
     'steel_drums': 115,
     'woodblock': 116,
     'taiko_drum_or_surdo': 117,
