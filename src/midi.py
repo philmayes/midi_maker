@@ -183,7 +183,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
 def make_bass_bar(bar_info: BarInfo, voice: Voice):
     bar_info.position = bar_info.start
     rhythm = voice.get_rhythm()
-    for duration in rhythm:
+    for duration in rhythm.durations:
         tonic: str = bar_info.get_tonic()
         pitch = note_to_interval[tonic] + 36
         if bar_info.bar_ended():
@@ -303,7 +303,7 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
     # bar_end = bar_info.bar_end()
     bar_info.position = bar_info.start
     rhythm = voice.get_rhythm()
-    for duration in rhythm:
+    for duration in rhythm.durations:
         # if bar_info.position >= bar_end:
         if bar_info.bar_ended():
             break
@@ -323,12 +323,11 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
         bar_info.position += duration
 
 def make_rhythm_bar(bar_info: BarInfo,
-                    voice: Voice,
-                    duration: int):
+                    voice: Voice):
     bar_info.position = bar_info.start
     # bar_end = bar_info.bar_end()
     rhythm = voice.get_rhythm()
-    for duration in rhythm:
+    for duration in rhythm.durations:
         if bar_info.bar_ended():
             break
         if duration < 0:
@@ -392,7 +391,7 @@ def make_midi(in_file: str, out_file: str, create: str):
                     elif voice.style == 'bass' and voice.active:
                         make_bass_bar(bar_info, voice)
                     elif voice.style == 'rhythm' and voice.active:
-                        make_rhythm_bar(bar_info, voice, 200)
+                        make_rhythm_bar(bar_info, voice)
                     elif voice.style == 'arpeggio' and voice.active:
                         make_arpeggio_bar(bar_info, voice)
                     elif voice.style == 'improv' and voice.active:

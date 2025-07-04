@@ -413,7 +413,7 @@ class Commands:
         rhythms: mt.RhythmDict = {}
         for cmd in self.command_dicts:
             if cmd['command'] == 'rhythm':
-                rhythm: mt.Rhythm = []
+                rhythm: mt.Rhythm = mt.Rhythm()
                 name: str = cmd.get('name', '')
                 seed = get_signed_int(cmd, 'seed', -1)
                 silence = get_float(cmd, 'silence', 0.0, 1.0, prefs.rhythm_silence)
@@ -442,16 +442,16 @@ class Commands:
                             index = int(len(probs) * random.number)
                             dur = probs[index]
                         if random.test(silence):
-                            rhythm.append(-dur)
+                            rhythm.durations.append(-dur)
                         else:
-                            rhythm.append(dur)
+                            rhythm.durations.append(dur)
                         tick += dur
                     logging.debug(f'random rhythm {rhythm}')
                     rhythms[name] = rhythm
                 elif name and durations:
-                    rhythm = mn.str_to_durations(durations)
+                    rhythm.durations = mn.str_to_durations(durations)
                     rhythms[name] = rhythm
-                    total = sum(rhythm)
+                    total = sum(rhythm.durations)
                     logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.Duration.quarter} beats')
                 elif name:
                     logging.error(f'Bad rhythm command "{cmd[_ln]}"')
