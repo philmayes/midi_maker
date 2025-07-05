@@ -41,15 +41,27 @@ class TestBarChord:
         assert d == 0
 
     def test_barchord6(self):
-        """Compound durations have invalid letter z."""
+        """Compound durations with invalid letter z."""
         d, bc = mc.get_barchord('h-zDm')
         assert d == 0
 
     def test_barchord7(self):
+        """Compound durations with leading sign."""
+        d, bc = mc.get_barchord('-h-zDm')
+        assert d == 0
+
+    def test_barchord8(self):
         """Diminished."""
-        d, bc = mc.get_barchord('eDm')
+        d, bc = mc.get_barchord('eDdim')
         assert d == dur.eighth
         assert bc.key == 'D'
-        assert bc.chord == 'min'
+        assert bc.chord == 'dim'
         assert bc.chord in mc.chords
 
+    def test_barchord9(self):
+        """Diminished."""
+        d, bc = mc.get_barchord('Asus4')
+        assert d == dur.q
+        assert bc.key == 'A'
+        assert bc.chord == 'sus4'
+        assert bc.chord in mc.chords

@@ -10,7 +10,7 @@ class BarChord:
 from midi_notes import note_to_interval
 
 ch1 = r'^([tseqhnd+-\.]+)*'             # duration prefix (needs validating)
-ch2 = r'([A-G][#b]*)([a-z]*)([679]?)$'  # key chord-type chord-mod
+ch2 = r'([A-G][#b]*)([a-z]*)([4679]?)$'  # key chord-type chord-mod
 re_chord = re.compile('^' + ch2)        # chord
 re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
 
@@ -27,6 +27,7 @@ chords: dict[str, list[int]]  = {
     'min6': [0, 3, 7, 9],     # C Eb G  A
     'maj9': [0, 4, 7, 11, 14],# C E  G  B  D
     'min9': [0, 3, 7, 10, 14],# C Eb G  Bb D
+    'sus4': [0, 5, 7],        # C F  G
 }
 
 def chord_to_intervals(chord: str) -> list[int]:
