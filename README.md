@@ -124,7 +124,7 @@ Format: `tempo bpm=#` supplies the number of beats per minute.
 Format: `timesig value=3/4` or any other time signature.
 
 ### effects
-Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=#`
+Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=dur`
 
 This turns various effects on or off for the named voices. The `staccato` value can either be the number of ticks for which the note should be played or a decimal fraction like 0.5 meaning the note will be played for half its time.
 
@@ -132,12 +132,12 @@ This turns various effects on or off for the named voices. The `staccato` value 
 
 See **Discussions: Clipping** for use of the `clip` parameter.
 
-`rate` is how quickly an arpeggio is played. The default is a quarter note.
+`rate` is how quickly an arpeggio is played. It takes either a duration or a number of ticks. The default is a quarter note.
 
 Some of the effects only apply to particular styles:
 
 | style | clip | octave | rate |
-| :---- | :--: | :----: | :----: |
+| :---- | :--: | :----: | :--: |
 | arpeggio | Y | Y | Y |
 | bass     | Y | Y | - |
 | improv   | - | - | _ |
@@ -175,7 +175,7 @@ These are used in the `rhythm`, `tune`, and `bar` commands.
 
 ### notes
 Format: `duration note octave`.
-* `duration` is an abbreviation such as `q` for quarter (a quarter note). It can be dotted to make it 50% longer. A duration can be assembled from multiple parts, e.g. `q.+n` is 5½ beats; `n-q` is 3 beats.
+* `duration` is one of the above abbreviations such as `q` for quarter (a quarter note). It can be dotted to make it 50% longer. A duration can be assembled from multiple parts, e.g. `q.+n` is 5½ beats; `n-q` is 3 beats.
 * `note` is A-G with possible # or b e.g. `Eb`.
 * `octave` is 1-10.
 
@@ -186,7 +186,7 @@ For example, `q.F#4` will play a dotted quarter note F# in the 4th octave.
 ### chords
 Format: `[duration] key chord`.
 
-The chord can be one of `maj`,`min`,`m`,`dim`,`aug`,`maj7`,`min7`,`dom7`,`dim7`,`maj6`,`min6`,`maj9`,`min9`. `m` is a sysnomym for `min`, a minor chord. If the chord is omitted. `maj` is assumed.
+The chord can be one of `maj`,`min`,`m`,`dim`,`aug`,`maj7`,`min7`,`dom7`,`dim7`,`maj6`,`min6`,`maj9`,`min9`. `m` is a synomym for `min`, a minor chord. If the chord is omitted. `maj` is assumed.
 
 Some examples: `Eb`: Eb major; `Am`: A minor; `qF#maj7`: F# major 7th played for a quarter note; `h.Gaug`: G augmented for 3 beats.
 

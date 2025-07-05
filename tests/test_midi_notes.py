@@ -3,6 +3,37 @@ from src.midi_notes import Duration as dur
 from src import midi_types as mt
 
 bad_note: mt.Note = mt.Note(0, 0, '', 0, 0, 0)
+class TestGetSubDuration:
+    def test_get_neg_duration0(self):
+        """Test empty duration."""
+        result = mn.get_sub_duration('')
+        assert result == 0
+
+    def test_get_sub_duration1(self):
+        """Test single duration."""
+        result = mn.get_sub_duration('h')
+        assert result == dur.half
+
+    def test_get_sub_duration2(self):
+        """Test correct subtraction."""
+        result = mn.get_sub_duration('h-q')
+        assert result == dur.q
+
+    def test_get_sub_duration3(self):
+        """Test dotted duration."""
+        result = mn.get_sub_duration('q.')
+        assert result == dur.quarter + dur.eighth
+
+    def test_get_sub_duration4(self):
+        """Test multiple subtractions."""
+        result = mn.get_sub_duration('n-h-q')
+        assert result == dur.quarter
+
+    def test_get_sub_duration5(self):
+        """Test invalid format (trailing sign)."""
+        result = mn.get_sub_duration('q-h-')
+        assert result < 0
+
 class TestGetDuration:
     def test_get_duration0(self):
         result = mn.get_duration('')
@@ -55,6 +86,10 @@ class TestGetDuration:
         assert result == dur.note
 
     def test_get_duration12(self):
+        result = mn.get_duration('q+n-')
+        assert result == 0
+
+    def test_get_duration13(self):
         result = mn.get_duration('half.-quarter')
         assert result == dur.half
 

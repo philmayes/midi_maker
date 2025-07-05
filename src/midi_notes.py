@@ -77,7 +77,7 @@ class Duration:
     dd = d_doublenote
     default = quarter  # used when duration is not supplied
 
-def get_neg_duration(text: str, silent=False) -> int:
+def get_sub_duration(text: str, silent=False) -> int:
     """Translates the duration string into ticks.
 
     Expects one or more note names, possibly with a trailing dot,
@@ -85,12 +85,20 @@ def get_neg_duration(text: str, silent=False) -> int:
     The <silent> option is for the benefit of str_to_notes because a tune
     can contain both notes and durations (indicating silences), and
     parsing for durations first would generate error messages.
+    Returns: >0 = duration
+             =0 = no duration
+             <0 = bad duration
     """
     total: int = 0
     first = True
     if text:
         d = Duration.__dict__
         for bit in text.split('-'):
+            if bit == '':
+                if not silent:
+                    logging.error(f'Bad duration: "{text}"')
+                total = -1
+                break
             dur = bit
             dot = dur[-1] == '.'
             if dot:
@@ -99,6 +107,7 @@ def get_neg_duration(text: str, silent=False) -> int:
             if dur not in d:
                 if not silent:
                     logging.error(f'Bad duration: "{bit}"')
+                total = -1
                 break
             duration =  d[dur]
             if dot:
@@ -111,25 +120,36 @@ def get_neg_duration(text: str, silent=False) -> int:
                 total -= duration
     if total <= 0:
         if not silent:
-            logging.error(f'Negative note duration: "{text}"')
-        total = 0
+            logging.error(f'Invalid note duration: "{text}"')
+        # total = 0
     return total
 
 def get_duration(text: str, silent=False) -> int:
     """Translates the duration string into ticks.
 
     Expects one or more note names, possibly with a trailing dot,
-    and joined with "+" characters.
+    and joined with "+" or "-" characters.
+    Returns: >0 = duration
+             =0 = no duration
+             <0 = bad duration
     """
     total: int = 0
     if text:
         d = Duration.__dict__
         for bit in text.split('+'):
-            total += get_neg_duration(bit, silent)
+            neg = get_sub_duration(bit, silent)
+            if neg < 0:
+                return -1
+            total += neg
     return total
 
 def str_to_duration(text: str, silent=False) -> int:
-    """Returns the note duration described by the string."""
+    """Returns the note duration described by the string.
+
+    Returns: >0 = duration
+             <0 = a negative duration
+             =0 = bad duration
+    """
     if text:
         # A leading minus sign inverts the value of the note
         neg = text[0] == '-'
@@ -140,10 +160,11 @@ def str_to_duration(text: str, silent=False) -> int:
             return int(text)
         # Look up the name and return its value
         duration = get_duration(text, silent)
+        if duration < 0:
+            return 0
         if neg:
             duration = -duration
         return duration
-    # return Duration.default
     return 0
 
 def str_to_durations(text: str) -> list[int]:
@@ -152,7 +173,9 @@ def str_to_durations(text: str) -> list[int]:
         return []   # because the code below would return [0]
     durations: list[int] = []
     for note in text.split(','):
-        durations.append(str_to_duration(note))
+        d = str_to_duration(note)
+        if d != 0:
+            durations.append(d)
     return durations
 
 def str_to_note(note_str: str) -> mt.Note:

@@ -1,8 +1,6 @@
 import re
-# from collections import namedtuple
 import midi_notes as mn
 
-# BarChord = namedtuple('BarChord', 'start key chord')
 class BarChord:
     def __init__(self, start: int, key: str, chord: str):
         self.start = start
@@ -11,7 +9,7 @@ class BarChord:
 
 from midi_notes import note_to_interval
 
-ch1 = r'([t|d]?[tseqhnd]\.?)?'          # duration prefix
+ch1 = r'^([tseqhnd+-\.]+)*'             # duration prefix (needs validating)
 ch2 = r'([A-G][#b]*)([a-z]*)([679]?)$'  # key chord-type chord-mod
 re_chord = re.compile(ch2)              # chord
 re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
@@ -51,19 +49,26 @@ def chord_to_pitches(chord: str, octave: int) -> list[int]:
     return result
 
 def get_barchord(chord: str) -> tuple[int, BarChord]:
+    """Parse a string describing a chord into a BarChord() and its duration.
 
+    A parsing failure is indicated by duration == 0.
+    """
     match = re_dur_chord.match(chord)
     if match:
         dur = match.group(1)
         key = match.group(2)
         cho = match.group(3)
         mod = match.group(4)
+        # The regex gets a jumbled duration of "tseqhnd", ".", "+" and "-".
+        # get_duration() does further checks for validity.
         if dur is None:
             dur2 = mn.Duration.default
         else:
             dur2 = mn.get_duration(dur)
-            if dur2 <= 0:
+            if dur2 == 0:
                 dur2 = mn.Duration.default
+            elif dur2 < 0:
+                dur2 = 0
         if not cho:
             cho = 'maj'
         elif cho == 'm':
