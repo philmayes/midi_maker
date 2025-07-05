@@ -406,6 +406,9 @@ class Commands:
                 name: str = cmd.get('name', '')
                 notes = cmd.get('notes', '')
                 if name and notes:
+                    if not name.isalpha() or name != name.lower():
+                        logging.error(f'Chord names must be lowercase alpha "{cmd[_ln]}"')
+                        break
                     offsets: list[int] = []
                     last_value = -1
                     for note in notes.split(','):

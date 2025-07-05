@@ -145,13 +145,13 @@ Some of the effects only apply to particular styles:
 | perc     | Y | - | - |
 | rhythm   | Y | Y | - |
 
-## loop
+### loop
 Format: `loop`.
 
 Loop marks the start of a passage that is to be played more than once, see `repeat`.
 It takes no parameters.
 
-## repeat
+### repeat
 Format: `repeat count=#`
 
 Repeat a section starting at the preceding `loop` command. `count` is optional; it is the total number of times the section will be played. Loops can be nested, e.g. `loop A loop B repeat C repeat` will play `A B B C A B B C`.
