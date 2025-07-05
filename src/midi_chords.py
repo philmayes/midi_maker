@@ -11,7 +11,7 @@ from midi_notes import note_to_interval
 
 ch1 = r'^([tseqhnd+-\.]+)*'             # duration prefix (needs validating)
 ch2 = r'([A-G][#b]*)([a-z]*)([679]?)$'  # key chord-type chord-mod
-re_chord = re.compile(ch2)              # chord
+re_chord = re.compile('^' + ch2)        # chord
 re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
 
 chords: dict[str, list[int]]  = {
@@ -70,7 +70,10 @@ def get_barchord(chord: str) -> tuple[int, BarChord]:
             elif dur2 < 0:
                 dur2 = 0
         if not cho:
-            cho = 'maj'
+            if mod == '7':
+                cho = 'dom'
+            else:
+                cho = 'maj'
         elif cho == 'm':
             cho = 'min'
         cho = cho + mod
