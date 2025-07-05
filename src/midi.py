@@ -162,7 +162,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     while bar_info.in_bar():
         new_chord = bar_info.get_chord()
         if new_chord != old_chord:
-            pitches = chord_to_pitches(new_chord, 4)
+            pitches = chord_to_pitches(new_chord, voice.octave)
             old_chord = new_chord
             pitch_index: int = 0
             step: int = -1
@@ -185,7 +185,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
     rhythm = voice.get_rhythm()
     for duration in rhythm:
         tonic: str = bar_info.get_tonic()
-        pitch = note_to_interval[tonic] + 36
+        pitch = note_to_interval[tonic] + voice.octave * 12
         if bar_info.bar_ended():
             break
         if duration < 0:
