@@ -255,13 +255,21 @@ class Commands:
                     composition += mi.Bar(chords, repeat, clip)
 
             elif item == 'effects':
-                expect(cmd, ['voices', 'staccato', 'overhang', 'clip', 'octave', 'rate'])
+                expect(cmd, ['voices',
+                             'staccato',
+                             'overhang',
+                             'clip',
+                             'octave',
+                             'rate',
+                             'reverb',
+                             ])
                 voices = self.get_voices(cmd)
                 staccato: int | float | None = None
                 overhang: int | float | None = None
-                clip = True
-                octave = None
-                rate = 0
+                clip: bool | None = None
+                octave: int | None = None
+                rate: int | None = None
+                reverb: int | None = None
                 if value := cmd.get('staccato'):
                     staccato = get_effect(value, 0.0, 1.0)
                 if value := cmd.get('overhang'):
@@ -272,10 +280,18 @@ class Commands:
                     octave = utils.get_int(value, 0, 10)
                 if value := cmd.get('rate'):
                     rate = mn.str_to_duration(value)
+                if value := cmd.get('reverb'):
+                    reverb = mn.str_to_duration(value)
                 if staccato and overhang:
                     logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
                     overhang = None
-                composition += mi.Effects(voices, staccato, overhang, clip, octave, rate)
+                composition += mi.Effects(voices,
+                                          staccato,
+                                          overhang,
+                                          clip,
+                                          octave,
+                                          rate,
+                                          reverb)
 
             elif item == 'hear':
                 expect(cmd, ['voices'])

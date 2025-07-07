@@ -43,13 +43,15 @@ class Effects(Item):
                  overhang: int | float | None,
                  clip: bool | None,
                  octave: int | None,
-                 rate: int | None):
+                 rate: int | None,
+                 reverb: int | None):
         self.voices = voices
         self.staccato = staccato
         self.overhang = overhang
         self.clip = clip
         self.octave = octave
         self.rate = rate
+        self.reverb = reverb
 
 class Hear(Item):
     """Play (unmute) voice(s)."""
