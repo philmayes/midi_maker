@@ -261,7 +261,9 @@ class Commands:
                              'clip',
                              'octave',
                              'rate',
+                             'vibrato',
                              'reverb',
+                             'chorus',
                              ])
                 voices = self.get_voices(cmd)
                 staccato: int | float | None = None
@@ -269,7 +271,9 @@ class Commands:
                 clip: bool | None = None
                 octave: int | None = None
                 rate: int | None = None
+                vibrato: int | None = None
                 reverb: int | None = None
+                chorus: int | None = None
                 if value := cmd.get('staccato'):
                     staccato = get_effect(value, 0.0, 1.0)
                 if value := cmd.get('overhang'):
@@ -280,8 +284,12 @@ class Commands:
                     octave = utils.get_int(value, 0, 10)
                 if value := cmd.get('rate'):
                     rate = mn.str_to_duration(value)
+                if value := cmd.get('vibrato'):
+                    vibrato = mn.str_to_duration(value)
                 if value := cmd.get('reverb'):
                     reverb = mn.str_to_duration(value)
+                if value := cmd.get('chorus'):
+                    chorus = mn.str_to_duration(value)
                 if staccato and overhang:
                     logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
                     overhang = None
@@ -291,7 +299,9 @@ class Commands:
                                           clip,
                                           octave,
                                           rate,
-                                          reverb)
+                                          vibrato,
+                                          reverb,
+                                          chorus)
 
             elif item == 'hear':
                 expect(cmd, ['voices'])

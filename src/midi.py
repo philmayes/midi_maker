@@ -11,6 +11,7 @@ https://csound.com/get-started.html
 https://en.wikipedia.org/wiki/General_MIDI
 https://www.fluidsynth.org          # plays MIDI files
 https://www.polyphone.io/en/home    # sf2 editor
+https://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec.htm
 """
 """ Music theory
 note    = whole note
@@ -125,6 +126,18 @@ class BarInfo:
     def in_bar(self) -> bool:
         return not self.bar_ended()
 
+def add_controller_event(bar_info: BarInfo,
+                         channel: Channel,
+                         id: int,
+                         level: int,
+                         ) -> None:
+    bar_info.midi_file.addControllerEvent(0,            # track
+                                          channel,      # channel
+                                          bar_info.start,# time
+                                          id,           # controller ID
+                                          level)        # parameter
+
+
 def add_start_error(value: int) -> int:
     err = value + random.choice(start_error)
     return max(err, 0)
@@ -154,7 +167,6 @@ def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
 
 def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     bar_info.position = bar_info.start
-    bar_end = bar_info.bar_end()
     duration = voice.rate
     old_chord = 'none'
     pitch_index: int = 0
@@ -347,7 +359,7 @@ def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
 def make_midi(in_file: str, out_file: str, create: str):
     with open(in_file, "r") as f_in:
         lines = f_in.readlines()
-    commands = midi_parse.Commands(lines)
+    commands: midi_parse.Commands = midi_parse.Commands(lines)
     voices: Voices = commands.voices
 
     random.seed(1)
@@ -361,6 +373,7 @@ def make_midi(in_file: str, out_file: str, create: str):
     midi_channel_count = len([k for k in voices if k.style != 'perc'])
     # Always request at least 1 channel, otherwise MIDIFile freaks out.
     midi_file = MIDIFile(max(midi_channel_count, 1),
+                         adjust_origin=False,
                          ticks_per_quarternote=n.quarter,
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, default_tempo)
@@ -374,8 +387,7 @@ def make_midi(in_file: str, out_file: str, create: str):
     bar_info: BarInfo = BarInfo(midi_file)
 
     # Get a composition and process all the commands in it.
-    # composition = commands.get_composition(args.play)
-    composition = get_work(commands, create)
+    composition: mi.Composition = get_work(commands, create)
     loop_stack: list[mi.LoopItem] = []
     item_number = 0
     while item_number < len(composition.items):
@@ -411,6 +423,18 @@ def make_midi(in_file: str, out_file: str, create: str):
                     voice.octave = item.octave
                 if item.rate is not None:
                     voice.rate = item.rate
+                if item.vibrato is not None:
+                    if voice.vibrato != item.vibrato:
+                        voice.vibrato = item.vibrato
+                        add_controller_event(bar_info, voice.channel, 1, voice.vibrato)
+                if item.reverb is not None:
+                    if voice.reverb != item.reverb:
+                        voice.reverb = item.reverb
+                        add_controller_event(bar_info, voice.channel, 91, voice.reverb)
+                if item.chorus is not None:
+                    if voice.chorus != item.chorus:
+                        voice.chorus = item.chorus
+                        add_controller_event(bar_info, voice.channel, 93, voice.chorus)
 
         elif isinstance(item, mi.Hear):
             for voice in item.voices:

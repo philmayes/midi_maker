@@ -87,7 +87,9 @@ class Voice:
         self.clip = True    # Clip overhang to the end of the bar
         self.octave: int = octave[style]
         self.rate: int = rate[style]
+        self.vibrato: int = 0
         self.reverb: int = 0
+        self.chorus: int = 0
 
     def adjust_duration(self, duration: int) -> int:
         """Adjust the duration of a note by the effects command."""
