@@ -412,25 +412,27 @@ class Commands:
                         # Might be a previously-defined volume name
                         if value in self.volumes:
                             vol.level = self.volumes[value]
-                            continue
-                        # 'level' without a sign is an absolute value;
-                        # with a sign it is a delta.
-                        sign = value[0]
-                        if sign in '+-':
-                            value = value[1:]
-                        if value.isdigit():
-                            level = int(value)
-                            if sign == '+':
-                                vol.delta = level
-                            elif sign == '-':
-                                vol.delta = -level
-                            else:
-                                vol.level = level
                         else:
-                            logging.warning(f'Bad level in "{cmd[_ln]}"')
+                            # 'level' without a sign is an absolute value;
+                            # with a sign it is a delta.
+                            sign = value[0]
+                            if sign in '+-':
+                                value = value[1:]
+                            if value.isdigit():
+                                level = int(value)
+                                if sign == '+':
+                                    vol.delta = level
+                                elif sign == '-':
+                                    vol.delta = -level
+                                else:
+                                    vol.level = level
+                            else:
+                                logging.warning(f'Bad level in "{cmd[_ln]}"')
                     if value := get_value(cmd, 'rate'):
                         if value.isdigit():
                             vol.rate = int(value)
+                        else:
+                            logging.warning(f'Bad rate in "{cmd[_ln]}"')
                     if vol.delta or vol.level:
                         composition += vol
                     else:
