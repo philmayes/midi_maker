@@ -204,6 +204,54 @@ class TestLoop:
         assert same_name(item, mi.Bar)
         assert item.chords[0].key == 'C'
 
+class TestParsing:
+    def get_pnames(self, params: mt.Params) -> list[str]:
+        """Get a list of all the parameter names."""
+        result = []
+        for n, v in params:
+            result.append(n)
+        return result
+
+    def test_parse1(self):
+        """Test parse_command()."""
+        line = 'effects voices=arp overhang=0.3 octave=4'
+        verb, params = mp.parse_command(line)
+        assert verb == 'effects'
+        pnames = self.get_pnames(params)
+        assert 'voices' in pnames
+        assert 'octave' in pnames
+        assert 'fred' not in pnames
+
+    def test_parse2(self):
+        """Test detection of unexpected parameter."""
+        expect = ['voices', 'overhang', 'octave']
+        line = 'effects voices=arp overhang=0.3 octave=4 unexpected=666'
+        cmd_dict = mp.parse_command_dict(line)
+        assert not mp.expect(cmd_dict, expect)
+
+    def test_parse3(self):
+        """Test detection of ambiguous parameter."""
+        expect = ['voices', 'overhang', 'octave']
+        line = 'effects voices=arp overhang=0.3 o=4'
+        cmd_dict = mp.parse_command_dict(line)
+        assert not mp.expect(cmd_dict, expect)
+
+    def test_parse4(self):
+        """Test recognition of truncated parameters."""
+        expect = ['voices', 'overhang', 'octave']
+        lines: list[str] = [
+            'effects overhang=1.25 oct=4 rev=100'
+        ]
+        commands = mp.Commands(lines)
+        comp: mi.Composition = commands.get_composition()
+        assert len(comp.items) == 1
+        item: mi.Item = comp.items[0]
+        assert same_name(item, mi.Effects)
+        assert item.overhang == 1.25
+        assert item.octave == 4
+        assert item.reverb == 100
+        assert item.chorus == None
+
 class TestRhythm:
     def test_rhythm1(self):
         """Test rhythm command that generates a random list of durations."""

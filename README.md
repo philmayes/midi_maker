@@ -4,6 +4,7 @@
 ### Syntax
 The text file syntax is a list of commands with the format: `command param1=value1 param2=value2,value3...`. Values are case-sensitive. 
 By convention, a parameter name is plural when it can take multiple values separated by commas.
+Parameter names can be abbreviated, e.g. `bar chords=C` can be `bar ch=C`.
 Comments start with`;`.
 
 Commands fall into two categories: definitions and performance.
@@ -35,6 +36,10 @@ and an additional 10 `perc`[ussion] styles.
 
 ### volume
 Format: `volume name=vname level=#`
+
+A volume name is an easy way of supplying volume levels by name instead of by number.
+For convenience, volume names corresponding to the various styles are pre-supplied.
+You can override or add to the list of volume names/values.
 
 ### chord
 Format: `chord name=cname notes=C,E,G,Bb`

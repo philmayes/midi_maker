@@ -34,16 +34,29 @@ def clean_line(line: str) -> str:
     # Remove leading & trailing whitespace
     return line.strip()
 
-def expect(cmd: mt.CmdDict, names: list[str]) -> None:
-    """Report any unexpected parameters in command."""
+def expect(cmd: mt.CmdDict, allowed: list[str]) -> bool:
+    """Report any unexpected or ambiguous parameters in command.
+    
+    Returns True if command appears legal. This is only used by pytest.
+    """
     unexpected: list[str] = []
-    for key in cmd.keys():
-        # Ignore the command and the text line.
-        if key != 'command' and key != _ln and key not in names:
-            unexpected.append(key)
+    ambiguous: list[str] = []
+    for supplied in cmd.keys():
+        if supplied == 'command' or supplied == _ln:
+            continue
+        count = 0
+        for legal in allowed:
+            if legal.startswith(supplied):
+                count += 1
+        if count == 0:
+            unexpected.append(supplied)
+        elif count > 1:
+            ambiguous.append(supplied)
     if unexpected:
         logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{cmd[_ln]}"')
-    return
+    if ambiguous:
+        logging.error(f'Ambiguous parameter(s) "{', '.join(ambiguous)}" in "{cmd[_ln]}"')
+    return len(unexpected) == 0 and len(ambiguous) == 0
 
 def get_effect(value: str, min_val: float, max_val: float) -> int | float | None:
     """Get staccato or overhang value.
@@ -89,6 +102,18 @@ def get_signed_int(cmd: mt.CmdDict, param: str, default: int|str) -> int:
         logging.error(f'Bad signed number {value}')
         return int(default)
     return number
+
+def get_value(cmd: mt.CmdDict, param: str, default: str | None=None) -> str | None:
+    """Get the value of a particular parameter, allowing for an abbreviation.
+    
+    Looks through all the supplied parameter names for one matching the
+    official (full) name. A duplicate match can be ignored as it should have
+    already been reported by expect().
+    """
+    for supplied in cmd.keys():
+        if param.startswith(supplied):
+            return cmd.get(supplied, default)
+    return default
 
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
@@ -199,7 +224,7 @@ class Commands:
             if item != 'composition':
                 if item == 'preferences':
                     continue
-                if cmd.get('name'):
+                if get_value(cmd, 'name'):
                     continue
 
             if item == 'composition':
@@ -211,7 +236,7 @@ class Commands:
                 if not name:
                     # If a name is not supplied, use any composition.
                     in_composition = True
-                elif cmd.get('name') == name:
+                elif get_value(cmd, 'name') == name:
                     # If this composition matches the supplied name, use it.
                     in_composition = True
                 continue
@@ -231,7 +256,7 @@ class Commands:
                 chords: list[mc.BarChord] = []
                 repeat = 1
                 clip = True
-                if value := cmd.get('chords'):
+                if value := get_value(cmd, 'chords'):
                     tick = 0
                     for chord in value.split(','):
                         duration, bar  = mc.get_barchord(chord)
@@ -241,13 +266,13 @@ class Commands:
                             tick += duration
                         else:
                             logging.error(f'Bad bar chord "{chord}"')
-                if value := cmd.get('repeat'):
+                if value := get_value(cmd, 'repeat'):
                     repeat2 = utils.get_int(value)
                     if repeat2 is None:
                         logging.warning(f'Bad repeat in command: "{cmd[_ln]}"')
                     else:
                         repeat = repeat2
-                if value := cmd.get('clip'):
+                if value := get_value(cmd, 'clip'):
                     new_clip = utils.truth(value)
                     if new_clip is not None:
                         clip = new_clip
@@ -274,21 +299,21 @@ class Commands:
                 vibrato: int | None = None
                 reverb: int | None = None
                 chorus: int | None = None
-                if value := cmd.get('staccato'):
+                if value := get_value(cmd, 'staccato'):
                     staccato = get_effect(value, 0.0, 1.0)
-                if value := cmd.get('overhang'):
+                if value := get_value(cmd, 'overhang'):
                     overhang = get_effect(value, 1.0, 8.01)
-                if value := cmd.get('clip'):
+                if value := get_value(cmd, 'clip'):
                     clip = utils.truth(value)
-                if value := cmd.get('octave'):
+                if value := get_value(cmd, 'octave'):
                     octave = utils.get_int(value, 0, 10)
-                if value := cmd.get('rate'):
+                if value := get_value(cmd, 'rate'):
                     rate = mn.str_to_duration(value)
-                if value := cmd.get('vibrato'):
+                if value := get_value(cmd, 'vibrato'):
                     vibrato = mn.str_to_duration(value)
-                if value := cmd.get('reverb'):
+                if value := get_value(cmd, 'reverb'):
                     reverb = mn.str_to_duration(value)
-                if value := cmd.get('chorus'):
+                if value := get_value(cmd, 'chorus'):
                     chorus = mn.str_to_duration(value)
                 if staccato and overhang:
                     logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
@@ -322,11 +347,11 @@ class Commands:
                 voice: mv.Voice | None = None
                 tunes: mt.Tunes = []
                 trans: int | None = 0
-                if value := cmd.get('voice'):
+                if value := get_value(cmd, 'voice'):
                     voice = self.get_voice(value)
-                if value := cmd.get('tunes'):
+                if value := get_value(cmd, 'tunes'):
                     tunes = self.get_tunes(value)
-                if value := cmd.get('transpose'):
+                if value := get_value(cmd, 'transpose'):
                     trans = utils.get_signed_int(value)
                 if tunes and voice and trans is not None:
                     composition += mi.Play(voice, tunes, trans)
@@ -338,9 +363,9 @@ class Commands:
                 expect(cmd, ['voices', 'rhythms'])
                 voices = self.get_voices(cmd)
                 rhythms: mt.Rhythms = []
-                if value := cmd.get('rhythms'):
+                if value := get_value(cmd, 'rhythms'):
                     rhythms = self.get_rhythms(value)
-                if value := cmd.get('name'):
+                if value := get_value(cmd, 'name'):
                     # Not an error, but not a good .ini layout.
                     logging.warning('Rhythm definition found within composition')
                     continue
@@ -350,7 +375,7 @@ class Commands:
             elif item == 'repeat':
                 expect(cmd, ['count'])
                 repeat = 2
-                if value := cmd.get('count'):
+                if value := get_value(cmd, 'count'):
                     count = utils.get_int(value, 2, 100)
                     if count is not None:
                         repeat = count
@@ -360,7 +385,7 @@ class Commands:
 
             elif item == 'tempo':
                 expect(cmd, ['bpm'])
-                if value := cmd.get('bpm'):
+                if value := get_value(cmd, 'bpm'):
                     if value.isdigit():
                         composition += mi.Tempo(int(value))
                         continue
@@ -368,7 +393,7 @@ class Commands:
 
             elif item == 'timesig':
                 expect(cmd, ['value'])
-                if value := cmd.get('value'):
+                if value := get_value(cmd, 'value'):
                     match = re_timesig.match(value)
                     if match:
                         top = int(match.group(1))
@@ -383,7 +408,7 @@ class Commands:
                 voices = self.get_voices(cmd)
                 if voices:
                     vol = mi.Volume(0, 0, 0, voices)
-                    if value := cmd.get('level'):
+                    if value := get_value(cmd, 'level'):
                         # Might be a previously-defined volume name
                         if value in self.volumes:
                             vol.level = self.volumes[value]
@@ -403,7 +428,7 @@ class Commands:
                                 vol.level = level
                         else:
                             logging.warning(f'Bad level in "{cmd[_ln]}"')
-                    if value := cmd.get('rate'):
+                    if value := get_value(cmd, 'rate'):
                         if value.isdigit():
                             vol.rate = int(value)
                     if vol.delta or vol.level:
@@ -512,7 +537,7 @@ class Commands:
             if cmd['command'] == 'tune':
                 expect(cmd, ['name', 'notes'])
                 name: str = cmd.get('name', '')
-                notes = cmd.get('notes', '')
+                notes = get_value(cmd, 'notes', '')
                 tune: mt.Tune = []
 
                 if name and notes:
@@ -617,21 +642,36 @@ class Commands:
         return voices
 
     def get_all_volumes(self):
-        """Get a dictionary of all volume names and values."""
+        """Get a dictionary of all volume names and values.
+
+        A volume name is an easy way of supplying volume levels by name
+        instead of by number. For convenience, volume names corresponding to
+        the various styles are pre-supplied. Users can override or add to the
+        list of volume names/values.
+
+        Note that "volume" is also a performance command, distinguished by not
+        having a name.
+        """
         volumes: dict[str, int] = {'default': prefs.default_volume}
-        # prime the volumes with defaults
+        # Supply a default volume for each style.
         for name, level in mv.volume.items():
             volumes[name] = level
+
+        # Find any volume names that the user is changing or adding.
         for cmd in self.command_dicts:
             if cmd['command'] == 'volume':
-                if 'name' in cmd and 'level' in cmd:
+                name = get_value(cmd, 'name')
+                # Volume commands without a name are performance commands.
+                if name:
                     expect(cmd, ['name', 'level'])
-                    name = cmd['name']
-                    level = cmd['level']
-                    if level.isdigit():
-                        volumes[name] = utils.make_in_range(int(level), 128, 'volume name')
+                    level = get_value(cmd, 'level')
+                    if level:
+                        if level.isdigit():
+                            volumes[name] = utils.make_in_range(int(level), 128, 'volume name')
+                        else:
+                            logging.error(f'volume name level "{level}" is invalid')
                     else:
-                        logging.error(f'volume name level "{level}" is invalid')
+                        logging.error(f'volume name has no level')
         return volumes
 
     def get_preferences(self) -> None:
@@ -694,8 +734,9 @@ class Commands:
     def get_voices(self, cmd: mt.CmdDict) -> mv.Voices:
         """Return a list of all the voices supplied in cmd."""
         voices: mv.Voices = []
-        if 'voices' in cmd:
-            voice_names = cmd['voices'].split(',')
+        value = get_value(cmd, 'voices')
+        if value is not None:
+            voice_names = value.split(',')
             if 'all' in voice_names:
                 return self.voices
             for voice_name in voice_names:
