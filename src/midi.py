@@ -67,7 +67,13 @@ class BarInfo:
         self.position = 0
 
     def adjust_note_time(self, voice: Voice, duration: int) -> int:
-        """Adjust how much time the note takes in the bar."""
+        """Adjust how much time the note takes in the bar.
+
+        Two things can change the note length:
+        * A note length of 0 is a request to extend it to the end of the bar
+        * If clipping is enabled, don't allow the note to play beyond the end
+          of the bar
+        """
         remaining = self.bar_end() - self.position
         # A negative note length is a silence; the called should handle it.
         assert duration >= 0, 'adjust_note_time does not handle neg duration'
@@ -85,19 +91,7 @@ class BarInfo:
 
     def adjust_play_time(self, voice: Voice, duration: int) -> int:
         """Adjust how much time the note plays for."""
-        remaining = self.bar_end() - self.position
-        assert remaining >= 0, 'neg remaining'
-        if duration == 0:
-            # A zero note length extends note to the end of the bar.
-            # extend note to end of bar
-            return remaining
-
-        clip = self.clip(voice)
-        if clip:
-            # Don't allow notes to extend beyond the bar.
-            if duration > remaining:
-                duration = remaining
-        return duration
+        return voice.adjust_duration(duration)
 
     def bar_end(self) -> int:
         """Returns the time at the end of the bar in ticks."""
