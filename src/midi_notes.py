@@ -23,7 +23,7 @@ interval_to_note: list[str] = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb',
 # with a possible dot suffix to add 50%. Durations can be added
 # together, e.g. q+n or q.+q and are parsed using a secondary regex.
 re_durs = re.compile(r'[tseqhnd+-\.]*$')
-re_note = re.compile(r'([tseqhnd+-\.]*)([A-G|X][#|b]?)(\d)?$')
+re_note = re.compile(r'([tseqhnd+-\.]*)([A-G][#|b]?)(\d)?$')
 
 n32 = prefs.ticks_per_beat // 8
 class Duration:

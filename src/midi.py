@@ -451,19 +451,17 @@ def make_midi(in_file: str, out_file: str, create: str):
                 position = start = bar_info.start
                 for tune in item.tunes:
                     for note in tune:
-                        # A pitch < 0 requests a period of silence.
-                        if note.pitch >= 0:
-                            pitch = utils.make_in_range(note.pitch + item.trans,
-                                                        128,
-                                                        'Play note')
-                            volume = mv.get_volume(voice.channel, position)
-                            position = start + note.start
-                            midi_file.addNote(0,
-                                            voice.channel,
-                                            pitch,
-                                            add_start_error(position),
-                                            note.duration,
-                                            volume)
+                        pitch = utils.make_in_range(note.pitch + item.trans,
+                                                    128,
+                                                    'Play note')
+                        volume = mv.get_volume(voice.channel, position)
+                        position = start + note.start
+                        midi_file.addNote(0,
+                                        voice.channel,
+                                        pitch,
+                                        add_start_error(position),
+                                        note.duration,
+                                        volume)
                     # At the end of a tune, update start in case another tune
                     # is following.
                     start = position + tune[-1].duration

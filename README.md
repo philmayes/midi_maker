@@ -70,7 +70,7 @@ A tune is a list of notes and durations (which represent silences).
 See **Data Formats** for the syntax of notes. More than one note can be played at once; for example, `hD5+F#+A` would play a D major chord for two beats. (The `h` indicates a half note).
 Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` for two beats, `F#` for one beat, and `A` for four beats.
 
-Use tunes with the `play` command.
+Use tunes with the `play` command. An example: `tune name=song notes=hG4,h,qA,C5` is a half note of G (4th octave), a half note of silence, two quarter notes of A and C.
 
 ### preferences
 Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_silence=p default_volume=# ticks_per_beat=# reverb_damp=p reverb_level=p reverb_roomsize=p reverb_width=%`

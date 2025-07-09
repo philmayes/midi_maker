@@ -276,6 +276,38 @@ class TestRhythm:
         rhythm: mt.Rhythm = commands.rhythms['r0']
         assert rhythm == [dur.te, dur.de, dur.e, dur.q, dur.e, dur.e, dur.q]
 
+class TestTune:
+    def test_tune1(self):
+        lines: list[str] = [
+            'tune name=test1 notes=G5,h,qA,qC',
+        ]
+        commands = mp.Commands(lines)
+        assert len(commands.tunes) == 1
+        tunes: mt.TuneDict = commands.tunes
+        tune: mt.Tune = tunes['test1']
+        assert len(tune) == 3
+        note = tune[0]
+        assert note.duration == dur.q
+        assert note.name == 'G'
+        assert note.interval == 7
+        assert note.octave == 5
+        assert note.pitch == 67
+        assert note.start == 0
+        note = tune[1]
+        assert note.duration == dur.q
+        assert note.name == 'A'
+        assert note.interval == 9
+        assert note.octave == 5
+        assert note.pitch == 69
+        assert note.start == dur.q + dur.h
+        note = tune[2]
+        assert note.duration == dur.q
+        assert note.name == 'C'
+        assert note.interval == 0
+        assert note.octave == 5
+        assert note.pitch == 60
+        assert note.start == dur.n
+
 class TestVoice:
     def test_voice1(self):
         """Test normal voice command."""
