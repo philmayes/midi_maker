@@ -449,22 +449,18 @@ def make_midi(in_file: str, out_file: str, create: str):
             voice = item.voice
             if voice.active:
                 position = start = bar_info.start
-                for tune in item.tunes:
-                    for note in tune:
-                        pitch = utils.make_in_range(note.pitch + item.trans,
-                                                    128,
-                                                    'Play note')
-                        volume = mv.get_volume(voice.channel, position)
-                        position = start + note.start
-                        midi_file.addNote(0,
-                                        voice.channel,
-                                        pitch,
-                                        add_start_error(position),
-                                        note.duration,
-                                        volume)
-                    # At the end of a tune, update start in case another tune
-                    # is following.
-                    start = position + tune[-1].duration
+                for note in item.notes:
+                    pitch = utils.make_in_range(note.pitch + item.trans,
+                                                128,
+                                                'Play note')
+                    volume = mv.get_volume(voice.channel, position)
+                    position = start + note.start
+                    midi_file.addNote(0,
+                                      voice.channel,
+                                      pitch,
+                                      add_start_error(position),
+                                      note.duration,
+                                      volume)
 
         elif isinstance(item, mi.Repeat):
             if not loop_stack:

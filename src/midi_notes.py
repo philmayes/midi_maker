@@ -191,11 +191,11 @@ def str_to_note(note_str: str) -> mt.Note:
 
         # process the note
         name = match.group(2)
-        # A note of X is silence; indicate this with pitch < 0.
-        if name == 'X':
-            interval = -1000
-        else:
-            interval = note_to_interval[name]
+        # # A note of X is silence; indicate this with pitch < 0.
+        # if name == 'X':
+        #     interval = -1000
+        # else:
+        interval = note_to_interval[name]
 
         # process the octave
         octave = match.group(3)
@@ -210,20 +210,39 @@ def str_to_note(note_str: str) -> mt.Note:
 
     return mt.Note(0, 0, '', 0, 0, 0)
 
-def str_to_notes(notes: str) -> mt.Tune:
-    """Returns a list of the notes described by the string."""
+def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
+    """Returns a list of the notes described by the string.
+
+    The string is a comma-separated collection of:
+    * notes
+    * silences
+    * tunes
+    """
     tune: mt.Tune = []
     # Defaults for the first note in case they are not supplied.
     last_duration = Duration.quarter
     last_octave = 5
     start = 0
     for note_str in notes.split(','):
+        # Handle a possible silence.
         match = re_durs.match(note_str)
         if match:
             duration = str_to_duration(note_str, True)
             if duration != 0: # is a duration only
                 start += abs(duration)
                 continue
+
+        # NEW! IMPROVED!!
+        # Handle a possible tune.
+        if note_str.isalnum() and note_str.islower():
+            if note_str in tunes:
+                sub_tune = tunes[note_str]
+                for sub_note in sub_tune:
+                    pass
+            else:
+                logging.error(f'tune {note_str} does not exist')
+            continue
+
 
         # A "note" in a tune can consist of several notes joined by "+".
         # They all start at the same time. The first note supplies the

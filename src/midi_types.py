@@ -26,7 +26,7 @@ class Note:
                self.pitch == other.pitch
 
 # Used in midi.py
-Notes: TypeAlias = list[str]
+Notes: TypeAlias = list[Note]
 Pitches: TypeAlias = list[int]
 Rhythm: TypeAlias = list[int]
 RhythmDict: TypeAlias = dict[str, Rhythm]

@@ -345,16 +345,16 @@ class Commands:
             elif item == 'play':
                 expect(cmd, ['voice', 'tunes', 'transpose'])
                 voice: mv.Voice | None = None
-                tunes: mt.Tunes = []
+                notes: mt.Notes = []
                 trans: int | None = 0
                 if value := get_value(cmd, 'voice'):
                     voice = self.get_voice(value)
                 if value := get_value(cmd, 'tunes'):
-                    tunes = self.get_tunes(value)
+                    notes = mn.str_to_notes(value, self.tunes)
                 if value := get_value(cmd, 'transpose'):
                     trans = utils.get_signed_int(value)
-                if tunes and voice and trans is not None:
-                    composition += mi.Play(voice, tunes, trans)
+                if notes and voice and trans is not None:
+                    composition += mi.Play(voice, notes, trans)
                 else:
                     logging.warning(f'Bad play command: "{cmd[_ln]}"')
 
@@ -543,7 +543,8 @@ class Commands:
                 tune: mt.Tune = []
 
                 if name and notes:
-                    tune = mn.str_to_notes(notes)
+                    # TODO if I merge notes & tunes, should ensure tune name is not a duration name
+                    tune = mn.str_to_notes(notes, tunes)
                     if name in tunes:
                         logging.error(f'Tune "{name}" already used')
                     else:
@@ -723,17 +724,6 @@ class Commands:
             else:
                 logging.error(f'rhythm {rhythm_name} does not exist')
         return rhythms
-
-    def get_tunes(self, value: str) -> mt.Tunes:
-        """Return a list of all the tunes supplied in param."""
-        tunes: mt.Tunes = []
-        tune_names = value.split(',')
-        for tune_name in tune_names:
-            if tune_name in self.tunes:
-                tunes.append(self.tunes[tune_name])
-            else:
-                logging.error(f'tune {tune_name} does not exist')
-        return tunes
 
     def get_voice(self, name: str) -> mv.Voice | None:
         """Return the named voice."""
