@@ -73,10 +73,9 @@ Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` 
 Use tunes with the `play` command.
 
 ### preferences
-Format: `preferences improv_repeat=probability rhythm_repeat=probability rhythm_silence=probability default_volume=# ticks_per_beat=#`
+Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_silence=p default_volume=# ticks_per_beat=# reverb_damp=p reverb_level=p reverb_roomsize=p reverb_width=%`
 
-Adjust various settings. Probability is a decimal number less than 1.0.
-
+Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
 
 ## Performance Commands
 These generate the actual MIDI output using the definitions that have been created.
@@ -129,7 +128,7 @@ Format: `tempo bpm=#` supplies the number of beats per minute.
 Format: `timesig value=3/4` or any other time signature.
 
 ### effects
-Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=dur`
+Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=dur vibrato=# reverb=# chorus=#`
 
 This turns various effects on or off for the named voices. The `staccato` value can either be the number of ticks for which the note should be played or a decimal fraction like 0.5 meaning the note will be played for half its time.
 
@@ -139,16 +138,18 @@ See **Discussions: Clipping** for use of the `clip` parameter.
 
 `rate` is how quickly an arpeggio is played. It takes either a duration or a number of ticks. The default is a quarter note.
 
+`vibrato`, `reverb` and `chorus` are self-explanatory. Additional values for `reverb` (damp, level, roomsize and width) can be set in `preferences`.
+
 Some of the effects only apply to particular styles:
 
-| style | clip | octave | rate |
-| :---- | :--: | :----: | :--: |
-| arpeggio | Y | Y | Y |
-| bass     | Y | Y | - |
-| improv   | - | - | _ |
-| lead     | - | - | _ |
-| perc     | Y | - | - |
-| rhythm   | Y | Y | - |
+| style | clip | octave | rate | vib/rev/ch |
+| :---- | :--: | :----: | :--: | :--: |
+| arpeggio | Y | Y | Y | Y |
+| bass     | Y | Y | - | Y |
+| improv   | - | - | _ | Y |
+| lead     | - | - | _ | Y |
+| perc     | Y | - | - | - |
+| rhythm   | Y | Y | - | Y |
 
 ### loop
 Format: `loop`.

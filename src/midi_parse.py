@@ -639,7 +639,10 @@ class Commands:
             if channel == Channel.none:
                 logging.warning(f'No channel in "{cmd[_ln]}"')
                 continue
-            voices.append(mv.Voice(name, channel, voice - 1, style, min_pitch, max_pitch))
+            # Voice names are 1-based, so adjust them; perc names are 0-based.
+            if channel < Channel.perc1:
+                voice -= 1
+            voices.append(mv.Voice(name, channel, voice, style, min_pitch, max_pitch))
             midi_volume.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
@@ -687,7 +690,14 @@ class Commands:
                     if key in prefs_dict:
                         pref_type = type(prefs_dict[key])
                         if pref_type == float:
-                            result = utils.get_float(value, 1.0)
+                            max_val = 1.0
+                            # get_float() max_val is exclusive, but the reverb
+                            # params are inclusive, so cheat by adding .001
+                            if key.startswith('reverb'):
+                                max_val += 0.001
+                                if key == 'reverb_width':
+                                    max_val = 100.001
+                            result = utils.get_float(value, 0.0, max_val)
                             if result is None:
                                 logging.warning(f'Preference out of range: "{key}={value}"')
                             else:
