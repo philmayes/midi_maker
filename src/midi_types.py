@@ -4,7 +4,8 @@ class Note:
     def __init__(self,
                  start: int,
                  duration: int,
-                 name: str, interval: int,
+                 name: str,
+                 interval: int,
                  octave: int,
                  pitch: int):
         self.start = start

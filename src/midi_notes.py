@@ -223,36 +223,38 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
     last_duration = Duration.quarter
     last_octave = 5
     start = 0
-    for note_str in notes.split(','):
+    for item in notes.split(','):
         # Handle a possible silence.
-        match = re_durs.match(note_str)
+        match = re_durs.match(item)
         if match:
-            duration = str_to_duration(note_str, True)
+            duration = str_to_duration(item, True)
             if duration != 0: # is a duration only
                 start += abs(duration)
                 continue
 
-        # NEW! IMPROVED!!
         # Handle a possible tune.
-        if note_str.isalnum() and note_str.islower():
-            if note_str in tunes:
-                sub_tune = tunes[note_str]
+        if item.isalnum() and item.islower():
+            if item in tunes:
+                sub_tune = tunes[item]
                 for sub_note in sub_tune:
-                    pass
+                    sub_note.start += start
+                    tune.append(sub_note)
+                last = tune[-1]
+                start = last.start + last.duration
             else:
-                logging.error(f'tune {note_str} does not exist')
+                logging.error(f'tune {item} does not exist')
             continue
 
-
+        # Handle a note.
         # A "note" in a tune can consist of several notes joined by "+".
         # They all start at the same time. The first note supplies the
         # duration for the tune, but the subnotes can supply their own
         # durations, potentially overlapping any following notes.
         first = True
-        for sub_note in note_str.split('+'):
+        for sub_note in item.split('+'):
             note: mt.Note = str_to_note(sub_note)
             if not note.name:
-                logging.error(f'Bad note: "{note_str}"')
+                logging.error(f'Bad note: "{item}"')
                 continue
 
             # Handle note start:
