@@ -41,7 +41,7 @@ class TestGetDuration:
 
     def test_get_duration1(self):
         result = mn.get_duration('C')
-        assert result == 0
+        assert result == -1
 
     def test_get_duration2(self):
         result = mn.get_duration('h')
@@ -87,7 +87,7 @@ class TestGetDuration:
 
     def test_get_duration12(self):
         result = mn.get_duration('q+n-')
-        assert result == 0
+        assert result == -1
 
     def test_get_duration13(self):
         result = mn.get_duration('half.-quarter')
