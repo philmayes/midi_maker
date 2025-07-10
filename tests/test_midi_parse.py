@@ -276,6 +276,66 @@ class TestRhythm:
         rhythm: mt.Rhythm = commands.rhythms['r0']
         assert rhythm == [dur.te, dur.de, dur.e, dur.q, dur.e, dur.e, dur.q]
 
+class TestStrToNotes:
+    def test_str_to_notes1(self):
+        tune: mt.Tune = mp.str_to_notes('nC5,h-qE,qA,C6', {})
+        note: mt.Note = tune[0]
+        assert note.duration == dur.note
+        assert note.name == 'C'
+        assert note.octave == 5
+        assert note.pitch == 60
+        note: mt.Note = tune[1]
+        assert note.duration == dur.quarter
+        assert note.name == 'E'
+        assert note.octave == 5
+        assert note.pitch == 64
+        note: mt.Note = tune[2]
+        assert note.duration == dur.quarter
+        assert note.name == 'A'
+        assert note.octave == 5
+        assert note.pitch == 69
+        note: mt.Note = tune[3]
+        assert note.duration == dur.quarter
+        assert note.name == 'C'
+        assert note.octave == 6
+        assert note.pitch == 72
+
+    def test_str_to_notes2(self):
+        """Test tune without duration or octave for first note."""
+        tune: mt.Tune = mp.str_to_notes('C,h-qE,qA,C6', {})
+        note: mt.Note = tune[0]
+        assert note.duration == dur.quarter
+        assert note.name == 'C'
+        assert note.octave == 5
+        assert note.pitch == 60
+        note: mt.Note = tune[1]
+        assert note.duration == dur.quarter
+        assert note.name == 'E'
+        assert note.octave == 5
+        assert note.pitch == 64
+
+    def test_str_to_notes3(self):
+        """Test tune with duration in it."""
+        tune: mt.Tune = mp.str_to_notes('nC5,h-q,qA,C6', {})
+        note0: mt.Note = tune[0]
+        assert note0.start == 0
+        assert note0.duration == dur.note
+        assert note0.name == 'C'
+        assert note0.octave == 5
+        assert note0.pitch == 60
+        note1: mt.Note = tune[1]
+        assert note1.start == dur.n + dur.q
+        assert note1.duration == dur.quarter
+        assert note1.name == 'A'
+        assert note1.octave == 5
+        assert note1.pitch == 69
+        note2: mt.Note = tune[2]
+        assert note2.start == dur.n + dur.h
+        assert note2.duration == dur.quarter
+        assert note2.name == 'C'
+        assert note2.octave == 6
+        assert note2.pitch == 72
+
 class TestTune:
     def test_tune1(self):
         """Test notes and silences."""
