@@ -19,6 +19,7 @@ import utils
 re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_text = re.compile('[a-zA-Z_]')
 re_timesig = re.compile(r'(\d+)/(\d+)$')
+re_durs = re.compile(r'[tseqhnd+-\.]*$')
 
 _ln = '$line'  # Key for the original command line. Used for error reports.
 
@@ -180,6 +181,91 @@ def parse_command_dict(command: str) -> mt.CmdDict:
     # Add the original command line for use in error reports.
     result[_ln] = command
     return result
+
+def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
+    """Returns a list of the notes described by the string.
+
+    The string is a comma-separated collection of:
+    * notes
+    * chords
+    * silences
+    * tunes
+    """
+    tune: mt.Tune = []
+    # Defaults for the first note in case they are not supplied.
+    last_duration = mn.Duration.quarter
+    last_octave = 5
+    start = 0
+    for item in notes.split(','):
+        # Handle a possible silence.
+        match = re_durs.match(item)
+        if match:
+            duration = mn.str_to_duration(item, True)
+            if duration != 0: # is a duration only
+                start += abs(duration)
+                continue
+
+        # Handle a possible chord.
+        dur, bar_chord = mc.get_barchord(item)
+
+
+        # Handle a possible tune.
+        if item.isalnum() and item.islower():
+            if item in tunes:
+                sub_tune = tunes[item]
+                for sub_note in sub_tune:
+                    sub_note.start += start
+                    tune.append(sub_note)
+                last = tune[-1]
+                start = last.start + last.duration
+            else:
+                logging.error(f'tune {item} does not exist')
+            continue
+
+        # Handle a note.
+        # A "note" in a tune can consist of several notes joined by "+".
+        # They all start at the same time. The first note supplies the
+        # duration for the tune, but the subnotes can supply their own
+        # durations, potentially overlapping any following notes.
+        first = True
+        for sub_note in item.split('+'):
+            note: mt.Note = mn.str_to_note(sub_note)
+            if not note.name:
+                logging.error(f'Bad note: "{item}"')
+                continue
+
+            # Handle note start:
+            note.start = start
+
+            # Handle note duration:
+            if first:
+                # The first note's duration defaults to the previous note's.
+                if note.duration == 0:
+                    note.duration = last_duration
+                # Keep track of this for the following notes.
+                last_duration = note.duration
+            else:
+                # Subnotes are allowed to keep their duration.
+                # If none is supplied, use the duration of the first note.
+                if note.duration == 0:
+                    note.duration = last_duration
+
+            # Handle note octave:
+            if note.octave == 0:
+                note.octave = last_octave
+            if first:
+                # Keep track of this for the following notes.
+                last_octave = note.octave
+
+            # Handle note pitch:
+            note.pitch = note.interval + note.octave * 12
+
+            # print(note)
+            tune.append(note)
+            first = False
+        start += last_duration
+
+    return tune
 
 class Commands:
     """Class that parses the .ini file."""
@@ -350,7 +436,7 @@ class Commands:
                 if value := get_value(cmd, 'voice'):
                     voice = self.get_voice(value)
                 if value := get_value(cmd, 'tunes'):
-                    notes = mn.str_to_notes(value, self.tunes)
+                    notes = str_to_notes(value, self.tunes)
                 if value := get_value(cmd, 'transpose'):
                     trans = utils.get_signed_int(value)
                 if notes and voice and trans is not None:
@@ -544,7 +630,7 @@ class Commands:
 
                 if name and notes:
                     # TODO if I merge notes & tunes, should ensure tune name is not a duration name
-                    tune = mn.str_to_notes(notes, tunes)
+                    tune = str_to_notes(notes, tunes)
                     if name in tunes:
                         logging.error(f'Tune "{name}" already used')
                     else:
