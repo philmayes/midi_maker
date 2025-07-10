@@ -3,7 +3,7 @@ import random
 from midiutil import MIDIFile
 
 from src import midi
-from src.midi_chords import BarChord
+from src.midi_chords import Chord
 from src import midi_parse
 from src import midi_voice as mv
 from src.midi_channels import Channel
@@ -30,7 +30,7 @@ def test_1(mocker):
     mock_add_note = mocker.patch.object(midi_file, 'addNote')
     mocker.patch('src.midi.add_start_error')
     bar_info: midi.BarInfo = midi.BarInfo(midi_file)
-    chords: list[BarChord] = [BarChord(0, 'C', 'maj')]
+    chords: list[Chord] = [Chord(0, 'C', 'maj')]
     # Set 3rd param to True to remove clipping.
     # This will make the last assertion 1000, not 840.
     bar_info.bar = mi.Bar(chords, 1)

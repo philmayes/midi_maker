@@ -339,7 +339,7 @@ class Commands:
 
             if item == 'bar':
                 expect(cmd, ['chords', 'repeat', 'clip'])
-                chords: list[mc.BarChord] = []
+                chords: list[mc.Chord] = []
                 repeat = 1
                 clip = True
                 if value := get_value(cmd, 'chords'):

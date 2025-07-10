@@ -1,6 +1,6 @@
 from typing import Any
 
-from src.midi_chords import BarChord
+from src.midi_chords import Chord
 import src.midi_items as mi
 # from src.midi_items import midi_items as mi
 from src.midi_notes import Duration as dur
@@ -35,7 +35,7 @@ class TestBar:
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
         assert same_name(item, mi.Bar)
-        bar_chord: BarChord = item.chords[0]
+        bar_chord: Chord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
@@ -50,11 +50,11 @@ class TestBar:
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
         assert same_name(item, mi.Bar)
-        bar_chord: BarChord = item.chords[0]
+        bar_chord: Chord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
-        bar_chord: BarChord = item.chords[1]
+        bar_chord: Chord = item.chords[1]
         assert bar_chord.start == dur.quarter
         assert bar_chord.key == 'G'
         assert bar_chord.chord == 'maj'
@@ -69,11 +69,11 @@ class TestBar:
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
         assert same_name(item, mi.Bar)
-        bar_chord: BarChord = item.chords[0]
+        bar_chord: Chord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
-        bar_chord: BarChord = item.chords[1]
+        bar_chord: Chord = item.chords[1]
         assert bar_chord.start == dur.half
         assert bar_chord.key == 'G'
         assert bar_chord.chord == 'maj'
@@ -88,11 +88,11 @@ class TestBar:
         assert len(comp.items) == 1
         item: mi.Item = comp.items[0]
         assert same_name(item, mi.Bar)
-        bar_chord: BarChord = item.chords[0]
+        bar_chord: Chord = item.chords[0]
         assert bar_chord.start == 0
         assert bar_chord.key == 'C'
         assert bar_chord.chord == 'maj'
-        bar_chord: BarChord = item.chords[1]
+        bar_chord: Chord = item.chords[1]
         assert bar_chord.start == dur.half + dur.quarter
         assert bar_chord.key == 'G'
         assert bar_chord.chord == 'maj'

@@ -1,7 +1,7 @@
 import re
 import midi_notes as mn
 
-class BarChord:
+class Chord:
     def __init__(self, start: int, key: str, chord: str):
         self.start = start
         self.key = key
@@ -49,8 +49,8 @@ def chord_to_pitches(chord: str, octave: int) -> list[int]:
     result: list[int] = [interval + octave for interval in intervals]
     return result
 
-def get_barchord(chord: str) -> tuple[int, BarChord]:
-    """Parse a string describing a chord into a BarChord() and its duration.
+def get_barchord(chord: str) -> tuple[int, Chord]:
+    """Parse a string describing a chord into a Chord() and its duration.
 
     A parsing failure is indicated by duration == 0.
     """
@@ -79,6 +79,6 @@ def get_barchord(chord: str) -> tuple[int, BarChord]:
             cho = 'min'
         cho = cho + mod
         if cho in chords:
-            return dur2, BarChord(0, key, cho)
+            return dur2, Chord(0, key, cho)
 
-    return (0, BarChord(0,'',''))
+    return (0, Chord(0,'',''))
