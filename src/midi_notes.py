@@ -22,7 +22,7 @@ interval_to_note: list[str] = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb',
 # The duration is one or more of the shorthand NoteDurations
 # with a possible dot suffix to add 50%. Durations can be added
 # together, e.g. q+n or q.+q and are parsed using a secondary regex.
-re_note = re.compile(r'([tseqhnd+-\.]*)([A-G][#|b]?)(\d)?$')
+re_note = re.compile(r'([tseqhnd+-\.]*)([A-G][#|b]?)(@(\d))?$')
 
 
 n32 = prefs.ticks_per_beat // 8
@@ -198,12 +198,11 @@ def str_to_note(note_str: str) -> mt.Note:
         interval = note_to_interval[name]
 
         # process the octave
-        octave = match.group(3)
+        octave = match.group(4)
         if octave is None:
             octave = 0
-        # if not octave:
-        #     octave = 4
-        octave = int(octave)
+        else:
+            octave = int(octave)
 
         pitch = interval + octave * 12
         return mt.Note(0, ticks, name, interval, octave, pitch)

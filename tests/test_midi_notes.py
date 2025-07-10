@@ -177,7 +177,7 @@ class TestStrToNote:
         assert result.pitch == 0
 
     def test_str_to_note2(self):
-        result = mn.str_to_note('eEb5')
+        result = mn.str_to_note('eEb@5')
         assert result.duration == dur.eighth
         assert result.name == 'Eb'
         assert result.octave == 5

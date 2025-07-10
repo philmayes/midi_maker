@@ -171,9 +171,11 @@ These describe the format of the values used in various commands.
 
 | format | `tune` | `rhythm` | `bar` | `chord` |
 | :---- | :--: | :----: | :--: | :--: |
-| durations | Y | Y | - | - |
-| notes     | Y | - | - | Y |
-| chords    | Y | - | Y | - |
+| durations | Y  | Y | - | -  |
+| notes     | Y¹ | - | - | Y¹ |
+| chords    | Y¹ | - | Y | -  |
+
+1 Can take an @octave suffix
 
 ### durations
 
@@ -190,19 +192,21 @@ These are used alone in the `rhythm` and `tune` commands, and as prefixes for no
 | doublenote | t_doublenote | d_doublenote | d, td, dd |
 
 ### notes
-Format: `duration note octave`.
+Format: `duration note @octave`.
 * `duration` is one of the above abbreviations such as `q` for quarter (a quarter note). It can be dotted to make it 50% longer. A duration can be assembled from multiple parts, e.g. `q.+n` is 5½ beats; `n-q` is 3 beats.
 * `note` is A-G with possible # or b e.g. `Eb`.
 * `octave` is 1-10.
 
-When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `qG5,A,B,C6,D,E,F#,G`. Note that the `C` must be declared as being in octave 6, otherwise the C below G5 will play.
+When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `qG@5,A,B,C@6,D,E,F#,G`. Note that the `C` must be declared as being in octave 6, otherwise the C below G5 will play.
 
-For example, `q.F#4` will play a dotted quarter note F# in the 4th octave.
+For example, `q.F#@4` will play a dotted quarter note F# in the 4th octave.
 
 ### chords
-Format: `[duration] key chord`.
+Format: `[duration] key chord [@octave]`.
 
 The chord can be one of `maj`,`min`,`m`,`dim`,`aug`,`maj7`,`min7`,`dom7`,`dim7`,`maj6`,`min6`,`maj9`,`min9`. `m` is a synomym for `min`, a minor chord. If the chord is omitted. `maj` is assumed.
+
+When the chord is used in a `bar`, @`octave` is (presently) disallowed.
 
 Some examples: `Eb`: Eb major; `Am`: A minor; `qF#maj7`: F# major 7th played for a quarter note; `h.Gaug`: G augmented for 3 beats.
 

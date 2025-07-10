@@ -278,34 +278,13 @@ class TestRhythm:
 
 class TestStrToNotes:
     def test_str_to_notes1(self):
-        tune: mt.Tune = mp.str_to_notes('nC5,h-qE,qA,C6', {})
-        # assert len(tune) == 4
+        tune: mt.Tune = mp.str_to_notes('nC@5,h-qE,qA,C@6', {})
+        assert len(tune) == 4
         # #                           start    dur name int oct pitch
-        # assert tune[0] == mt.Note(      0, dur.n, 'C',  0, 5, 60)
-        # assert tune[1] == mt.Note(4*dur.q, dur.q, 'E',  4, 5, 64)
-        # assert tune[2] == mt.Note(5*dur.q, dur.q, 'A',  9, 5, 69)
-        # assert tune[3] == mt.Note(6*dur.q, dur.q, 'C',  0, 6, 72)
-
-        note: mt.Note = tune[0]
-        assert note.duration == dur.note
-        assert note.name == 'C'
-        assert note.octave == 5
-        assert note.pitch == 60
-        note: mt.Note = tune[1]
-        assert note.duration == dur.quarter
-        assert note.name == 'E'
-        assert note.octave == 5
-        assert note.pitch == 64
-        note: mt.Note = tune[2]
-        assert note.duration == dur.quarter
-        assert note.name == 'A'
-        assert note.octave == 5
-        assert note.pitch == 69
-        note: mt.Note = tune[3]
-        assert note.duration == dur.quarter
-        assert note.name == 'C'
-        assert note.octave == 6
-        assert note.pitch == 72
+        assert tune[0] == mt.Note(      0, dur.n, 'C',  0, 5, 60)
+        assert tune[1] == mt.Note(4*dur.q, dur.q, 'E',  4, 5, 64)
+        assert tune[2] == mt.Note(5*dur.q, dur.q, 'A',  9, 5, 69)
+        assert tune[3] == mt.Note(6*dur.q, dur.q, 'C',  0, 6, 72)
 
     def test_str_to_notes2(self):
         """Test tune without duration or octave for first note."""
@@ -323,7 +302,7 @@ class TestStrToNotes:
 
     def test_str_to_notes3(self):
         """Test tune with duration in it."""
-        tune: mt.Tune = mp.str_to_notes('nC5,h-q,qA,C6', {})
+        tune: mt.Tune = mp.str_to_notes('nC@5,h-q,qA,C@6', {})
         note0: mt.Note = tune[0]
         assert note0.start == 0
         assert note0.duration == dur.note
@@ -345,7 +324,7 @@ class TestStrToNotes:
 
     def test_str_to_notes4(self):
         """Test tune starting with chord, no duration, no octave."""
-        tune: mt.Tune = mp.str_to_notes('Emaj,C,h,D4', {})
+        tune: mt.Tune = mp.str_to_notes('Emaj,C,h,D@4', {})
         assert len(tune) == 5
         #                           start    dur name int oct pitch
         assert tune[0] == mt.Note(      0, dur.q, 'E',  4, 5, 64)
@@ -358,34 +337,17 @@ class TestTune:
     def test_tune1(self):
         """Test notes and silences."""
         lines: list[str] = [
-            'tune name=tune1 notes=G5,h,qA,qC',
+            'tune name=tune1 notes=G@5,h,qA,qC',
         ]
         commands = mp.Commands(lines)
         assert len(commands.tunes) == 1
         tunes: mt.TuneDict = commands.tunes
         tune: mt.Tune = tunes['tune1']
         assert len(tune) == 3
-        note = tune[0]
-        assert note.duration == dur.q
-        assert note.name == 'G'
-        assert note.interval == 7
-        assert note.octave == 5
-        assert note.pitch == 67
-        assert note.start == 0
-        note = tune[1]
-        assert note.duration == dur.q
-        assert note.name == 'A'
-        assert note.interval == 9
-        assert note.octave == 5
-        assert note.pitch == 69
-        assert note.start == dur.q + dur.h
-        note = tune[2]
-        assert note.duration == dur.q
-        assert note.name == 'C'
-        assert note.interval == 0
-        assert note.octave == 5
-        assert note.pitch == 60
-        assert note.start == dur.n
+        #                           start    dur name int oct pitch
+        assert tune[0] == mt.Note(      0, dur.q, 'G',  7, 5, 67)
+        assert tune[1] == mt.Note(3*dur.q, dur.q, 'A',  9, 5, 69)
+        assert tune[2] == mt.Note(4*dur.q, dur.q, 'C',  0, 5, 60)
 
     def test_tune2(self):
         """Test multiple notes.
@@ -393,50 +355,38 @@ class TestTune:
         The 2nd (hB) is longer and overlaps the next note (qA).
         """
         lines: list[str] = [
-            'tune name=tune1 notes=G5+hB,qA,qC',
+            'tune name=tune1 notes=G@5+hB,qA,qC',
         ]
         commands = mp.Commands(lines)
         assert len(commands.tunes) == 1
         tunes: mt.TuneDict = commands.tunes
         tune: mt.Tune = tunes['tune1']
         assert len(tune) == 4
-        note = tune[0]
-        assert note.start == 0
-        assert note.duration == dur.q
-        assert note.name == 'G'
-        assert note.interval == 7
-        assert note.octave == 5
-        assert note.pitch == 67
-        note = tune[1]
-        assert note.start == 0
-        assert note.duration == dur.h
-        assert note.name == 'B'
-        assert note.interval == 11
-        assert note.octave == 5
-        note = tune[2]
-        assert note.start == dur.q
-        assert note.duration == dur.q
-        assert note.name == 'A'
-        assert note.interval == 9
-        assert note.octave == 5
+        #                           start    dur name int oct pitch
+        assert tune[0] == mt.Note(      0, dur.q, 'G',  7, 5, 67)
+        assert tune[1] == mt.Note(      0, dur.h, 'B', 11, 5, 71)
+        assert tune[2] == mt.Note(1*dur.q, dur.q, 'A',  9, 5, 69)
+        assert tune[3] == mt.Note(2*dur.q, dur.q, 'C',  0, 5, 60)
 
     def test_tune3(self):
         """Test multiple notes.
 
-        The 2nd (hB) is longer and overlaps the next note (qA).
+        The 2nd (hB) is longer and overlaps the next note (qA)
+        and is a different octave, which should not be propagated.
         """
         lines: list[str] = [
-            'tune name=tune1 notes=G5+hB,qA,qC',
+            'tune name=tune1 notes=G@5+hB@6,qA,qC',
         ]
         commands = mp.Commands(lines)
         assert len(commands.tunes) == 1
         tunes: mt.TuneDict = commands.tunes
         tune: mt.Tune = tunes['tune1']
         assert len(tune) == 4
-        #                         start  dur   name int oct pitch
-        assert tune[0] == mt.Note(0,     dur.q, 'G',  7, 5, 67)
-        assert tune[1] == mt.Note(0,     dur.h, 'B', 11, 5, 71)
-        assert tune[2] == mt.Note(dur.q, dur.q, 'A',  9, 5, 69)
+        #                           start    dur name int oct pitch
+        assert tune[0] == mt.Note(      0, dur.q, 'G',  7, 5, 67)
+        assert tune[1] == mt.Note(      0, dur.h, 'B', 11, 6, 83)
+        assert tune[2] == mt.Note(1*dur.q, dur.q, 'A',  9, 5, 69)
+        assert tune[3] == mt.Note(2*dur.q, dur.q, 'C',  0, 5, 60)
 
     def test_tune4(self):
         """Test embedded tune.
@@ -445,7 +395,7 @@ class TestTune:
         """
         lines: list[str] = [
             'tune name=tune1 notes=C,D,E',
-            'tune name=tune2 notes=G5,tune1,qA,qC',
+            'tune name=tune2 notes=G@5,tune1,qA,qC',
         ]
         commands = mp.Commands(lines)
         assert len(commands.tunes) == 2
@@ -467,7 +417,7 @@ class TestTune:
         """
         lines: list[str] = [
             'tune name=tune1 notes=C+hG,D,E',
-            'tune name=tune2 notes=G5,tune1,qA,qC',
+            'tune name=tune2 notes=G@5,tune1,qA,qC',
         ]
         commands = mp.Commands(lines)
         assert len(commands.tunes) == 2

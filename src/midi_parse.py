@@ -193,9 +193,12 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
     * tunes
     """
     tune: mt.Tune = []
-    # Defaults for the first note in case they are not supplied.
+    # Default duration and octave. If either/both are supplied with an item,
+    # the value(s) are updated. For compound items (ones separated with a '+'),
+    # these are only updated by the first sub-item.
     last_duration = mn.Duration.quarter
     last_octave = 5
+
     start = 0
     for item in notes.split(','):
         # Handle a possible silence.
@@ -211,35 +214,6 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
                 start += duration
                 continue
 
-        # Handle a possible chord.
-        # To name an octave as well as a chord, a syntax like qCmaj7@4 is used
-        # so that the chord number (7) is distinguishable from the octave (4).
-        # Note the difference in handling here: if an octave is found at the
-        # end of the string, a failure to find a chord is an error. If no
-        # chord is found, it might be a tune or a note, so keep parsing.
-        new_octave = last_octave
-        match = re_octave.match(item)
-        if match is not None:
-            new_octave = int(match.group(1))
-            note_list = mc.str_to_notes(item[:-2], start, last_duration, new_octave)
-            if note_list:
-                tune.extend(note_list)
-                last_duration = note_list[0].duration
-                last_octave = new_octave
-                start += last_duration
-            else:
-                logging.error(f'Bad chord: "{item}"')
-            continue
-        elif len(item) >= 2 and item[-1] not in '#b':
-            # The above tests are to avoid parsing a note as a chord. They
-            # distinguish between chords Dmaj Dm and notes D Db D#.
-            note_list = mc.str_to_notes(item, start, last_duration, last_octave)
-            if note_list:
-                tune.extend(note_list)
-                last_duration = note_list[0].duration
-                start += last_duration
-                continue
-
         # Handle a possible tune.
         if item.isalnum() and item.islower():
             if item in tunes:
@@ -253,47 +227,49 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
                 logging.error(f'tune {item} does not exist')
             continue
 
-        # Handle a note.
-        # A "note" in a tune can consist of several notes joined by "+".
-        # They all start at the same time. The first note supplies the
-        # duration for the tune, but the subnotes can supply their own
-        # durations, potentially overlapping any following notes.
+        # Handle notes and chords (collectively: "sounds").
+        # A sound in a tune can consist of several sounds joined by "+".
+        # They all start at the same time. The first sound supplies the
+        # duration for the tune, but the following sounds can supply their
+        # own durations, potentially overlapping any following items.
         first = True
-        for sub_note in item.split('+'):
-            note: mt.Note = mn.str_to_note(sub_note)
-            if not note.name:
-                logging.error(f'Bad note: "{item}"')
-                continue
+        for sub_item in item.split('+'):
+            new_octave = last_octave
+            new_duration = last_duration
 
-            # Handle note start:
-            note.start = start
+            # Extract possible octave from note/chord and save for use when
+            # the item parses correctly.
+            match = re_octave.search(sub_item)
+            if match is not None:
+                new_octave = int(match.group(1))
+                sub_item = sub_item[:-2]
 
-            # Handle note duration:
+            note: mt.Note = mn.str_to_note(sub_item)
+            if note.name:
+                # Handle a note.
+                note.start = start
+                note.octave = new_octave
+                note.pitch = note.interval + new_octave * 12
+                if note.duration == 0:
+                    note.duration = new_duration
+                new_duration = note.duration
+                tune.append(note)
+            else:
+                # Handle a chord
+                note_list = mc.str_to_notes(sub_item, start, new_duration, new_octave)
+                if note_list:
+                    tune.extend(note_list)
+                    new_duration = note_list[0].duration
+                else:
+                    logging.error(f'Bad note: "{item}"')
+                    continue
+
             if first:
                 # The first note's duration defaults to the previous note's.
-                if note.duration == 0:
-                    note.duration = last_duration
                 # Keep track of this for the following notes.
-                last_duration = note.duration
-            else:
-                # Subnotes are allowed to keep their duration.
-                # If none is supplied, use the duration of the first note.
-                if note.duration == 0:
-                    note.duration = last_duration
-
-            # Handle note octave:
-            if note.octave == 0:
-                note.octave = last_octave
-            if first:
-                # Keep track of this for the following notes.
-                last_octave = note.octave
-
-            # Handle note pitch:
-            note.pitch = note.interval + note.octave * 12
-
-            # print(note)
-            tune.append(note)
-            first = False
+                last_duration = new_duration
+                last_octave = new_octave
+                first = False
         start += last_duration
 
     return tune
