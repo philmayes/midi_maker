@@ -279,6 +279,13 @@ class TestRhythm:
 class TestStrToNotes:
     def test_str_to_notes1(self):
         tune: mt.Tune = mp.str_to_notes('nC5,h-qE,qA,C6', {})
+        # assert len(tune) == 4
+        # #                           start    dur name int oct pitch
+        # assert tune[0] == mt.Note(      0, dur.n, 'C',  0, 5, 60)
+        # assert tune[1] == mt.Note(4*dur.q, dur.q, 'E',  4, 5, 64)
+        # assert tune[2] == mt.Note(5*dur.q, dur.q, 'A',  9, 5, 69)
+        # assert tune[3] == mt.Note(6*dur.q, dur.q, 'C',  0, 6, 72)
+
         note: mt.Note = tune[0]
         assert note.duration == dur.note
         assert note.name == 'C'
@@ -335,6 +342,17 @@ class TestStrToNotes:
         assert note2.name == 'C'
         assert note2.octave == 6
         assert note2.pitch == 72
+
+    def test_str_to_notes4(self):
+        """Test tune starting with chord, no duration, no octave."""
+        tune: mt.Tune = mp.str_to_notes('Emaj,C,h,D4', {})
+        assert len(tune) == 5
+        #                           start    dur name int oct pitch
+        assert tune[0] == mt.Note(      0, dur.q, 'E',  4, 5, 64)
+        assert tune[1] == mt.Note(      0, dur.q, 'Ab', 8, 5, 68)
+        assert tune[2] == mt.Note(      0, dur.q, 'B', 11, 5, 71)
+        assert tune[3] == mt.Note(1*dur.q, dur.q, 'C',  0, 5, 60)
+        assert tune[4] == mt.Note(4*dur.q, dur.q, 'D',  2, 4, 50)
 
 class TestTune:
     def test_tune1(self):

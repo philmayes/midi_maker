@@ -2,12 +2,12 @@ from typing import TypeAlias
 
 class Note:
     def __init__(self,
-                 start: int,
-                 duration: int,
-                 name: str,
-                 interval: int,
-                 octave: int,
-                 pitch: int):
+                 start: int,    # Start time in ticks
+                 duration: int, # Duration in ticks
+                 name: str,     # Name (C, C#, D,...)
+                 interval: int, # Number of semitones above C (0-11)
+                 octave: int,   # 0-10
+                 pitch: int):   # octave * 12 + interval
         self.start = start
         self.duration = duration
         self.name = name

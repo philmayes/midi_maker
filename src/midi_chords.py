@@ -1,13 +1,12 @@
 import re
 import midi_notes as mn
+import midi_types as mt
 
 class Chord:
     def __init__(self, start: int, key: str, chord: str):
         self.start = start
         self.key = key
         self.chord = chord
-
-from midi_notes import note_to_interval
 
 ch1 = r'^([tseqhnd+-\.]+)*'             # duration prefix (needs validating)
 ch2 = r'([A-G][#b]*)([a-z]*)([4679]?)$'  # key chord-type chord-mod
@@ -30,16 +29,17 @@ chords: dict[str, list[int]]  = {
     'sus4': [0, 5, 7],        # C F  G
 }
 
-def chord_to_intervals(chord: str) -> list[int]:
+def chord_to_intervals(text: str) -> list[int]:
     """Convert a chord name to list of intervals."""
-    match = re_chord.match(chord)
-    assert match, f'Unknown chord "{str}"'
+    match = re_chord.match(text)
+    assert match, f'Unknown chord "{text}"'
     chord_name = match.group(2) + match.group(3)
-    assert chord_name in chords, f'Unknown chord "{str}"'
-    offset: int = note_to_interval[match.group(1)]
+    assert chord_name in chords, f'Unknown chord "{text}"'
+    offset: int = mn.note_to_interval[match.group(1)]
     intervals: list[int] = chords[chord_name]
     result: list[int] = [interval + offset for interval in intervals]
     return result
+interval_to_note: list[str] = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
 
 def chord_to_pitches(chord: str, octave: int) -> list[int]:
     """Convert a chord name to list of intervals for a specific octave."""
@@ -49,12 +49,14 @@ def chord_to_pitches(chord: str, octave: int) -> list[int]:
     result: list[int] = [interval + octave for interval in intervals]
     return result
 
-def get_barchord(chord: str) -> tuple[int, Chord]:
-    """Parse a string describing a chord into a Chord() and its duration.
+def get_chord(text: str) -> tuple[int, Chord]:
+    """Parse a string describing a chord into duration and Chord().
 
-    A parsing failure is indicated by duration == 0.
+    Return duration: > 0   This duration was supplied
+                     = 0   No duration was supplied
+                     < 0   Parsing failed
     """
-    match = re_dur_chord.match(chord)
+    match = re_dur_chord.match(text)
     if match:
         dur = match.group(1)
         key = match.group(2)
@@ -63,13 +65,9 @@ def get_barchord(chord: str) -> tuple[int, Chord]:
         # The regex gets a jumbled duration of "tseqhnd", ".", "+" and "-".
         # get_duration() does further checks for validity.
         if dur is None:
-            dur2 = mn.Duration.default
+            dur2 = 0
         else:
-            dur2 = mn.get_duration(dur)
-            if dur2 == 0:
-                dur2 = mn.Duration.default
-            elif dur2 < 0:
-                dur2 = 0
+            dur2 = mn.get_duration(dur) # Has same meanings as above.
         if not cho:
             if mod == '7':
                 cho = 'dom'
@@ -81,4 +79,23 @@ def get_barchord(chord: str) -> tuple[int, Chord]:
         if cho in chords:
             return dur2, Chord(0, key, cho)
 
-    return (0, Chord(0,'',''))
+    return (-1, Chord(0,'',''))
+
+def str_to_notes(text: str, start: int, last_dur: int, octave: int) -> mt.Notes:
+    """Convert a chord name to a list of Note instances."""
+    result: mt.Notes = []
+    dur, chord = get_chord(text)
+    if dur >= 0:
+        if dur == 0:
+            dur = last_dur
+        offset: int = mn.note_to_interval[chord.key]
+        intervals: list[int] = chords[chord.chord]
+        for interval in intervals:
+            interval += offset
+            pitch = interval + octave * 12
+            interval %= 12
+            name = interval_to_note[interval]
+            octave2 = pitch // 12
+            note = mt.Note(start, dur, name, interval, octave2, pitch)
+            result.append(note)
+    return result

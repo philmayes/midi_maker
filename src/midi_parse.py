@@ -20,6 +20,7 @@ re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_text = re.compile('[a-zA-Z_]')
 re_timesig = re.compile(r'(\d+)/(\d+)$')
 re_durs = re.compile(r'[tseqhnd+-\.]*$')
+re_octave = re.compile(r'@(\d)$')
 
 _ln = '$line'  # Key for the original command line. Used for error reports.
 
@@ -202,12 +203,42 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
         if match:
             duration = mn.str_to_duration(item, True)
             if duration != 0: # is a duration only
-                start += abs(duration)
+                if duration < 0:
+                    # Ouch. User should not use negative duration here.
+                    logging.warning(f'Negative silence in tune "{notes}"')
+                    duration = -duration
+                # Should this change last_duration? This is a UI question.
+                start += duration
                 continue
 
         # Handle a possible chord.
-        dur, bar_chord = mc.get_barchord(item)
-
+        # To name an octave as well as a chord, a syntax like qCmaj7@4 is used
+        # so that the chord number (7) is distinguishable from the octave (4).
+        # Note the difference in handling here: if an octave is found at the
+        # end of the string, a failure to find a chord is an error. If no
+        # chord is found, it might be a tune or a note, so keep parsing.
+        new_octave = last_octave
+        match = re_octave.match(item)
+        if match is not None:
+            new_octave = int(match.group(1))
+            note_list = mc.str_to_notes(item[:-2], start, last_duration, new_octave)
+            if note_list:
+                tune.extend(note_list)
+                last_duration = note_list[0].duration
+                last_octave = new_octave
+                start += last_duration
+            else:
+                logging.error(f'Bad chord: "{item}"')
+            continue
+        elif len(item) >= 2 and item[-1] not in '#b':
+            # The above tests are to avoid parsing a note as a chord. They
+            # distinguish between chords Dmaj Dm and notes D Db D#.
+            note_list = mc.str_to_notes(item, start, last_duration, last_octave)
+            if note_list:
+                tune.extend(note_list)
+                last_duration = note_list[0].duration
+                start += last_duration
+                continue
 
         # Handle a possible tune.
         if item.isalnum() and item.islower():
@@ -345,10 +376,12 @@ class Commands:
                 if value := get_value(cmd, 'chords'):
                     tick = 0
                     for chord in value.split(','):
-                        duration, bar  = mc.get_barchord(chord)
-                        if duration:
-                            bar.start = tick
-                            chords.append(bar)
+                        duration, chord  = mc.get_chord(chord)
+                        if duration >= 0:
+                            if duration == 0:
+                                duration = mn.Duration.default
+                            chord.start = tick
+                            chords.append(chord)
                             tick += duration
                         else:
                             logging.error(f'Bad bar chord "{chord}"')

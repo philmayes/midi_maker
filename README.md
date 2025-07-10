@@ -44,8 +44,12 @@ You can override or add to the list of volume names/values.
 ### chord
 Format: `chord name=cname notes=C,E,G,Bb`
 
-midi_maker recognizes major, minor, augmented, diminished, 7th and 9th chord names,
-but you may want to make your own, e.g `chord name=sus4 notes=C,F,G`. The notes are taken to apply to the key of C.
+midi_maker recognizes major, minor, augmented, diminished, 7th and 9th chord names.
+Use `midi_maker help chords` to see what is available.
+You can create your own chord with a command in the .ini file like
+`chord name=pairs notes=C,D,E,F#`.
+The chord is taken to be in the key of C, thus you can create an inversion with
+`chord name=inv notes=E,G,C`
 
 ### rhythm
 This can take either of two formats:
@@ -163,11 +167,17 @@ Format: `repeat count=#`
 Repeat a section starting at the preceding `loop` command. `count` is optional; it is the total number of times the section will be played. Loops can be nested, e.g. `loop A loop B repeat C repeat` will play `A B B C A B B C`.
 
 ## Data Formats
-These describe the format of the values supplied to commands.
+These describe the format of the values used in various commands.
+
+| format | `tune` | `rhythm` | `bar` | `chord` |
+| :---- | :--: | :----: | :--: | :--: |
+| durations | Y | Y | - | - |
+| notes     | Y | - | - | Y |
+| chords    | Y | - | Y | - |
 
 ### durations
 
-These are used in the `rhythm`, `tune`, and `bar` commands. 
+These are used alone in the `rhythm` and `tune` commands, and as prefixes for notes and chords.
 
 | duration | 1/3 duration | 2/3 duration | abbreviations |
 | -------- | ------------ | ------------ | ------------- |
