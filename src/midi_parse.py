@@ -352,6 +352,12 @@ class Commands:
                 if value := get_value(cmd, 'chords'):
                     tick = 0
                     for chord in value.split(','):
+                        # Chop possible octave off the end.
+                        match = re_octave.search(chord)
+                        if match:
+                            logging.warning(f'Octave {chord[-2:]} is ignored in bar commands; use "effects octave=n" instead')
+                            chord = chord[:-2]
+                        # Parse the chord.
                         duration, chord  = mc.get_chord(chord)
                         if duration >= 0:
                             if duration == 0:

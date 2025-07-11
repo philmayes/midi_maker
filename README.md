@@ -205,14 +205,13 @@ For example, `q.F#@4` will play a dotted quarter note F# in the 4th octave.
 Format: `[duration] key chord [@octave]`.
 
 The chord can be one of `maj`,`min`,`m`,`dim`,`aug`,`maj7`,`min7`,`dom7`,`dim7`,`maj6`,`min6`,`maj9`,`min9`. `m` is a synomym for `min`, a minor chord. If the chord is omitted. `maj` is assumed.
-
-When the chord is used in a `bar`, @`octave` is (presently) disallowed.
+When the chord is used in a `tune`, an @`octave` suffix can be appended.
 
 Some examples: `Eb`: Eb major; `Am`: A minor; `qF#maj7`: F# major 7th played for a quarter note; `h.Gaug`: G augmented for 3 beats.
 
 ## Discussions
 ### Clipping
-Normally for all styles except lead, notes are clipped at the end of the bar. For instance, using `rhythm name=half durations=q,q,q,h` as the 4/4 rhythm for a voice will normally clip the fourth half note to a quarter note.
+Normally for all styles except lead, notes are clipped at the end of the bar. For instance, using `rhythm name=half durations=q,q,q,h` in a 4/4 composition will normally clip the fourth half note to a quarter note.
 
 To inhibit this behavior and allow the note or chord to play for its full duration, use `clip=no` (can also be n, 0, f, false) with either:
 * a `bar` command, which will apply to all voices for one bar
