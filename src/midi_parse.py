@@ -54,10 +54,11 @@ def expect(cmd: mt.CmdDict, allowed: list[str]) -> bool:
             unexpected.append(supplied)
         elif count > 1:
             ambiguous.append(supplied)
+    plural = '' if len(unexpected) == 1 else 's'
     if unexpected:
-        logging.error(f'Bad parameter(s) "{', '.join(unexpected)}" in "{cmd[_ln]}"')
+        logging.error(f'Bad parameter{plural} "{', '.join(unexpected)}" in "{cmd[_ln]}"')
     if ambiguous:
-        logging.error(f'Ambiguous parameter(s) "{', '.join(ambiguous)}" in "{cmd[_ln]}"')
+        logging.error(f'Ambiguous parameter{plural} "{', '.join(ambiguous)}" in "{cmd[_ln]}"')
     return len(unexpected) == 0 and len(ambiguous) == 0
 
 def get_effect(value: str, min_val: float, max_val: float) -> int | float | None:
@@ -291,7 +292,7 @@ class Commands:
                 continue
             self.command_dicts.append(parse_command_dict(clean))
 
-        self.get_preferences()
+        self.get_all_preferences()
         self.volumes = self.get_all_volumes()
         self.voices: mv.Voices = self.get_all_voices()
         self.tunes = self.get_all_tunes()
@@ -579,6 +580,58 @@ class Commands:
                 else:
                     logging.error(f'Bad format for command "{cmd[_ln]}"')
 
+    def get_all_preferences(self) -> None:
+        """Get changes to global preferences."""
+        prefs_dict = prefs.__dict__
+        # Construct a list of valid parameters.
+        expects: list[str] = []
+        for key in prefs_dict:
+            if key[0].isalpha():
+                expects.append(key)
+
+        def add_to_prefs(key: str, result) -> None:
+            if key in found:
+                logging.warning(f'Preference "{key}" already set; replacing {prefs_dict[key]} with {value}"')
+            prefs_dict[key] = result
+            found[key] = 1
+
+        found: dict[str, int] = {}
+        for cmd in self.command_dicts:
+            if cmd['command'] == 'preferences':
+                expect(cmd, expects)
+                for key, value in cmd.items():
+                    if key in ('command', _ln):
+                        continue
+                    if key in prefs_dict:
+                        pref_type = type(prefs_dict[key])
+                        if pref_type == float:
+                            max_val = 1.0
+                            # get_float() max_val is exclusive, but the reverb
+                            # params are inclusive, so cheat by adding .001
+                            if key.startswith('reverb'):
+                                max_val += 0.001
+                                if key == 'reverb_width':
+                                    max_val = 100.001
+                            result = utils.get_float(value, 0.0, max_val)
+                            if result is None:
+                                logging.warning(f'Preference out of range: "{key}={value}"')
+                            else:
+                                add_to_prefs(key, result)
+                                # prefs_dict[key] = result
+                                # found[key] = 1
+                        elif pref_type == int:
+                            result = utils.get_int(value, 0, 4000)
+                            if result is None:
+                                logging.warning(f'Preference is not a number: "{key}={value}"')
+                            else:
+                                add_to_prefs(key, result)
+                                # prefs_dict[key] = result
+                                # found[key] = 1
+                        else:
+                            logging.error(f'Preference type {pref_type} not handled')
+                    else:
+                        logging.warning(f'Unknown preference: "{key}={value}"')
+
     def get_all_rhythms(self) -> mt.RhythmDict:
         """Construct Rhythm dictionary from the list of commands."""
         rhythms: mt.RhythmDict = {}
@@ -780,40 +833,6 @@ class Commands:
                     else:
                         logging.error(f'volume name has no level')
         return volumes
-
-    def get_preferences(self) -> None:
-        """Get changes to global preferences."""
-        prefs_dict = prefs.__dict__
-        for cmd in self.command_dicts:
-            if cmd['command'] == 'preferences':
-                for key, value in cmd.items():
-                    if key in ('command', _ln):
-                        continue
-                    if key in prefs_dict:
-                        pref_type = type(prefs_dict[key])
-                        if pref_type == float:
-                            max_val = 1.0
-                            # get_float() max_val is exclusive, but the reverb
-                            # params are inclusive, so cheat by adding .001
-                            if key.startswith('reverb'):
-                                max_val += 0.001
-                                if key == 'reverb_width':
-                                    max_val = 100.001
-                            result = utils.get_float(value, 0.0, max_val)
-                            if result is None:
-                                logging.warning(f'Preference out of range: "{key}={value}"')
-                            else:
-                                prefs_dict[key] = result
-                        elif pref_type == int:
-                            result = utils.get_int(value, 0, 4000)
-                            if result is None:
-                                logging.warning(f'Preference is not a number: "{key}={value}"')
-                            else:
-                                prefs_dict[key] = result
-                        else:
-                            logging.error(f'Preference type {pref_type} not handled')
-                    else:
-                        logging.warning(f'Unknown preference: "{key}={value}"')
 
     def get_rhythms(self, value: str) -> mt.Rhythms:
         """Return a list of all the rhythms supplied in param."""
