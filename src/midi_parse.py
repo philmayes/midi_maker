@@ -576,6 +576,8 @@ class Commands:
                         else:
                             logging.error(f'Bad note in chord "{cmd[_ln]}"')
                             break
+                    if name in mc.chords:
+                        logging.error(f'Chord "{name}" replaces earlier instance')
                     mc.chords[name] = offsets
                 else:
                     logging.error(f'Bad format for command "{cmd[_ln]}"')
@@ -635,6 +637,14 @@ class Commands:
     def get_all_rhythms(self) -> mt.RhythmDict:
         """Construct Rhythm dictionary from the list of commands."""
         rhythms: mt.RhythmDict = {}
+
+        def add_to_rhythms(name: str, rhythm: mt.Rhythm) -> None:
+            if name in rhythms:
+                logging.error(f'Rhythm "{name}" replaces earlier instance')
+            rhythms[name] = rhythm
+            total = sum(rhythm)
+            logging.debug(f'rhythm "{name}" has duration {total} ticks = {total/mn.Duration.quarter} beats')
+
         for cmd in self.command_dicts:
             if cmd['command'] == 'rhythm':
                 expect(cmd, ['name', 'voices', 'rhythms', 'seed', 'silence', 'repeat', 'durations'])
@@ -672,12 +682,10 @@ class Commands:
                             rhythm.append(dur)
                         tick += dur
                     logging.debug(f'random rhythm {rhythm}')
-                    rhythms[name] = rhythm
+                    add_to_rhythms(name, rhythm)
                 elif name and durations:
                     rhythm = mn.str_to_durations(durations)
-                    rhythms[name] = rhythm
-                    total = sum(rhythm)
-                    logging.debug(f'rhythm named {name} has duration {total} ticks = {total/mn.Duration.quarter} beats')
+                    add_to_rhythms(name, rhythm)
                 elif name:
                     logging.error(f'Bad rhythm command "{cmd[_ln]}"')
                 else:
@@ -797,6 +805,9 @@ class Commands:
             # Voice names are 1-based, so adjust them; perc names are 0-based.
             if channel < Channel.perc1:
                 voice -= 1
+            for v_check in voices:
+                if v_check.name == name:
+                    logging.error(f'Voice "{name}" replaces earlier instance')
             voices.append(mv.Voice(name, channel, voice, style, min_pitch, max_pitch))
             midi_volume.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
@@ -850,8 +861,7 @@ class Commands:
         for voice in self.voices:
             if voice.name == name:
                 return voice
-        else:
-            logging.error(f'mv.Voice {name} does not exist')
+        logging.error(f'mv.Voice {name} does not exist')
 
     def get_voices(self, cmd: mt.CmdDict) -> mv.Voices:
         """Return a list of all the voices supplied in cmd."""
