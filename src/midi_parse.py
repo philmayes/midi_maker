@@ -25,6 +25,7 @@ re_octave = re.compile(r'@(\d)$')
 _ln = '$line'  # Key for the original command line. Used for error reports.
 
 def clean_line(line: str) -> str:
+    """Remove comments and whitespace."""
     max_len = 250
     if len(line) > max_len:
         logging.error(f'Line starting "{line[:16]}..." is longer than ({max_len} chars)')
@@ -121,66 +122,54 @@ def get_value(cmd: mt.CmdDict, param: str, default: str | None=None) -> str | No
 def is_text(text: str) -> bool:
     return re_text.match(text) is not None
 
-def parse_command(command: str) -> mt.Cmd:
-    """Parse command into verb and params."""
-    item: mt.Verb = ''
-    params: mt.Params = []
-    assert command, 'Empty command'
-    words = command.split()
-
-    # parse parameters into the default values
-    for index, word in enumerate(words):
-        if index == 0:
-            # First word is the command aka Item
-            if word.isalpha():
-                item = word
-            else:
-                logging.warning(f'Bad verb in "{command}"')
-                break
-        else:
-            if '=' not in word:
-                # Subsequent words should be of the form key=value
-                logging.warning(f'Missing "=" in "{command}"')
-                break
-            key, value = word.split('=', 1)
-            if not value:
-                logging.warning(f'Missing value in "{command}"')
-                break
-            params.append([key, value])
-    else:
-        # Weird python syntax: the loop finished without a break.
-        # Add the original command line for use in error reports.
-        params.append([_ln, command])
-        return item, params
-    return '', []
-
 def parse_command_dict(command: str) -> mt.CmdDict:
     """Parse command into dictionary."""
-    result: mt.CmdDict = {'command': ''}
-    assert command, 'Empty command'
-    words = command.split()
-
+    result: mt.CmdDict = {}
+    expect = [
+        'bar',
+        'chord',
+        'composition',
+        'effects',
+        'hear',
+        'loop',
+        'mute',
+        'notes',
+        'opus',
+        'play',
+        'preferences',
+        'repeat',
+        'rhythm',
+        'skip',
+        'tempo',
+        'timesig',
+        'tune',
+        'unskip',
+        'voice',
+        'volume',
+    ]
+    error: str = ''
     # parse parameters into the default values
-    for index, word in enumerate(words):
+    for index, word in enumerate(command.split()):
         if index == 0:
-            # First word is the command aka Item
-            if word.isalpha():
+            # First word should be the command.
+            if word in expect:
                 result['command'] = word
             else:
-                logging.warning(f'Bad verb in "{command}"')
+                error = f'Bad command in "{command}"'
                 break
         else:
             if '=' not in word:
                 # Subsequent words should be of the form key=value
-                logging.warning(f'Missing "=" in "{command}"')
+                error = f'Missing "=" in "{command}"'
                 break
             key, value = word.split('=', 1)
             if not value:
-                logging.warning(f'Missing value in "{command}"')
+                error = f'Missing value in "{command}"'
                 break
-            # params.append([key, value])
             result[key] = value
-    # Add the original command line for use in error reports.
+    if error:
+        logging.warning(error)
+        return {}
     result[_ln] = command
     return result
 
@@ -276,27 +265,27 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
     return tune
 
 class Commands:
-    """Class that parses the .ini file."""
+    """Class that parses the .ini file and provides access to the results."""
     def __init__(self, lines: list[str]):
-        # Remove leading & trailing whitespace and comments,
-        # and validate the command.
-        # Assemble a list of CmdDict instances for future use.
-        self.command_dicts: list[mt.CmdDict] = []
+        self.commands: list[mt.CmdDict] = []
         for line in lines:
+            # Remove comments and whitespace.
             clean: str = clean_line(line)
             if not clean:
                 continue
-            command: mt.Cmd = parse_command(clean)
-            if not command[0]:
-                logging.error(f'Bad command "{clean}"')
-                continue
-            self.command_dicts.append(parse_command_dict(clean))
+            # Convert the line into a dictionary.
+            cmd: mt.CmdDict = parse_command_dict(clean)
+            if cmd:
+                # Make a list of all commands.
+                self.commands.append(cmd)
 
+        # Get preferences first because some definitions use them.
         self.get_all_preferences()
-        self.volumes = self.get_all_volumes()
+        # Extract all the definitions into their various types.
+        self.volumes: dict[str, int] = self.get_all_volumes()
         self.voices: mv.Voices = self.get_all_voices()
-        self.tunes = self.get_all_tunes()
-        self.rhythms = self.get_all_rhythms()
+        self.tunes: mt.TuneDict = self.get_all_tunes()
+        self.rhythms: mt.RhythmDict = self.get_all_rhythms()
         self.get_all_chords()
 
     def get_composition(self, name: str='') -> mi.Composition:
@@ -308,7 +297,7 @@ class Commands:
         composition: mi.Composition = mi.Composition()
         in_composition = False
         found_composition = False
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             item: mt.Verb = cmd['command']
             assert item, 'Empty item'
 
@@ -552,7 +541,7 @@ class Commands:
 
     def get_opus(self, name: str) -> str:
         """Get parts of the named opus."""
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             if cmd['command'] == 'opus':
                 expect(cmd, ['name', 'parts'])
                 name2: str = cmd.get('name', '')
@@ -561,9 +550,9 @@ class Commands:
                     return parts
         return ''
 
-    def get_all_chords(self):
+    def get_all_chords(self) -> None:
         """Read and set up non-standard chords."""
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             if cmd['command'] == 'chord':
                 expect(cmd, ['name', 'notes'])
                 name: str = cmd.get('name', '')
@@ -606,7 +595,7 @@ class Commands:
             found[key] = 1
 
         found: dict[str, int] = {}
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             if cmd['command'] == 'preferences':
                 expect(cmd, expects)
                 for key, value in cmd.items():
@@ -653,7 +642,7 @@ class Commands:
             total = sum(rhythm)
             logging.debug(f'rhythm "{name}" has duration {total} ticks = {total/mn.Duration.quarter} beats')
 
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             if cmd['command'] == 'rhythm':
                 expect(cmd, ['name', 'voices', 'rhythms', 'seed', 'silence', 'repeat', 'durations'])
                 rhythm: mt.Rhythm = mt.Rhythm()
@@ -705,7 +694,7 @@ class Commands:
     def get_all_tunes(self) -> mt.TuneDict:
         """Construct Tune dictionary from the list of commands."""
         tunes: mt.TuneDict = {}
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             if cmd['command'] == 'tune':
                 expect(cmd, ['name', 'notes'])
                 name: str = cmd.get('name', '')
@@ -729,7 +718,7 @@ class Commands:
         voices: mv.Voices = []
         next_voice_channel = 1
         next_perc_channel = 1
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             if cmd['command'] != 'voice':
                 continue
 
@@ -837,7 +826,7 @@ class Commands:
             volumes[name] = level
 
         # Find any volume names that the user is changing or adding.
-        for cmd in self.command_dicts:
+        for cmd in self.commands:
             if cmd['command'] == 'volume':
                 name = get_value(cmd, 'name')
                 # Volume commands without a name are performance commands.
