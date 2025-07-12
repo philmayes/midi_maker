@@ -95,6 +95,11 @@ class Repeat(Item):
         assert repeat >= 2, 'Bad repeat count'
         self.repeat = repeat - 1
 
+class Skip(Item):
+    """Skip a section on playback. Command "unskip" calls Skip(False)."""
+    def __init__(self, skip: bool):
+        self.skip = skip
+
 class Tempo(Item):
     """Change the tempo of a composition."""
     def __init__(self, tempo: int):

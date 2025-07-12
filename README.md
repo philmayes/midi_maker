@@ -166,6 +166,11 @@ Format: `repeat count=#`
 
 Repeat a section starting at the preceding `loop` command. `count` is optional; it is the total number of times the section will be played. Loops can be nested, e.g. `loop A loop B repeat C repeat` will play `A B B C A B B C`.
 
+### skip and unskip
+Format: `skip` [other commands] `unskip`.
+
+When making changes to a composition, you may want to skip some of the playback so you only hear what you are working on. Use `skip` and `unskip` to skip over a section you do not want to hear. Voice changes etc. in the skipped section will still be honored, but any `play` command will not.
+
 ## Data Formats
 These describe the format of the values used in various commands.
 

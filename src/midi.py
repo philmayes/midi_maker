@@ -382,26 +382,28 @@ def make_midi(in_file: str, out_file: str, create: str):
 
     # Get a composition and process all the commands in it.
     composition: mi.Composition = get_work(commands, create)
+    skip = False
     loop_stack: list[mi.LoopItem] = []
     item_number = 0
     while item_number < len(composition.items):
         item = composition.items[item_number]
         if isinstance(item, mi.Bar):
-            bar_info.bar = item
-            for _ in range(item.repeat):
-                logging.debug(item.chords)
-                for voice in voices:
-                    if voice.style == 'perc' and voice.active:
-                        make_percussion_bar(bar_info, voice)
-                    elif voice.style == 'bass' and voice.active:
-                        make_bass_bar(bar_info, voice)
-                    elif voice.style == 'rhythm' and voice.active:
-                        make_rhythm_bar(bar_info, voice)
-                    elif voice.style == 'arpeggio' and voice.active:
-                        make_arpeggio_bar(bar_info, voice)
-                    elif voice.style == 'improv' and voice.active:
-                        make_improv_bar(bar_info, voice)
-                bar_info.start += bar_info.timesig.ticks_per_bar
+            if not skip:
+                bar_info.bar = item
+                for _ in range(item.repeat):
+                    logging.debug(item.chords)
+                    for voice in voices:
+                        if voice.style == 'perc' and voice.active:
+                            make_percussion_bar(bar_info, voice)
+                        elif voice.style == 'bass' and voice.active:
+                            make_bass_bar(bar_info, voice)
+                        elif voice.style == 'rhythm' and voice.active:
+                            make_rhythm_bar(bar_info, voice)
+                        elif voice.style == 'arpeggio' and voice.active:
+                            make_arpeggio_bar(bar_info, voice)
+                        elif voice.style == 'improv' and voice.active:
+                            make_improv_bar(bar_info, voice)
+                    bar_info.start += bar_info.timesig.ticks_per_bar
 
         elif isinstance(item, mi.Beat):
             for voice in item.voices:
@@ -447,7 +449,7 @@ def make_midi(in_file: str, out_file: str, create: str):
 
         elif isinstance(item, mi.Play):
             voice = item.voice
-            if voice.active:
+            if voice.active and not skip:
                 position = start = bar_info.start
                 for note in item.notes:
                     pitch = utils.make_in_range(note.pitch + item.trans,
@@ -477,6 +479,10 @@ def make_midi(in_file: str, out_file: str, create: str):
                     logging.debug(f'repeating {loop_item.count}')
                     loop_item.count -= 1
                     item_number = loop_item.item_no
+
+        elif isinstance(item, mi.Skip):
+            # This is created by both the "skip" and "unskip" commands.
+            skip = item.skip
 
         elif isinstance(item, mi.Tempo):
             midi_file.addTempo(0, bar_info.start, item.tempo)

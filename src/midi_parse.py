@@ -485,6 +485,10 @@ class Commands:
                         logging.error(f'Bad parameter in "{cmd[_ln]}"')
                 composition += mi.Repeat(repeat)
 
+            elif item == 'skip':
+                expect(cmd, [''])
+                composition += mi.Skip(True)
+
             elif item == 'tempo':
                 expect(cmd, ['bpm'])
                 if value := get_value(cmd, 'bpm'):
@@ -504,6 +508,10 @@ class Commands:
                             composition += mi.TimeSig(top, bottom)
                             continue
                 logging.warning(f'Bad timesig in "{cmd[_ln]}"')
+
+            elif item == 'unskip':
+                expect(cmd, [''])
+                composition += mi.Skip(False)
 
             elif item == 'volume':
                 expect(cmd, ['voices', 'level', 'rate'])
