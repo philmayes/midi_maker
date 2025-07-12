@@ -1,5 +1,6 @@
 """Parse the input file."""
 
+import copy
 import logging
 import re
 
@@ -209,8 +210,9 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
             if item in tunes:
                 sub_tune = tunes[item]
                 for sub_note in sub_tune:
-                    sub_note.start += start
-                    tune.append(sub_note)
+                    dup = copy.copy(sub_note)
+                    dup.start += start
+                    tune.append(dup)
                 last = tune[-1]
                 start = last.start + last.duration
             else:
