@@ -1,4 +1,4 @@
-import utils
+import src.utils as utils
 
 def test_get_float():
     assert utils.get_float('11') == None
@@ -23,3 +23,12 @@ def test_signed_number():
     assert utils.get_signed_int('bad') == None
     assert utils.get_signed_int('+bad') == None
     assert utils.get_signed_int('-bad') == None
+
+def test_is_name():
+    assert utils.is_name('fred')
+    assert utils.is_name('_')
+    assert utils.is_name('_fred1')
+    assert utils.is_name('f1red')
+    assert not utils.is_name('1fred')
+    assert not utils.is_name('1Fred')
+    assert not utils.is_name('1fred!')

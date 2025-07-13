@@ -18,7 +18,6 @@ import rando
 import utils
 
 re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
-re_text = re.compile('[a-zA-Z_]')
 re_timesig = re.compile(r'(\d+)/(\d+)$')
 re_durs = re.compile(r'[tseqhnd+-\.]*$')
 re_octave = re.compile(r'@(\d)$')
@@ -119,9 +118,6 @@ def get_value(cmd: mt.CmdDict, param: str, default: str | None=None) -> str | No
         if param.startswith(supplied):
             return cmd.get(supplied, default)
     return default
-
-def is_text(text: str) -> bool:
-    return re_text.match(text) is not None
 
 def parse_command_dict(command: str) -> mt.CmdDict:
     """Parse command into dictionary."""
@@ -548,6 +544,9 @@ class Commands:
                 expect(cmd, ['name', 'parts'])
                 name2: str = cmd.get('name', '')
                 parts = cmd.get('parts', '')
+                if name2 and not utils.is_name(name2):
+                    logging.error(f'opus name "{name2}" is invalid')
+                    continue
                 if name == name2:
                     return parts
         return ''
@@ -559,8 +558,12 @@ class Commands:
                 expect(cmd, ['name', 'notes'])
                 name: str = cmd.get('name', '')
                 notes = cmd.get('notes', '')
+                if name and not utils.is_name(name):
+                    logging.error(f'chord name "{name}" is invalid')
+                    continue
                 if name and notes:
-                    if not name.isalpha() or name != name.lower():
+                    # if not name.isalpha() or name != name.lower():
+                    if not utils.is_name(name):
                         logging.error(f'Chord names must be lowercase alpha "{cmd[_ln]}"')
                         break
                     offsets: list[int] = []
@@ -653,6 +656,9 @@ class Commands:
                 silence = get_float(cmd, 'silence', 0.0, 1.0, prefs.rhythm_silence)
                 repeat = get_float(cmd, 'repeat', 0.0, 1.0, prefs.rhythm_repeat)
                 durations = cmd.get('durations', '')
+                if name and not utils.is_name(name):
+                    logging.error(f'rhythm name "{name}" is invalid')
+                    continue
                 if name and seed >= 0:
                     # Construct a table of possible durations
                     probs: list[int] = []
@@ -702,6 +708,9 @@ class Commands:
                 name: str = cmd.get('name', '')
                 notes = get_value(cmd, 'notes', '')
                 tune: mt.Tune = []
+                if name and not utils.is_name(name):
+                    logging.error(f'Tune name "{name}" is invalid')
+                    continue
 
                 if name and notes:
                     # TODO if I merge notes & tunes, should ensure tune name is not a duration name

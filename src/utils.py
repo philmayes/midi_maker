@@ -34,6 +34,10 @@ def get_signed_int(text: str) -> int | None:
             number = -number
         return number
 
+re_text = re.compile('[a-z_][a-z0-9_]*$')
+def is_name(text: str) -> bool:
+    return re_text.match(text) is not None
+
 def make_error_table(amount: int) -> list[int]:
     """Makes an error table
     Maximum error == ±<amount>.
