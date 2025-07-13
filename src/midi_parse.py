@@ -119,7 +119,7 @@ def get_value(cmd: mt.CmdDict, param: str, default: str | None=None) -> str | No
             return cmd.get(supplied, default)
     return default
 
-def parse_command_dict(command: str) -> mt.CmdDict:
+def parse_command(command: str) -> mt.CmdDict:
     """Parse command into dictionary."""
     result: mt.CmdDict = {}
     expect = [
@@ -272,7 +272,7 @@ class Commands:
             if not clean:
                 continue
             # Convert the line into a dictionary.
-            cmd: mt.CmdDict = parse_command_dict(clean)
+            cmd: mt.CmdDict = parse_command(clean)
             if cmd:
                 # Make a list of all commands.
                 self.commands.append(cmd)

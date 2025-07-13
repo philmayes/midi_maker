@@ -205,35 +205,18 @@ class TestLoop:
         assert item.chords[0].key == 'C'
 
 class TestParsing:
-    def get_pnames(self, params: mt.Params) -> list[str]:
-        """Get a list of all the parameter names."""
-        result = []
-        for n, v in params:
-            result.append(n)
-        return result
-
-    def test_parse1(self):
-        """Test parse_command()."""
-        line = 'effects voices=arp overhang=0.3 octave=4'
-        verb, params = mp.parse_command(line)
-        assert verb == 'effects'
-        pnames = self.get_pnames(params)
-        assert 'voices' in pnames
-        assert 'octave' in pnames
-        assert 'fred' not in pnames
-
     def test_parse2(self):
         """Test detection of unexpected parameter."""
         expect = ['voices', 'overhang', 'octave']
         line = 'effects voices=arp overhang=0.3 octave=4 unexpected=666'
-        cmd_dict = mp.parse_command_dict(line)
+        cmd_dict = mp.parse_command(line)
         assert not mp.expect(cmd_dict, expect)
 
     def test_parse3(self):
         """Test detection of ambiguous parameter."""
         expect = ['voices', 'overhang', 'octave']
         line = 'effects voices=arp overhang=0.3 o=4'
-        cmd_dict = mp.parse_command_dict(line)
+        cmd_dict = mp.parse_command(line)
         assert not mp.expect(cmd_dict, expect)
 
     def test_parse4(self):
