@@ -4,7 +4,6 @@ import logging
 import re
 
 import midi_types as mt
-from preferences import prefs
 
 note_to_interval: dict[str, int] = {
     'Cb':11, 'C':  0, 'C#': 1,
@@ -24,8 +23,8 @@ interval_to_note: list[str] = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb',
 # together, e.g. q+n or q.+q and are parsed using a secondary regex.
 re_note = re.compile(r'([tseqhnd+-\.]*)([A-G][#|b]?)(@(\d))?$')
 
-
-n32 = prefs.ticks_per_beat // 8
+ticks_per_beat = 960
+n32 = ticks_per_beat // 8
 class Duration:
     # note durations
     thirtysecondth = n32    # thirtysecond note      120

@@ -1,5 +1,6 @@
 from midi_chords import Chord
 import midi_types as mt
+import midi_notes as mn
 from midi_voice import Voice, Voices
 from preferences import prefs
 
@@ -110,7 +111,7 @@ class TimeSig(Item):
     def __init__(self, time_sig_top: int, time_sig_bottom: int):
         self.time_sig_top = time_sig_top
         self.time_sig_bottom = time_sig_bottom
-        self.ticks_per_beat = prefs.ticks_per_beat
+        self.ticks_per_beat = mn.ticks_per_beat
         self.ticks_per_bar = self.ticks_per_beat * time_sig_top
 
 class Volume(Item):

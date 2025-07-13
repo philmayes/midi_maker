@@ -77,7 +77,7 @@ Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` 
 Use tunes with the `play` command. An example: `tune name=song notes=hG4,h,qA,C5` is a half note of G (4th octave), a half note of silence, two quarter notes of A and C.
 
 ### preferences
-Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_silence=p default_volume=# ticks_per_beat=# reverb_damp=p reverb_level=p reverb_roomsize=p reverb_width=%`
+Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_silence=p default_volume=# reverb_damp=p reverb_level=p reverb_roomsize=p reverb_width=%`
 
 Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
 
@@ -126,7 +126,7 @@ You can have one or more compositions in a file. By naming the composition on th
 Format: `opus name=oname parts=cname1,cname2...`
 
 ### tempo
-Format: `tempo bpm=#` supplies the number of beats per minute.
+Format: `tempo bpm=#` supplies the number of beats per minute. If omitted, the default MIDI tempo of 120 bpm is used.
 
 ### timesig
 Format: `timesig value=3/4` or any other time signature.
