@@ -172,23 +172,22 @@ Format: `skip` [other commands] `unskip`.
 When making changes to a composition, you may want to skip some of the playback so you only hear what you are working on. Use `skip` and `unskip` to skip over a section you do not want to hear. Voice changes etc. in the skipped section will still be honored, but any `play` command will not.
 
 ## Data Formats
-These describe the format of the values used in various commands.
+These describe the format of the notes, chords and durations that are used in commands.
+This table describes where each format can be used.
 
 | format | `tune` | `rhythm` | `bar` | `chord` |
-| :---- | :--: | :----: | :--: | :--: |
-| durations | Y $^2$  | Y | - | -  |
-| notes     | Y $^1$ | - | - | Y $^1$ |
-| chords    | Y $^1$ | - | Y | -  |
-<!-- | durations | Y  | Y | - | -  |
-| notes     | Y¹ | - | - | Y¹ |
-| chords    | Y¹ | - | Y | -  | -->
+| :---- | :-- | :---- | :-- | :-- |
+| notes     | Y `+` | - | - | Y |
+| chords    | Y `+` | - | Y `+` | -  |
+| durations | Y      | Y | - | -  |
 
-1 Can take an @octave suffix\
-2 Can take an @octave suffix
+Y = format is used in command\
+`+` = format can take an extra duration prefix and/or an @octave suffix. if no octave is supplied, uses previous octave.
+<!-- d = if no duration supplied, uses previous duration -->
 
 ### durations
 
-These are used alone in the `rhythm` and `tune` commands, and as prefixes for notes and chords.
+These are used alone in the  `tune` and `rhythm` commands, and as prefixes for notes and chords.
 
 | duration | 1/3 duration | 2/3 duration | abbreviations |
 | -------- | ------------ | ------------ | ------------- |
@@ -206,9 +205,10 @@ Format: `duration note @octave`.
 * `note` is A-G with possible # or b e.g. `Eb`.
 * `octave` is 1-10.
 
-When supplying multiple notes, the duration and octave can be omitted if they match the previous note. e.g. a scale of G is `qG@5,A,B,C@6,D,E,F#,G`. Note that the `C` must be declared as being in octave 6, otherwise the C below G5 will play.
+When supplying multiple notes, the octave can be omitted if it matches the previous note. e.g. a scale of G is `qG@5,A,B,C@6,D,E,F#,G`. Note that the `C` must be declared as being in octave 6, otherwise the C below G5 will play.
+If the duration is not supplied, it will be a quarter note.
 
-For example, `q.F#@4` will play a dotted quarter note F# in the 4th octave.
+For example, `q.F#@4` will play a dotted quarter F# note in the 4th octave.
 
 ### chords
 Format: `[duration] key chord [@octave]`.

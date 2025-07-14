@@ -152,7 +152,7 @@ def parse_command(command: str) -> mt.CmdDict:
             if word in expect:
                 result['command'] = word
             else:
-                error = f'Bad command in "{command}"'
+                error = f'Bad command of "{command}"'
                 break
         else:
             if '=' not in word:
@@ -171,7 +171,7 @@ def parse_command(command: str) -> mt.CmdDict:
     return result
 
 def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
-    """Returns a list of the notes described by the string.
+    """Returns a list of the notes described by the string (from a tune).
 
     The string is a comma-separated collection of:
     * notes
@@ -251,7 +251,7 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
                     logging.error(f'Bad note: "{item}"')
                     continue
 
-            if first:
+            if first:   # First in the sub-item, not the whole tune!
                 # The first note's duration defaults to the previous note's.
                 # Keep track of this for the following notes.
                 last_duration = new_duration
