@@ -3,13 +3,15 @@ import midi_notes as mn
 import midi_types as mt
 
 class Chord:
-    def __init__(self, start: int, key: str, chord: str):
+    no_octave = -1
+    def __init__(self, start: int, key: str, chord: str, octave: int):
         self.start = start
         self.key = key
         self.chord = chord
+        self.octave = octave
 
 ch1 = r'^([tseqhnd+-\.]+)*'             # duration prefix (needs validating)
-ch2 = r'([A-G][#b]*)([a-z]*)([4679]?)$'  # key chord-type chord-mod
+ch2 = r'([A-G][#b]*)([a-z]*)([4679]?)(@(\d))?$'  # key chord-type chord-mod
 re_chord = re.compile('^' + ch2)        # chord
 re_dur_chord = re.compile(ch1 + ch2)    # duration + chord
 
@@ -62,6 +64,7 @@ def get_chord(text: str) -> tuple[int, Chord]:
         key = match.group(2)
         cho = match.group(3)
         mod = match.group(4)
+        oct = match.group(6)
         # The regex gets a jumbled duration of "tseqhnd", ".", "+" and "-".
         # get_duration() does further checks for validity.
         if dur is None:
@@ -77,9 +80,10 @@ def get_chord(text: str) -> tuple[int, Chord]:
             cho = 'min'
         cho = cho + mod
         if cho in chords:
-            return dur2, Chord(0, key, cho)
+            octave = Chord.no_octave if oct is None else int(oct)
+            return dur2, Chord(0, key, cho, octave)
 
-    return (-1, Chord(0,'',''))
+    return (-1, Chord(0,'','', Chord.no_octave))
 
 def str_to_notes(text: str, start: int, last_dur: int, octave: int) -> mt.Notes:
     """Convert a chord name to a list of Note instances."""

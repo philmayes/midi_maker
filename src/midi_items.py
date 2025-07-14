@@ -10,7 +10,7 @@ class Item:
 
 class Bar(Item):
     """Bar description of a composition."""
-    def __init__(self, chords: list[Chord], repeat: int=1, clip: bool=True):
+    def __init__(self, chords: list[Chord]=[], repeat: int=1, clip: bool=True):
         self.chords: list[Chord] = chords
         self.repeat = repeat
         self.clip = clip
@@ -21,6 +21,13 @@ class Bar(Item):
                 return chord.key + chord.chord
         assert 0, 'chord lookup failed'
         return ''
+
+    def get_octave(self, at: int) -> int:
+        for chord in reversed(self.chords):
+            if at >= chord.start:
+                return chord.octave
+        assert 0, 'octave lookup failed'
+        return Chord.no_octave
 
     def get_tonic(self, at: int) -> str:
         for chord in reversed(self.chords):

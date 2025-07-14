@@ -176,11 +176,15 @@ These describe the format of the values used in various commands.
 
 | format | `tune` | `rhythm` | `bar` | `chord` |
 | :---- | :--: | :----: | :--: | :--: |
-| durations | Y  | Y | - | -  |
+| durations | Y $^2$  | Y | - | -  |
+| notes     | Y $^1$ | - | - | Y $^1$ |
+| chords    | Y $^1$ | - | Y | -  |
+<!-- | durations | Y  | Y | - | -  |
 | notes     | Y¹ | - | - | Y¹ |
-| chords    | Y¹ | - | Y | -  |
+| chords    | Y¹ | - | Y | -  | -->
 
-1 Can take an @octave suffix
+1 Can take an @octave suffix\
+2 Can take an @octave suffix
 
 ### durations
 

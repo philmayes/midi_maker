@@ -67,6 +67,15 @@ class TestGetChord:
         assert bc.chord == 'sus4'
         assert bc.chord in mc.chords
 
+    def test_get_chord10(self):
+        """Octave supplied."""
+        d, bc = mc.get_chord('C@6')
+        assert d == 0
+        assert bc.key == 'C'
+        assert bc.chord == 'maj'
+        assert bc.chord in mc.chords
+        assert bc.octave == 6
+
 class TestStrToNotes:
     def test_str_to_notes1(self):
         """Plain key, duration missing."""

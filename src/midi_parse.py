@@ -230,7 +230,6 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
             match = re_octave.search(sub_item)
             if match is not None:
                 new_octave = int(match.group(1))
-                sub_item = sub_item[:-2]
 
             note: mt.Note = mn.str_to_note(sub_item)
             if note.name:
@@ -339,17 +338,19 @@ class Commands:
                 clip = True
                 if value := get_value(cmd, 'chords'):
                     tick = 0
+                    last_octave = mc.Chord.no_octave
                     for chord in value.split(','):
-                        # Chop possible octave off the end.
-                        match = re_octave.search(chord)
-                        if match:
-                            logging.warning(f'Octave {chord[-2:]} is ignored in bar commands; use "effects octave=n" instead')
-                            chord = chord[:-2]
                         # Parse the chord.
                         duration, chord  = mc.get_chord(chord)
                         if duration >= 0:
+                            # If no duration supplied, use the default.
                             if duration == 0:
                                 duration = mn.Duration.default
+                            # If no octave supplied, use the previous one.
+                            if chord.octave == mc.Chord.no_octave:
+                                chord.octave = last_octave
+                            else:
+                                last_octave = chord.octave
                             chord.start = tick
                             chords.append(chord)
                             tick += duration

@@ -30,7 +30,7 @@ import random
 from midiutil import MIDIFile
 
 from midi_channels import Channel
-from midi_chords import chord_to_pitches
+import midi_chords as mc
 import midi_items as mi
 from midi_notes import Duration as n, note_to_interval
 import midi_parse
@@ -63,8 +63,12 @@ class BarInfo:
         self.midi_file = midi_file
         self.timesig: mi.TimeSig = mi.TimeSig(4, 4)
         self.bar: mi.Bar = mi.Bar([])
-        self.start = 0
-        self.position = 0
+        self.start = 0      # start time of the current bar in ticks
+        self.position = 0   # position within the current bar in ticks
+
+    @property
+    def bar_position(self):
+        return self.position - self.start
 
     def adjust_note_time(self, voice: Voice, duration: int) -> int:
         """Adjust how much time the note takes in the bar.
@@ -107,11 +111,16 @@ class BarInfo:
 
     def get_chord(self) -> str:
         """Returns the chord at current time within the bar."""
-        return self.bar.get_chord(self.position)
+        return self.bar.get_chord(self.bar_position)
+
+    def get_octave(self, voice: Voice) -> int:
+        """Returns the octave at current time within the bar."""
+        bar_octave = self.bar.get_octave(self.bar_position)
+        return voice.octave if bar_octave ==  mc.Chord.no_octave else bar_octave
 
     def get_tonic(self) -> str:
         """Returns the tonic at current time within the bar."""
-        return self.bar.get_tonic(self.position)
+        return self.bar.get_tonic(self.bar_position)
 
     def get_tonic_offset(self) -> int:
         """Returns the tonic offset (0-11) at current time within the bar."""
@@ -168,7 +177,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
     while bar_info.in_bar():
         new_chord = bar_info.get_chord()
         if new_chord != old_chord:
-            pitches = chord_to_pitches(new_chord, voice.octave)
+            pitches = mc.chord_to_pitches(new_chord, voice.octave)
             old_chord = new_chord
             pitch_index: int = 0
             step: int = -1
@@ -339,7 +348,8 @@ def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
             # A negative note length is a silence.
             bar_info.position -= duration
             continue
-        pitches = chord_to_pitches(bar_info.get_chord(), voice.octave)
+        octave = bar_info.get_octave(voice)
+        pitches = mc.chord_to_pitches(bar_info.get_chord(), octave)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         make_chord(bar_info,
