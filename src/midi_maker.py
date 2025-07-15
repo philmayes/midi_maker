@@ -71,7 +71,7 @@ def run(args:argparse.Namespace):
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Create MIDI file',
                                      epilog='The positional arguments can also be "help [option]"')
-    parser.add_argument('input', nargs='?', default='example.ini', help=f'Data to create MIDI file (default: example.ini)')
+    parser.add_argument('input', nargs='?', default='..\\data\\example1.ini', help=f'Data to create MIDI file (default: example.ini)')
     parser.add_argument('output', nargs='?', default='', help=f'Output file or folder (defaults to input filename & location)')
     parser.add_argument('-v', '--version', action="store_true", help='version')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')

@@ -176,7 +176,7 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
     The string is a comma-separated collection of:
     * notes
     * chords
-    * silences
+    * rests
     * tunes
     """
     tune: mt.Tune = []
@@ -188,14 +188,14 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
 
     start = 0
     for item in notes.split(','):
-        # Handle a possible silence.
+        # Handle a possible rest.
         match = re_durs.match(item)
         if match:
             duration = mn.str_to_duration(item, True)
             if duration != 0: # is a duration only
                 if duration < 0:
                     # Ouch. User should not use negative duration here.
-                    logging.warning(f'Negative silence in tune "{notes}"')
+                    logging.warning(f'Negative rest in tune "{notes}"')
                     duration = -duration
                 # Should this change last_duration? This is a UI question.
                 start += duration
@@ -650,11 +650,11 @@ class Commands:
 
         for cmd in self.commands:
             if cmd['command'] == 'rhythm':
-                expect(cmd, ['name', 'voices', 'rhythms', 'seed', 'silence', 'repeat', 'durations'])
+                expect(cmd, ['name', 'voices', 'rhythms', 'seed', 'rest', 'repeat', 'durations'])
                 rhythm: mt.Rhythm = mt.Rhythm()
                 name: str = cmd.get('name', '')
                 seed = get_signed_int(cmd, 'seed', -1)
-                silence = get_float(cmd, 'silence', 0.0, 1.0, prefs.rhythm_silence)
+                rest = get_float(cmd, 'rest', 0.0, 1.0, prefs.rhythm_rest)
                 repeat = get_float(cmd, 'repeat', 0.0, 1.0, prefs.rhythm_repeat)
                 durations = cmd.get('durations', '')
                 if name and not utils.is_name(name):
@@ -682,7 +682,7 @@ class Commands:
                         if tick == 0 or not random.test(repeat):
                             index = int(len(probs) * random.number)
                             dur = probs[index]
-                        if random.test(silence):
+                        if random.test(rest):
                             rhythm.append(-dur)
                         else:
                             rhythm.append(dur)

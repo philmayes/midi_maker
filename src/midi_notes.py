@@ -190,10 +190,6 @@ def str_to_note(note_str: str) -> mt.Note:
 
         # process the note
         name = match.group(2)
-        # # A note of X is silence; indicate this with pitch < 0.
-        # if name == 'X':
-        #     interval = -1000
-        # else:
         interval = note_to_interval[name]
 
         # process the octave

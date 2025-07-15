@@ -4,7 +4,7 @@ class Preferences:
     def __init__(self):
         self.improv_repeat = 0.3
         self.rhythm_repeat = 0.3
-        self.rhythm_silence = 0.5
+        self.rhythm_rest = 0.5
         self.default_volume = 100
         # ticks_per_beat was removed because midi_notes sets up its values at
         # load time. Changing tpb in preferences is too late. It could be done

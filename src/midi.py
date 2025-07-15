@@ -48,7 +48,7 @@ minor_ints = [0, 2, 3, 5, 7, 8, 10,]
 default_tempo = 120   # In BPM
 
 # Rhythms represent the timing of events within a bar.
-# Negative values represent a silence.
+# Negative values represent a rest.
 # A zero value extends the event to the end of the bar.
 rhythms: dict[str, mt.Rhythm] = {}
 
@@ -79,7 +79,7 @@ class BarInfo:
           of the bar
         """
         remaining = self.bar_end() - self.position
-        # A negative note length is a silence; the called should handle it.
+        # A negative note length is a rest; the called should handle it.
         assert duration >= 0, 'adjust_note_time does not handle neg duration'
         if duration == 0:
             # A zero note length extends note to the end of the bar.
@@ -204,7 +204,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
         if bar_info.bar_ended():
             break
         if duration < 0:
-            # A negative note length is a silence.
+            # A negative note length is a rest.
             bar_info.position -= duration
             continue
         volume = mv.get_volume(voice.channel, bar_info.position)
@@ -288,7 +288,7 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
         else:
             duration = random.choice(durations1)
             if duration < 0:
-                # A negative note length is a silence.
+                # A negative note length is a rest.
                 bar_info.position -= duration
                 continue
         voice.prev_duration = duration
@@ -323,7 +323,7 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
         if bar_info.bar_ended():
             break
         if duration < 0:
-            # A negative note length is a silence.
+            # A negative note length is a rest.
             bar_info.position -= duration
             continue
         volume = mv.get_volume(voice.channel, bar_info.position)
@@ -345,7 +345,7 @@ def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
         if bar_info.bar_ended():
             break
         if duration < 0:
-            # A negative note length is a silence.
+            # A negative note length is a rest.
             bar_info.position -= duration
             continue
         octave = bar_info.get_octave(voice)

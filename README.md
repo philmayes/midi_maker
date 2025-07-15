@@ -55,13 +55,13 @@ The chord is taken to be in the key of C, thus you can create an inversion with
 This can take either of two formats:
 
 * Format 1: `rhythm name=rname durations=d1,d2,d3,...`
-* Format 2: `rhythm name=rname seed=integer silence=float repeat=float durations=d1,d2,d3...`
+* Format 2: `rhythm name=rname seed=integer rest=float repeat=float durations=d1,d2,d3...`
 
 Rhythms are of two sorts: for format 1, durations are a list of note durations or integers. Integers are a duration in ticks. 960 ticks = a quarter note. The durations can be negative to indicate a rest. For example, `q.,q.,q` is a calypso rhythm; `-q,q,-q,q` is an offbeat rhythm.
 
 Format 2 generates a random rhythm using:
 * `seed`: different seed values produce different rhythms.
-* `silence`: a decimal number less than 1; it is the chance of generating silence rather than a note.
+* `rest`: a decimal number less than 1; it is the chance of generating a rest rather than a note.
 * `repeat`: a decimal number less than 1; the chance of repeating the previous note.
 * `durations`: a list of durations from which to pick. Each duration is followed by an integer probability, e.g. `q4,h1` means a quarter note is 4 times more likely than a half note.
 
@@ -70,14 +70,14 @@ Use these rhythms in compositions with `rhythm voices=vname1,vname2... rhythms=r
 ### tune
 Format: `tune name=tname notes=note1,note2...`
 
-A tune is a list of notes and durations (which represent silences).
+A tune is a list of notes and durations (which represent rests).
 See **Data Formats** for the syntax of notes. More than one note can be played at once; for example, `hD5+F#+A` would play a D major chord for two beats. (The `h` indicates a half note).
 Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` for two beats, `F#` for one beat, and `A` for four beats.
 
-Use tunes with the `play` command. An example: `tune name=song notes=hG4,h,qA,C5` is a half note of G (4th octave), a half note of silence, two quarter notes of A and C.
+Use tunes with the `play` command. An example: `tune name=song notes=hG4,h,qA,C5` is a half note of G (4th octave), a half note of rest, two quarter notes of A and C.
 
 ### preferences
-Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_silence=p default_volume=# reverb_damp=p reverb_level=p reverb_roomsize=p reverb_width=%`
+Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_rest=p default_volume=# reverb_damp=p reverb_level=p reverb_roomsize=p reverb_width=%`
 
 Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
 

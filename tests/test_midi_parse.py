@@ -256,7 +256,7 @@ class TestRhythm:
     def test_rhythm1(self):
         """Test rhythm command that generates a random list of durations."""
         lines: list[str] = [
-            'rhythm name=r0 seed=11 silence=0.3 repeat=0.4 durations=d1,h1,q1,c1,m1'
+            'rhythm name=r0 seed=11 rest=0.3 repeat=0.4 durations=d1,h1,q1,c1,m1'
         ]
         commands = mp.Commands(lines)
         # It's impossible to assert anything about the randomly generated rhythm
@@ -397,7 +397,7 @@ class TestStrToNotes:
 
 class TestTune:
     def test_tune1(self):
-        """Test that a silence is handled & durations are not inherited."""
+        """Test that a rest is handled & durations are not inherited."""
         lines: list[str] = [
             'tune name=tune1 notes=G@5,h,A,hF,C',
         ]
