@@ -833,7 +833,11 @@ class Commands:
         Note that "volume" is also a performance command, distinguished by not
         having a name.
         """
-        volumes: dict[str, int] = mvol.music_vol
+        volumes: dict[str, int] = copy.copy(mvol.dynamics)
+        # Coding note: mvol.dynamics is constructed before preferences are
+        # parsed, so putting prefs.default_volume in mvol.dynamics would not
+        # pick up a value supplied by prefs command; instead set it up here.
+        volumes['default'] = prefs.default_volume
         # Supply a default volume for each style.
         for name, level in mv.volume.items():
             volumes[name] = level
@@ -847,8 +851,8 @@ class Commands:
                     expect(cmd, ['name', 'level'])
                     level = get_value(cmd, 'level')
                     if level:
-                        if level in mvol.music_vol:
-                            volumes[name] = mvol.music_vol[level]
+                        if level in volumes:
+                            volumes[name] = volumes[level]
                         elif level.isdigit():
                             volumes[name] = utils.make_in_range(int(level), 128, 'volume name')
                         else:
