@@ -12,7 +12,7 @@ import midi_percussion
 import midi_types as mt
 import midi_voice as mv
 import midi_voices
-import midi_volume
+import midi_volume as mvol
 from preferences import prefs
 import rando
 import utils
@@ -818,7 +818,7 @@ class Commands:
                 if v_check.name == name:
                     logging.error(f'Voice "{name}" replaces earlier instance')
             voices.append(mv.Voice(name, channel, voice, style, min_pitch, max_pitch))
-            midi_volume.set_volume(channel, 0, self.volumes[style], 0, 0)
+            mvol.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
     def get_all_volumes(self):
@@ -827,12 +827,13 @@ class Commands:
         A volume name is an easy way of supplying volume levels by name
         instead of by number. For convenience, volume names corresponding to
         the various styles are pre-supplied. Users can override or add to the
-        list of volume names/values.
+        list of volume names/values. The musical terms ppp...fff are also
+        recognized.
 
         Note that "volume" is also a performance command, distinguished by not
         having a name.
         """
-        volumes: dict[str, int] = {'default': prefs.default_volume}
+        volumes: dict[str, int] = mvol.music_vol
         # Supply a default volume for each style.
         for name, level in mv.volume.items():
             volumes[name] = level
@@ -846,7 +847,9 @@ class Commands:
                     expect(cmd, ['name', 'level'])
                     level = get_value(cmd, 'level')
                     if level:
-                        if level.isdigit():
+                        if level in mvol.music_vol:
+                            volumes[name] = mvol.music_vol[level]
+                        elif level.isdigit():
                             volumes[name] = utils.make_in_range(int(level), 128, 'volume name')
                         else:
                             logging.error(f'volume name level "{level}" is invalid')

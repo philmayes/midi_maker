@@ -13,6 +13,21 @@ import utils
 # When the change rate is 1, the volume should change by 1 every:
 ticks_per_rate = midi_notes.Duration.quarter
 
+music_vol: dict[str, int] = {
+    # A dictionary that translates names to MIDI velocity aka volume.
+    # It is extended/modified by midi_parse.get_all_volumes().
+    # Eight musical names: https://en.wikipedia.org/wiki/Dynamics_(music)
+    # Seven steps of 17: 8 + 7 * 17 == 127
+    'ppp':  8,
+    'pp':  25,
+    'p':   42,
+    'mp':  59,
+    'nf':  76,
+    'f':   93,
+    'ff': 110,
+    'fff':127,
+    'default': prefs.default_volume,
+}
 VolChange = namedtuple('VolChange', 'tick, vol, rate')
 
 voice_dict: dict[int, list[VolChange]] = {}
