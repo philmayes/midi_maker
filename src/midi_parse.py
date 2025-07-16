@@ -714,11 +714,12 @@ class Commands:
                     continue
 
                 if name and notes:
-                    # TODO if I merge notes & tunes, should ensure tune name is not a duration name
-                    tune = str_to_notes(notes, tunes)
-                    if name in tunes:
+                    if mn.str_to_duration(name, True) != 0:
+                        logging.error(f'Name "{name}" of tune must not be a note name')
+                    elif name in tunes:
                         logging.error(f'Tune "{name}" already used')
                     else:
+                        tune = str_to_notes(notes, tunes)
                         tunes[name] = tune
                         total = sum(note.duration for note in tune)
                         logging.debug(f'Tune {name} has duration {total:5}')
