@@ -715,7 +715,7 @@ class Commands:
 
                 if name and notes:
                     if mn.str_to_duration(name, True) != 0:
-                        logging.error(f'Name "{name}" of tune must not be a note name')
+                        logging.error(f'Tune "{name}" must not use a note name')
                     elif name in tunes:
                         logging.error(f'Tune "{name}" already used')
                     else:
@@ -878,7 +878,7 @@ class Commands:
         for voice in self.voices:
             if voice.name == name:
                 return voice
-        logging.error(f'mv.Voice {name} does not exist')
+        logging.error(f'voice "{name}" does not exist')
 
     def get_voices(self, cmd: mt.CmdDict) -> mv.Voices:
         """Return a list of all the voices supplied in cmd."""
@@ -897,5 +897,5 @@ class Commands:
                             logging.error(f'{voice_name} repeated')
                         break
                 else:
-                    logging.error(f'mv.Voice {voice_name} does not exist')
+                    logging.error(f'Voice "{voice_name}" does not exist')
         return voices

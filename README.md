@@ -38,8 +38,8 @@ and an additional 10 `perc`[ussion] styles.
 Format: `volume name=vname level=#`
 
 A volume name is an easy way of supplying volume levels by name instead of by number.
-For convenience, volume names corresponding to the various styles are pre-supplied.
-You can override or add to the list of volume names/values.
+For convenience, volume names corresponding to the various styles are pre-supplied, and also the common music dynamics *ppp, pp, p, mp, mf, f, ff,* and *fff*.
+You can override or add to the existing volume names+values.
 
 ### chord
 Format: `chord name=cname notes=C,E,G,Bb`

@@ -102,7 +102,7 @@ class BarInfo:
         return self.start + self.timesig.ticks_per_bar
 
     def bar_ended(self) -> bool:
-        """Returns TODO."""
+        """Returns whether the current position is past the end of the bar."""
         return self.position >= self.bar_end()
 
     def clip(self, voice: Voice) -> bool:
