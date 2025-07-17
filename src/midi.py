@@ -184,7 +184,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
         volume = mv.get_volume(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
-        bar_info.midi_file.addNote(0,
+        bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitches[pitch_index],
                                    add_start_error(bar_info.position),
@@ -210,7 +210,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
         volume = mv.get_volume(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
-        bar_info.midi_file.addNote(0,
+        bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
                                    add_start_error(bar_info.position),
@@ -226,7 +226,7 @@ def make_chord(bar_info: BarInfo, voice: Voice,
     start = add_start_error(start)
     for pitch in pitches:
         volume = mv.get_volume(voice.channel, start)
-        bar_info.midi_file.addNote(0,
+        bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
                                    start,
@@ -306,7 +306,7 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
                 voice.overlap = duration - remaining
         volume = mv.get_volume(voice.channel, bar_info.position)
         play_time = voice.adjust_duration(duration)
-        bar_info.midi_file.addNote(0,
+        bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
                                    add_start_error(bar_info.position),
@@ -329,7 +329,7 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
         volume = mv.get_volume(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
-        bar_info.midi_file.addNote(0,
+        bar_info.midi_file.addNote(voice.track,
                                    Channel.percussion,
                                    voice.voice,
                                    add_start_error(bar_info.position),

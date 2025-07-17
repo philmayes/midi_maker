@@ -57,6 +57,7 @@ class Voice:
 
     def __init__(self,
                  name: str,
+                 track: int,
                  channel: Channel,
                  voice: int,
                  style: str,
@@ -64,6 +65,7 @@ class Voice:
                  max_pitch: int=127,
                  ) -> None:
         self.name = name
+        self.track = track
         self.channel = channel
         self.voice = voice
         self.style = style

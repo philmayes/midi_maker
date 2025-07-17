@@ -731,6 +731,7 @@ class Commands:
         voices: mv.Voices = []
         next_voice_channel = 1
         next_perc_channel = 1
+        track = 0
         for cmd in self.commands:
             if cmd['command'] != 'voice':
                 continue
@@ -818,7 +819,8 @@ class Commands:
             for v_check in voices:
                 if v_check.name == name:
                     logging.error(f'Voice "{name}" replaces earlier instance')
-            voices.append(mv.Voice(name, channel, voice, style, min_pitch, max_pitch))
+            voices.append(mv.Voice(name, track, channel, voice, style, min_pitch, max_pitch))
+            track += 1
             mvol.set_volume(channel, 0, self.volumes[style], 0, 0)
         return voices
 
