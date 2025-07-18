@@ -26,6 +26,7 @@ def test_1(mocker):
     global error7
     error7 = utils.make_error_table(7)
     channel = Channel.ch1
+    track = 1
     mvol.set_volume(channel, 0, 100, 0, 0) # channel, tick, level, delta, rate
     midi_file = MIDIFile()
     mock_add_note = mocker.patch.object(midi_file, 'addNote')
@@ -35,7 +36,7 @@ def test_1(mocker):
     # Set 3rd param to True to remove clipping.
     # This will make the last assertion 1000, not 840.
     bar_info.bar = mi.Bar(chords, 1)
-    voice: mv.Voice = mv.Voice('vtest', channel, 30, 'bass')
+    voice: mv.Voice = mv.Voice('vtest', track, channel, 30, 'bass')
     # Use rhythms that extend past the end of the bar:
     voice.rhythms = [[1000,1000,1000,1000,]]
     midi.make_bass_bar(bar_info, voice)
@@ -65,7 +66,7 @@ class TestBarInfo:
             'bar chords=C@2,D@7,Em,F@5',
         ]
         midi_file = MIDIFile()
-        voice: mv.Voice = mv.Voice('vtest', Channel.ch1, 30, 'bass')
+        voice: mv.Voice = mv.Voice('vtest', 1, Channel.ch1, 30, 'bass')
         # Create an object to hold dynamic info about the current bar.
         bar_info: midi.BarInfo = midi.BarInfo(midi_file)
         commands = mp.Commands(lines)

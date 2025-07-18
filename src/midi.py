@@ -372,20 +372,18 @@ def make_midi(in_file: str, out_file: str, create: str):
     global error7
     error7 = utils.make_error_table(7)
 
-    # MIDIFile channel count does not include percussion voices as they are
-    # pseudo-channels that map to track in the percussion channel.
-    midi_channel_count = len([k for k in voices if k.style != 'perc'])
     # Always request at least 1 channel, otherwise MIDIFile freaks out.
-    midi_file = MIDIFile(max(midi_channel_count, 1),
+    midi_file = MIDIFile(max(len(voices), 1),
                          adjust_origin=False,
                          ticks_per_quarternote=n.quarter,
                          eventtime_is_ticks=True)
     midi_file.addTempo(0, 0, default_tempo)
 
-    # Populate channel_info with voice info and set the voice up in MIDI.
+    # Name the tracks and assign voices to channels.
     for voice in voices:
+        midi_file.addTrackName(voice.track, 0, voice.name)
         if voice.style != 'perc':
-            midi_file.addProgramChange(0, voice.channel, 0, voice.voice)
+            midi_file.addProgramChange(voice.track, voice.channel, 0, voice.voice)
 
     # Create an object to hold dynamic info about the current bar.
     bar_info: BarInfo = BarInfo(midi_file)
