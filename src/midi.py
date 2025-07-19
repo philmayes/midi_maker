@@ -35,7 +35,7 @@ from midi_notes import Duration as n, note_to_interval
 import midi_parse
 import midi_types as mt
 from midi_voice import Voice, Voices
-import midi_volume as mv
+import midi_timer as mtim
 from preferences import prefs
 import utils
 
@@ -181,7 +181,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
             old_chord = new_chord
             pitch_index: int = 0
             step: int = -1
-        volume = mv.get_volume(voice.channel, bar_info.position)
+        volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         bar_info.midi_file.addNote(voice.track,
@@ -207,7 +207,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
             # A negative note length is a rest.
             bar_info.position -= duration
             continue
-        volume = mv.get_volume(voice.channel, bar_info.position)
+        volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         bar_info.midi_file.addNote(voice.track,
@@ -225,7 +225,7 @@ def make_chord(bar_info: BarInfo, voice: Voice,
                     duration: int):
     start = utils.add_error(start, 10)
     for pitch in pitches:
-        volume = mv.get_volume(voice.channel, start)
+        volume = mtim.vol_timer.get_level(voice.channel, start)
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
@@ -304,7 +304,7 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
             else:
                 # Make a note for the next bar
                 voice.overlap = duration - remaining
-        volume = mv.get_volume(voice.channel, bar_info.position)
+        volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         play_time = voice.adjust_duration(duration)
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
@@ -326,7 +326,7 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
             # A negative note length is a rest.
             bar_info.position -= duration
             continue
-        volume = mv.get_volume(voice.channel, bar_info.position)
+        volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         bar_info.midi_file.addNote(voice.track,
@@ -455,7 +455,7 @@ def make_midi(in_file: str, out_file: str, create: str):
                    'Pan has no level or delta'
             # Panning of the voice is not set directly because it may
             # change over a period of time. Instead, mv.set_volume()
-            # is called on all supplied voices and mv.get_volume() is
+            # is called on all supplied voices and mtim.vol_timer.get_level() is
             # called whenever a midi note is generated.
             for voice in item.voices:
                 # mv.set_volume(voice.channel,
@@ -474,7 +474,7 @@ def make_midi(in_file: str, out_file: str, create: str):
                     pitch = utils.make_in_range(note.pitch + item.trans,
                                                 128,
                                                 'Play note')
-                    volume = mv.get_volume(voice.channel, position)
+                    volume = mtim.vol_timer.get_level(voice.channel, position)
                     position = start + note.start
                     midi_file.addNote(0,
                                       voice.channel,
@@ -515,14 +515,14 @@ def make_midi(in_file: str, out_file: str, create: str):
                    'Volume has no level or delta'
             # The volume in the voice is not set directly because it may
             # change over a period of time. Instead, mv.set_volume()
-            # is called on all supplied voices and mv.get_volume() is
+            # is called on all supplied voices and mtim.vol_timer.get_level() is
             # called whenever a midi note is generated.
             for voice in item.voices:
-                mv.set_volume(voice.channel,
-                              bar_info.start,
-                              item.level,
-                              item.delta,
-                              item.rate)
+                mtim.vol_timer.set_level(voice.channel,
+                                         bar_info.start,
+                                         item.level,
+                                         item.delta,
+                                         item.rate)
 
         else:
             logging.error(f'Unrecognized item {item}')

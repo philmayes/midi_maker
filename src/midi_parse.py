@@ -9,6 +9,7 @@ import midi_chords as mc
 import midi_items as mi
 import midi_notes as mn
 import midi_percussion
+import midi_timer as mtim
 import midi_types as mt
 import midi_voice as mv
 import midi_voices
@@ -279,6 +280,10 @@ class Commands:
 
         # Get preferences first because some definitions use them.
         self.get_all_preferences()
+        # Now timers can be set up with the correct values
+        mtim.vol_timer = mtim.Timer('volume', prefs.default_volume)
+        mtim.vol_pan = mtim.Timer('pan', 64)
+
         # Extract all the definitions into their various types.
         self.volumes: dict[str, int] = self.get_all_volumes()
         self.voices: mv.Voices = self.get_all_voices()
@@ -432,6 +437,39 @@ class Commands:
                 expect(cmd, ['voices'])
                 voices = self.get_voices(cmd)
                 composition += mi.Mute(voices)
+
+            elif item == 'pan':
+                expect(cmd, ['voices', 'level', 'rate'])
+                voices = self.get_voices(cmd)
+                if voices:
+                    vol = mi.Pan(None, None, 0, voices)
+                    level = get_value(cmd, 'level')
+                    rate2 = get_value(cmd, 'rate')
+                    if level is not None:
+                        # 'level' without a sign is an absolute value;
+                        # with a sign it is a delta.
+                        sign = level[0]
+                        if sign in '+-':
+                            level = level[1:]
+                        if level.isdigit():
+                            level = int(level)
+                            if sign == '+':
+                                vol.delta = level
+                            elif sign == '-':
+                                vol.delta = -level
+                            else:
+                                vol.level = level
+                        else:
+                            logging.warning(f'Bad level in "{cmd[_ln]}"')
+                    if rate2 is not None: # value := get_value(cmd, 'rate'):
+                        if rate2.isdigit():
+                            vol.rate = int(rate2)
+                        else:
+                            logging.warning(f'Bad rate in "{cmd[_ln]}"')
+                    if vol.delta is not None or vol.level is not None:
+                        composition += vol
+                    else:
+                        logging.warning(f'No level in "{cmd[_ln]}"')
 
             elif item == 'play':
                 expect(cmd, ['voice', 'tunes', 'transpose'])
@@ -824,7 +862,7 @@ class Commands:
                     logging.error(f'Voice "{name}" replaces earlier instance')
             voices.append(mv.Voice(name, track, channel, voice, style, min_pitch, max_pitch))
             track += 1
-            mvol.set_volume(channel, 0, self.volumes[style], None, 0)
+            mtim.vol_timer.set_level(channel, 0, self.volumes[style], None, 0)
         return voices
 
     def get_all_volumes(self):
