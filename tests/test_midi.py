@@ -12,7 +12,6 @@ from src import midi_parse as mp
 from src import midi_types as mt
 from src import midi_voice as mv
 from src import midi_volume as mvol
-from src import utils
 
 def test_1(mocker):
     """Test note/bar clipping."""
@@ -20,17 +19,11 @@ def test_1(mocker):
         'voice name=lead1 style=lead voice=rock_organ',
     ]
     commands = mp.Commands(lines)
-    random.seed(1)
-    global start_error
-    start_error = utils.make_error_table(10)
-    global error7
-    error7 = utils.make_error_table(7)
     channel = Channel.ch1
     track = 1
     mvol.set_volume(channel, 0, 100, 0, 0) # channel, tick, level, delta, rate
     midi_file = MIDIFile()
     mock_add_note = mocker.patch.object(midi_file, 'addNote')
-    mocker.patch('src.midi.add_start_error')
     bar_info: midi.BarInfo = midi.BarInfo(midi_file)
     chords: list[mc.Chord] = [mc.Chord(0, 'C', 'maj', 3)]
     # Set 3rd param to True to remove clipping.
@@ -47,7 +40,7 @@ def test_1(mocker):
     # time = args[3]
     # duration = args[4]
     # The time values fail because start_time is supplied by
-    # add_start_error(bar_info.position) and mock cannot handle this.
+    # add_error(bar_info.position) and mock cannot handle this.
     calls = mock_add_note.call_args_list
     # assert calls[0].args[3] == 0
     assert calls[0].args[4] == 1000

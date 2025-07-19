@@ -1,9 +1,23 @@
 """General utility functions."""
 
 import logging
+import random
 import re
 
 re_float = re.compile(r'\d*\.?\d+$')
+
+def add_error(value: int, max_error: int, floor: int=0) -> int:
+    """Returns a random number in the range -max_error...max_error.
+    
+    <floor> is the lowest number that will be returned.
+    """
+    err = random.gauss(0.0, max_error / 2)  # mu, sigma
+    if err > max_error:
+        err = max_error
+    elif err < -max_error:
+        err = -max_error
+    value += int(err)
+    return max(value, floor)
 
 def get_float(text: str, min_val: float=0.0, max_val: float=1.0) -> float | None:
     """Returns string as float in range or None."""

@@ -141,10 +141,6 @@ def add_controller_event(bar_info: BarInfo,
                                           level)        # parameter
 
 
-def add_start_error(value: int) -> int:
-    err = value + random.choice(start_error)
-    return max(err, 0)
-
 def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
     """Assembles the components (compositions) of a work."""
     composition = mi.Composition()
@@ -187,7 +183,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitches[pitch_index],
-                                   add_start_error(bar_info.position),
+                                   utils.add_error(bar_info.position, 10),
                                    play_time,
                                    volume)
         if pitch_index == 0 or pitch_index == len(pitches) - 1:
@@ -213,7 +209,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
-                                   add_start_error(bar_info.position),
+                                   utils.add_error(bar_info.position, 10),
                                    play_time,
                                    volume)
         bar_info.position += duration
@@ -223,7 +219,7 @@ def make_chord(bar_info: BarInfo, voice: Voice,
                     pitches: mt.Pitches,
                     start: int,
                     duration: int):
-    start = add_start_error(start)
+    start = utils.add_error(start, 10)
     for pitch in pitches:
         volume = mv.get_volume(voice.channel, start)
         bar_info.midi_file.addNote(voice.track,
@@ -275,8 +271,8 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
                     assert 0, f'prev_pitch ouside range?!'
                     index = tonic_pitch + 36
         # Pick a new pitch not far from the previous one.
-        pick = random.choice(error7)
-        pitch = pitches[index + pick]
+        index2 = utils.add_error(index, 7, -1000)
+        pitch = pitches[index2]
 
         # Keep the pitch within a reasonable range.
         pitch = voice.constrain_pitch(pitch)
@@ -309,7 +305,7 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
-                                   add_start_error(bar_info.position),
+                                   utils.add_error(bar_info.position, 10),
                                    play_time,
                                    volume)
         bar_info.position += duration
@@ -332,7 +328,7 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
         bar_info.midi_file.addNote(voice.track,
                                    Channel.percussion,
                                    voice.voice,
-                                   add_start_error(bar_info.position),
+                                   utils.add_error(bar_info.position, 10),
                                    play_time,
                                    volume)
         bar_info.position += duration
@@ -365,12 +361,6 @@ def make_midi(in_file: str, out_file: str, create: str):
         lines = f_in.readlines()
     commands: midi_parse.Commands = midi_parse.Commands(lines)
     voices: Voices = commands.voices
-
-    random.seed(1)
-    global start_error
-    start_error = utils.make_error_table(10)
-    global error7
-    error7 = utils.make_error_table(7)
 
     # Always request at least 1 channel, otherwise MIDIFile freaks out.
     midi_file = MIDIFile(max(len(voices), 1),
@@ -468,7 +458,7 @@ def make_midi(in_file: str, out_file: str, create: str):
                     midi_file.addNote(0,
                                       voice.channel,
                                       pitch,
-                                      add_start_error(position),
+                                      utils.add_error(position, 10),
                                       note.duration,
                                       volume)
 

@@ -32,3 +32,16 @@ def test_is_name():
     assert not utils.is_name('1fred')
     assert not utils.is_name('1Fred')
     assert not utils.is_name('1fred!')
+
+def test_get_error():
+    for i in range(20):
+        print(f'{i}= ', end='')
+        for j in range(20):
+            # Print results to assess the distribution by eye.
+            # Use pytest -rP ..\tests\test_utils.py
+            v2: int = utils.add_error(100, i)
+            print(f' {v2}', end='')
+            # Check that negative results are not returned.
+            v2: int = utils.add_error(0, i)
+            assert v2 >= 0
+        print()
