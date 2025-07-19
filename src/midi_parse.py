@@ -132,6 +132,7 @@ def parse_command(command: str) -> mt.CmdDict:
         'mute',
         'notes',
         'opus',
+        'pan',
         'play',
         'preferences',
         'repeat',
@@ -505,33 +506,35 @@ class Commands:
                 expect(cmd, ['voices', 'level', 'rate'])
                 voices = self.get_voices(cmd)
                 if voices:
-                    vol = mi.Volume(0, 0, 0, voices)
-                    if value := get_value(cmd, 'level'):
+                    vol = mi.Volume(None, None, 0, voices)
+                    level = get_value(cmd, 'level')
+                    rate2 = get_value(cmd, 'rate')
+                    if level is not None:
                         # Might be a previously-defined volume name
-                        if value in self.volumes:
-                            vol.level = self.volumes[value]
+                        if level in self.volumes:
+                            vol.level = self.volumes[level]
                         else:
                             # 'level' without a sign is an absolute value;
                             # with a sign it is a delta.
-                            sign = value[0]
+                            sign = level[0]
                             if sign in '+-':
-                                value = value[1:]
-                            if value.isdigit():
-                                level = int(value)
+                                level = level[1:]
+                            if level.isdigit():
+                                level = int(level)
                                 if sign == '+':
                                     vol.delta = level
                                 elif sign == '-':
                                     vol.delta = -level
                                 else:
-                                    pan.level = level
+                                    vol.level = level
                             else:
                                 logging.warning(f'Bad level in "{cmd[_ln]}"')
-                    if value := get_value(cmd, 'rate'):
-                        if value.isdigit():
-                            vol.rate = int(value)
+                    if rate2 is not None: # value := get_value(cmd, 'rate'):
+                        if rate2.isdigit():
+                            vol.rate = int(rate2)
                         else:
                             logging.warning(f'Bad rate in "{cmd[_ln]}"')
-                    if vol.delta or vol.level:
+                    if vol.delta is not None or vol.level is not None:
                         composition += vol
                     else:
                         logging.warning(f'No level in "{cmd[_ln]}"')
@@ -821,7 +824,7 @@ class Commands:
                     logging.error(f'Voice "{name}" replaces earlier instance')
             voices.append(mv.Voice(name, track, channel, voice, style, min_pitch, max_pitch))
             track += 1
-            mvol.set_volume(channel, 0, self.volumes[style], 0, 0)
+            mvol.set_volume(channel, 0, self.volumes[style], None, 0)
         return voices
 
     def get_all_volumes(self):

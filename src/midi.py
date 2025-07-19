@@ -5,13 +5,12 @@ See README.md for details."""
 """ References
 https://medium.com/@stevehiehn/how-to-generate-music-with-python-the-basics-62e8ea9b99a5
 Documentation:
-https://bspaans.github.io/python-mingus/
-https://midiutil.readthedocs.io/en/1.2.1/
-https://csound.com/get-started.html
+https://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec.htm
 https://en.wikipedia.org/wiki/General_MIDI
+https://midiutil.readthedocs.io/en/1.2.1/
 https://www.fluidsynth.org          # plays MIDI files
 https://www.polyphone.io/en/home    # sf2 editor
-https://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec.htm
+https://nickfever.com/music/midi-cc-list    # list of Continuous Controllers
 """
 """ Music theory
 note    = whole note
@@ -130,15 +129,20 @@ class BarInfo:
         return not self.bar_ended()
 
 def add_controller_event(bar_info: BarInfo,
-                         channel: Channel,
+                         voice: Voice,
                          id: int,
                          level: int,
                          ) -> None:
-    bar_info.midi_file.addControllerEvent(0,            # track
-                                          channel,      # channel
+    bar_info.midi_file.addControllerEvent(voice.track,  # track
+                                          voice.channel,# channel
                                           bar_info.start,# time
                                           id,           # controller ID
                                           level)        # parameter
+    print(voice.track,  # track
+          voice.channel,# channel
+          bar_info.start,# time
+          id,           # controller ID
+          level)        # parameter
 
 
 def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
@@ -420,15 +424,15 @@ def make_midi(in_file: str, out_file: str, create: str):
                 if item.vibrato is not None:
                     if voice.vibrato != item.vibrato:
                         voice.vibrato = item.vibrato
-                        add_controller_event(bar_info, voice.channel, 1, voice.vibrato)
+                        add_controller_event(bar_info, voice, 1, voice.vibrato)
                 if item.reverb is not None:
                     if voice.reverb != item.reverb:
                         voice.reverb = item.reverb
-                        add_controller_event(bar_info, voice.channel, 91, voice.reverb)
+                        add_controller_event(bar_info, voice, 91, voice.reverb)
                 if item.chorus is not None:
                     if voice.chorus != item.chorus:
                         voice.chorus = item.chorus
-                        add_controller_event(bar_info, voice.channel, 93, voice.chorus)
+                        add_controller_event(bar_info, voice, 93, voice.chorus)
 
         elif isinstance(item, mi.Hear):
             for voice in item.voices:
@@ -444,6 +448,23 @@ def make_midi(in_file: str, out_file: str, create: str):
             for voice in item.voices:
                 if voice.channel is not Channel.none:
                     voice.active = False
+
+        elif isinstance(item, mi.Pan):
+            # midi_parse is responsible for ensuring the following.
+            assert item.level is not None or item.delta is not None,\
+                   'Pan has no level or delta'
+            # Panning of the voice is not set directly because it may
+            # change over a period of time. Instead, mv.set_volume()
+            # is called on all supplied voices and mv.get_volume() is
+            # called whenever a midi note is generated.
+            for voice in item.voices:
+                # mv.set_volume(voice.channel,
+                #               bar_info.start,
+                #               item.level,
+                #               item.delta,
+                #               item.rate)
+                if item.level is not None:
+                    add_controller_event(bar_info, voice, 10, item.level)
 
         elif isinstance(item, mi.Play):
             voice = item.voice
@@ -490,7 +511,8 @@ def make_midi(in_file: str, out_file: str, create: str):
 
         elif isinstance(item, mi.Volume):
             # midi_parse is responsible for ensuring the following.
-            assert item.level or item.delta, 'Volume has no level or delta'
+            assert item.level is not None or item.delta is not None,\
+                   'Volume has no level or delta'
             # The volume in the voice is not set directly because it may
             # change over a period of time. Instead, mv.set_volume()
             # is called on all supplied voices and mv.get_volume() is

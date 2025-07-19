@@ -27,7 +27,12 @@ dynamics: dict[str, int] = {
     'ff': 110,
     'fff':127,
 }
-VolChange = namedtuple('VolChange', 'tick, vol, rate')
+
+class VolChange:
+    def __init__(self, tick: int, vol: int, rate: int):
+        self.tick = tick
+        self.vol = vol
+        self.rate = rate
 
 voice_dict: dict[int, list[VolChange]] = {}
 
@@ -37,8 +42,8 @@ def reset_volume() -> None:
 
 def set_volume(channel: int,
                tick: int,
-               level: int,
-               delta: int,
+               level: int | None,
+               delta: int | None,
                rate:int) -> None:
     """Adjust the volume of the channel in various ways.
 
@@ -56,24 +61,25 @@ def set_volume(channel: int,
         voice_dict[channel] = []
     values: list[VolChange] = voice_dict[channel]
 
-    assert level or delta
-    assert not (level and delta)
-    assert rate >= 0
+    assert level is not None or delta is not None, 'one of them must exist'
+    assert level is None or delta is None          ,' # ...but only one'
+    assert rate >= 0                             ,'   # negative rate illegal'
 
     if not values and not level:
         logging.warning(f'First volume command should not not have a sign')
 
     # Remove any entries later than <tick> -- this handles the issue of a
-    # volume change being requested while  a rate change is in progress.
+    # volume change being requested while a rate change is in progress.
     while values and values[-1].tick > tick:
         values.pop()
 
-    old_vol = values[-1].vol if values else prefs.default_volume
+    old_vol: int = values[-1].vol if values else prefs.default_volume
 
     # First set the current volume
-    if level and not rate:
+    new_vol: int
+    if level is not None and rate == 0:
         new_vol = level             # case 1
-    elif delta and not rate:
+    elif delta is not None and rate == 0:
         new_vol = old_vol + delta   # case 2
     else:
         new_vol = old_vol           # case 3 or4
@@ -82,10 +88,12 @@ def set_volume(channel: int,
 
     # Then set up possible rate change
     if rate:                        # case 3 or 4
-        if level:                   # case 4
+        if level is not None:       # case 4
             end_vol = level
-        else:                       # case 3
+        elif delta is not None:     # case 3
             end_vol = new_vol + delta
+        else:
+            assert 0, 'oops'
         end_vol = utils.make_in_range(end_vol, 128, 'Volume channel2')
         change = abs(end_vol - new_vol)
         change *= ticks_per_rate

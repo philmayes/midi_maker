@@ -86,6 +86,18 @@ class Mute(Item):
     def __init__(self, voices: Voices):
         self.voices = voices
 
+class Pan(Item):
+    """Adjust pan for voice(s)."""
+    def __init__(self,
+                 delta: int | None,
+                 level: int | None,
+                 rate: int,
+                 voices: Voices):
+        self.delta = delta  # Amount by which to adjust pan
+        self.level = level  # New setting for pan
+        self.rate = rate    # Rate change per quarter note
+        self.voices = voices
+
 class Play(Item):
     """Play tune with voice."""
     def __init__(self, voice: Voice, notes: mt.Notes, trans: int):
@@ -123,10 +135,14 @@ class TimeSig(Item):
 
 class Volume(Item):
     """Adjust volume for voice(s)."""
-    def __init__(self, delta: int, level: int, rate: int, voices: Voices):
+    def __init__(self,
+                 delta: int | None,
+                 level: int | None,
+                 rate: int,
+                 voices: Voices):
         self.delta = delta  # Amount by which to adjust volume
         self.level = level  # New setting for volume
-        self.rate = rate
+        self.rate = rate    # Rate change per quarter note
         self.voices = voices
 
 class Composition:

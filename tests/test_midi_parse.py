@@ -221,6 +221,18 @@ class TestLoop:
         assert same_name(item, mi.Bar)
         assert item.chords[0].key == 'C'
 
+class TestPan:
+    def test_pan1(self):
+        lines: list[str] = [
+            'voice name=bass style=bass voice=electric_bass_picked',
+            'pan voices=bass level=1',
+        ]
+        commands = mp.Commands(lines)
+        comp: mi.Composition = commands.get_composition()
+        assert len(comp.items) == 1
+        item: mi.Item = comp.items[0]
+        assert same_name(item, mi.Pan)
+
 class TestParsing:
     def test_parse2(self):
         """Test detection of unexpected parameter."""
@@ -496,7 +508,63 @@ class TestTune:
         assert tune[5] == mt.Note(4*dur.q, dur.q, 'A',  9, 5, 69)
         assert tune[6] == mt.Note(5*dur.q, dur.q, 'C',  0, 5, 60)
 
-class TestVoice:
+class TestVolume:
+    def test_volume1(self):
+        """Test non-zero level."""
+        lines: list[str] = [
+            'voice name=bass style=bass voice=electric_bass_picked',
+            'volume voices=bass level=1',
+        ]
+        commands = mp.Commands(lines)
+        comp: mi.Composition = commands.get_composition()
+        assert len(comp.items) == 1
+        item: mi.Item = comp.items[0]
+        assert same_name(item, mi.Volume)
+        assert item.delta == None
+        assert item.level == 1
+        assert item.rate == 0
+
+    def test_volume2(self):
+        """Test zero level."""
+        lines: list[str] = [
+            'voice name=bass style=bass voice=electric_bass_picked',
+            'volume voices=bass level=0',
+        ]
+        commands = mp.Commands(lines)
+        comp: mi.Composition = commands.get_composition()
+        assert len(comp.items) == 1
+        item: mi.Item = comp.items[0]
+        assert same_name(item, mi.Volume)
+        assert item.delta == None
+        assert item.level == 0
+        assert item.rate == 0
+
+    def test_volume3(self):
+        """Test delta."""
+        lines: list[str] = [
+            'voice name=bass style=bass voice=electric_bass_picked',
+            'volume voices=bass level=-20 rate=4',
+        ]
+        commands = mp.Commands(lines)
+        comp: mi.Composition = commands.get_composition()
+        assert len(comp.items) == 1
+        item: mi.Item = comp.items[0]
+        assert same_name(item, mi.Volume)
+        assert item.delta == -20
+        assert item.level == None
+        assert item.rate == 4
+
+    def test_volume4(self):
+        """Test no level or delta."""
+        lines: list[str] = [
+            'voice name=bass style=bass voice=electric_bass_picked',
+            'volume voices=bass rate=4',
+        ]
+        commands = mp.Commands(lines)
+        comp: mi.Composition = commands.get_composition()
+        assert len(comp.items) == 0
+
+class TestVoiceDefinition:
     def test_voice1(self):
         """Test normal voice command."""
         lines: list[str] = [
