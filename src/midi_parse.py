@@ -523,7 +523,7 @@ class Commands:
                                 elif sign == '-':
                                     vol.delta = -level
                                 else:
-                                    vol.level = level
+                                    pan.level = level
                             else:
                                 logging.warning(f'Bad level in "{cmd[_ln]}"')
                     if value := get_value(cmd, 'rate'):
