@@ -1,6 +1,6 @@
 """This module manages dynamic values for voices.
 
-For each channel, it assembles a list of Change items
+For each track, it assembles a list of Change items
 from which the level at any time can be calculated.
 """
 import logging
@@ -12,9 +12,9 @@ import utils
 ticks_per_rate = midi_notes.Duration.quarter
 
 class Change:
-    def __init__(self, tick: int, vol: int, rate: int):
+    def __init__(self, tick: int, level: int, rate: int):
         self.tick = tick
-        self.vol = vol
+        self.level = level
         self.rate = rate
 
 class Timer:
@@ -29,26 +29,25 @@ class Timer:
         self.level_dict.clear()
 
     def set_level(self,
-                  channel: int,
+                  track: int,
                   tick: int,
                   level: int | None,
                   delta: int | None,
                   rate:int) -> None:
-        """Adjust the level of the channel in various ways.
+        """Adjust the level of the track in various ways.
 
-        case  level  delta   rate  set level  set rate
-        1     Y      -      -    to level      -
-        2     -      Y      -    by delta      -
-        3     -      Y      Y    old level     Y
-        4     Y             Y    old level     Y
+        case  level  delta  rate  set level  set rate
+        1     Y      -      -     to level      -
+        2     -      Y      -     by delta      -
+        3     -      Y      Y     old level     Y
+        4     Y             Y     old level     Y
         There are only 4 cases because level or delta is a requirement
         and they may not coexist.
         """
-
-        global level_dict
-        if channel not in self.level_dict:
-            self.level_dict[channel] = []
-        values: list[Change] = self.level_dict[channel]
+        if track not in self.level_dict:
+            # This is the 1st set_level call; create a list with a start event.
+            self.level_dict[track] = [Change(0, self.default, 0)]
+        values: list[Change] = self.level_dict[track]
 
         assert level is not None or delta is not None, 'one of them must exist'
         assert level is None or delta is None, 'cannot supply level AND delta'
@@ -62,7 +61,7 @@ class Timer:
         while values and values[-1].tick > tick:
             values.pop()
 
-        old_level: int = values[-1].vol if values else self.default
+        old_level: int = values[-1].level if values else self.default
 
         # First set the current level
         new_level: int
@@ -74,7 +73,7 @@ class Timer:
             new_level = old_level           # case 3 or4
         new_level = utils.make_in_range(new_level,
                                         self.max_level,
-                                        f'{self.name} channel1')
+                                        f'{self.name} track1')
         values.append(Change(tick, new_level, 0))
 
         # Then set up possible rate change
@@ -87,15 +86,15 @@ class Timer:
                 assert 0, 'oops'
             end_level = utils.make_in_range(end_level,
                                             self.max_level,
-                                            f'{self.name} channel2')
+                                            f'{self.name} track2')
             change = abs(end_level - new_level)
             change *= ticks_per_rate
             change_time = change // rate
             # Add a second Change describing when the new level will be reached.
             values.append(Change(tick + change_time, end_level, rate))
 
-    def get_level(self, channel: int, tick: int) -> int:
-        """Returns the level for the channel at a specific time.
+    def get_level(self, track: int, tick: int) -> int:
+        """Returns the level for the track at a specific time.
 
         In this example, ticks_per_rate is assumed to be 1000
         to make the table have simple numbers.
@@ -120,10 +119,11 @@ class Timer:
         L = -------  x (L2 - L1) + L1
             t2 - t1
         """
-        values: list[Change] = self.level_dict[channel]
-        if not values:
-            logging.error(f'get_level called when no level set')
+        if track not in self.level_dict:
+            # No set_level call has been made for this track, so the level is
+            # the default.
             return self.default
+        values: list[Change] = self.level_dict[track]
         max_len = len(values)
         for n in range(max_len - 1, -1, -1):
             vc1 = values[n]
@@ -131,11 +131,11 @@ class Timer:
                 if n < max_len - 1: # i.e. this is not the last entry
                     vc2 = values[n + 1]
                     if vc2.rate:
-                        dv = vc2.vol - vc1.vol
+                        dv = vc2.level - vc1.level
                         dt = vc2.tick - vc1.tick
                         now = tick - vc1.tick
-                        return now * dv // dt + vc1.vol
-                return vc1.vol
+                        return now * dv // dt + vc1.level
+                return vc1.level
         assert 0, f'Cannot find time {tick} in level table'
         return self.default
 

@@ -863,7 +863,6 @@ class Commands:
                     logging.error(f'Voice "{name}" replaces earlier instance')
             voices.append(mv.Voice(name, track, channel, voice, style, min_pitch, max_pitch))
             track += 1
-            mtim.vol_timer.set_level(channel, 0, self.volumes[style], None, 0)
         return voices
 
     def get_all_volumes(self):
