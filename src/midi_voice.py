@@ -80,6 +80,7 @@ class Voice:
         self.active = True
         self.rhythms: mt.Rhythms = [rhythm[style]]
         self.rhythm_index = 0
+        self.pan = 64
         # staccato and overhang can be:
         # * an integer that clips a note to that duration
         # * a float that changes the duration by that factor

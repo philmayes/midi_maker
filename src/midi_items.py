@@ -90,11 +90,11 @@ class Pan(Item):
     """Adjust pan for voice(s)."""
     def __init__(self,
                  delta: int | None,
-                 level: int | None,
+                 position: int | None,
                  rate: int,
                  voices: Voices):
         self.delta = delta  # Amount by which to adjust pan
-        self.level = level  # New setting for pan
+        self.position = position  # New setting for pan
         self.rate = rate    # Rate change per quarter note
         self.voices = voices
 

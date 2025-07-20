@@ -54,7 +54,7 @@ class Timer:
         assert level is None or delta is None, 'cannot supply level AND delta'
         assert rate >= 0,'negative level rate illegal'
 
-        if not values and not level:
+        if not values and level is None:
             logging.warning(f'First level command should not not have a sign')
 
         # Remove any entries later than <tick> -- this handles the issue of a
@@ -140,5 +140,5 @@ class Timer:
         return self.default
 
 # Timer() instances. They are only constructed after prefs have been set up.
-vol_pan = Timer
+pan_timer: Timer
 vol_timer: Timer

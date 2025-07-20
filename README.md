@@ -7,12 +7,12 @@ By convention, a parameter name is plural when it can take multiple values separ
 Parameter names can be abbreviated, e.g. `bar chords=C` can be `bar ch=C`.
 Comments start with`;`.
 
-Commands fall into two categories: definitions and performance.
+Commands fall into two categories: **definitions** and **performance**.
 Some command names like `volume` or `rhythm` are used twice; e.g. to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
 
 ## Definition Commands
 These create the building blocks of a composition.
-With the exception of `preferences`, all definition commands all have a `name=xxxxx` parameter, and this name is used by the performance commands.
+With the exception of `preferences`, all **definition** commands all have a `name=xxxxx` parameter, and this name is used by the **performance** commands.
 They can occur in any order.
 
 ### voice
@@ -82,7 +82,7 @@ Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_rest=p default_volum
 Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
 
 ## Performance Commands
-These generate the actual MIDI output using the definitions that have been created.
+These generate the actual MIDI output using the **definition** commands that have been created.
 
 ### bar
 Format: `bar chords=chord1,chord2... repeat=# clip=false`
@@ -91,45 +91,10 @@ The chords can be preceded by a duration; if not, a quarter note is assumed. For
 
 Use `repeat` to play the bar more than once. See **Discussions: Clipping** for use of the `clip` parameter.
 
-### mute
-The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 
-
-### hear
-If voices have been previously muted, turn one or more on with `hear voices=voice1,voice2...`. Turn all voices on with `hear voices=all`.
-
-### volume
-Format: `volume voices=vname1,vname2,... level=# rate=#`
-
-Change the volume level of one or more voices. Use `level=80` to set the level to 80;
-`level=+20` to increase the level by 20, and `level=-10` to decrease the level by 10.
-Use `rate` to make the change happen over a period of time.
-For example, `rate=2` will change the volume level by 2 per beat.
-
-### play
-Format: `play voice=vname tunes=tune1,tune2... transpose=#`
-
-Play one or more `tunes` in turn with the specified `voice`. If `transpose` is supplied, raise or lower the notes by that number of semitones.
-
-### rhythm
-Format: `rhythm voices=vname1,vname2... rhythms=rhythm1,rhythm2...`
-
-Note that the `rhythm` command is used both to define a rhythm (see above) and (here) to invoke it.
-
-If the voice style is `perc`, `bass` or `rhythm`, it will use the rhythm supplied and repeat it for each bar. If multiple rhythms are supplied, they will be used in turn, one per bar. When all rhythms have been played, the first one is used again.
-
 ### composition
 Format: `composition name=cname`
 
 You can have one or more compositions in a file. By naming the composition on the command line, only that composition will be played.
-
-### opus
-Format: `opus name=oname parts=cname1,cname2...`
-
-### tempo
-Format: `tempo bpm=#` supplies the number of beats per minute. If omitted, the default MIDI tempo of 120 bpm is used.
-
-### timesig
-Format: `timesig value=3/4` or any other time signature.
 
 ### effects
 Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=dur vibrato=# reverb=# chorus=#`
@@ -155,21 +120,64 @@ Some of the effects only apply to particular styles:
 | perc     | Y | - | - | - |
 | rhythm   | Y | Y | - | Y |
 
+### hear
+If voices have been previously muted, turn one or more on with `hear voices=voice1,voice2...`. Turn all voices on with `hear voices=all`.
+
 ### loop
 Format: `loop`.
 
 Loop marks the start of a passage that is to be played more than once, see `repeat`.
 It takes no parameters.
 
+### mute
+The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 
+
+### pan
+Format: `volume voices=vname1,vname2,... position=# rate=#`
+
+Change the left-right position of one or more voices. The position ranges from left=0 to right=127. 64 is the center. Use `position=80` to set the position to 80;
+`position=+20` to increase the position by 20, and `position=-10` to decrease the position by 10.
+Use `rate` to make the change happen over a period of time.
+For example, `rate=2` will change the position by 2 per beat.
+
+### opus
+Format: `opus name=oname parts=cname1,cname2...`
+
+### play
+Format: `play voice=vname tunes=tune1,tune2... transpose=#`
+
+Play one or more `tunes` in turn with the specified `voice`. If `transpose` is supplied, raise or lower the notes by that number of semitones.
+
 ### repeat
 Format: `repeat count=#`
 
 Repeat a section starting at the preceding `loop` command. `count` is optional; it is the total number of times the section will be played. Loops can be nested, e.g. `loop A loop B repeat C repeat` will play `A B B C A B B C`.
 
+### rhythm
+Format: `rhythm voices=vname1,vname2... rhythms=rhythm1,rhythm2...`
+
+Note that the `rhythm` command is used both to define a rhythm (see above) and (here) to invoke it.
+
+If the voice style is `perc`, `bass` or `rhythm`, it will use the rhythm supplied and repeat it for each bar. If multiple rhythms are supplied, they will be used in turn, one per bar. When all rhythms have been played, the first one is used again.
+
 ### skip and unskip
 Format: `skip` [other commands] `unskip`.
 
 When making changes to a composition, you may want to skip some of the playback so you only hear what you are working on. Use `skip` and `unskip` to skip over a section you do not want to hear. Voice changes etc. in the skipped section will still be honored, but any `play` command will not.
+
+### tempo
+Format: `tempo bpm=#` supplies the number of beats per minute. If omitted, the default MIDI tempo of 120 bpm is used.
+
+### timesig
+Format: `timesig value=3/4` or any other time signature.
+
+### volume
+Format: `volume voices=vname1,vname2,... level=# rate=#`
+
+Change the volume level of one or more voices. Use `level=80` to set the level to 80;
+`level=+20` to increase the level by 20, and `level=-10` to decrease the level by 10.
+Use `rate` to make the change happen over a period of time.
+For example, `rate=2` will change the volume level by 2 per beat.
 
 ## Data Formats
 These describe the format of the notes, chords and durations that are used in commands.

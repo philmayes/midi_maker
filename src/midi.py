@@ -67,6 +67,7 @@ class BarInfo:
 
     @property
     def bar_position(self):
+        """Return position within the current bar."""
         return self.position - self.start
 
     def adjust_note_time(self, voice: Voice, duration: int) -> int:
@@ -135,15 +136,17 @@ def add_controller_event(bar_info: BarInfo,
                          ) -> None:
     bar_info.midi_file.addControllerEvent(voice.track,  # track
                                           voice.channel,# channel
-                                          bar_info.start,# time
+                                          bar_info.position,# time
                                           id,           # controller ID
                                           level)        # parameter
-    print(voice.track,  # track
-          voice.channel,# channel
-          bar_info.start,# time
-          id,           # controller ID
-          level)        # parameter
+    print(f'{voice.track:2} {voice.channel:2} t={bar_info.position:<5} {id:2} level={level:<3}')
 
+def add_pan(bar_info: BarInfo, voice: Voice) -> None:
+    """Add a pan command if the pan position has changed."""
+    new_pan = mtim.pan_timer.get_level(voice.channel, bar_info.position)
+    if voice.pan != new_pan:
+        voice.pan = new_pan
+        add_controller_event(bar_info, voice, 10, new_pan)
 
 def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
     """Assembles the components (compositions) of a work."""
@@ -184,6 +187,7 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
         volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
+        add_pan(bar_info, voice)
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitches[pitch_index],
@@ -210,6 +214,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
         volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
+        add_pan(bar_info, voice)
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
@@ -306,6 +311,7 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
                 voice.overlap = duration - remaining
         volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         play_time = voice.adjust_duration(duration)
+        add_pan(bar_info, voice)
         bar_info.midi_file.addNote(voice.track,
                                    voice.channel,
                                    pitch,
@@ -329,6 +335,7 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
         volume = mtim.vol_timer.get_level(voice.channel, bar_info.position)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
+        add_pan(bar_info, voice)
         bar_info.midi_file.addNote(voice.track,
                                    Channel.percussion,
                                    voice.voice,
@@ -352,6 +359,7 @@ def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
         pitches = mc.chord_to_pitches(bar_info.get_chord(), octave)
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
+        add_pan(bar_info, voice)
         make_chord(bar_info,
                    voice,
                    pitches,
@@ -451,20 +459,19 @@ def make_midi(in_file: str, out_file: str, create: str):
 
         elif isinstance(item, mi.Pan):
             # midi_parse is responsible for ensuring the following.
-            assert item.level is not None or item.delta is not None,\
-                   'Pan has no level or delta'
-            # Panning of the voice is not set directly because it may
-            # change over a period of time. Instead, mv.set_volume()
-            # is called on all supplied voices and mtim.vol_timer.get_level() is
-            # called whenever a midi note is generated.
+            assert item.position is not None or item.delta is not None,\
+                   'Pan has no position or delta'
+            # Panning of the voice is not set directly because it may change
+            # over a period of time. Instead, mtim.pan_timer.set_level()
+            # is called on all supplied voices and mtim.pan_timer.get_level()
+            # is called whenever a midi note is generated and the position
+            # has changed.
             for voice in item.voices:
-                # mv.set_volume(voice.channel,
-                #               bar_info.start,
-                #               item.level,
-                #               item.delta,
-                #               item.rate)
-                if item.level is not None:
-                    add_controller_event(bar_info, voice, 10, item.level)
+                mtim.pan_timer.set_level(voice.channel,
+                                         bar_info.start,
+                                         item.position,
+                                         item.delta,
+                                         item.rate)
 
         elif isinstance(item, mi.Play):
             voice = item.voice

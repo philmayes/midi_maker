@@ -18,26 +18,13 @@ class Channel(IntEnum):
     ch14 = 14
     ch15 = 15
     percussion = 9
-    # Above are real MIDI channels;
-    # below are pseudo-channels used as percussion tracks.
-    perc1 = 16
-    perc2 = 17
-    perc3 = 18
-    perc4 = 19
-    perc5 = 20
-    perc6 = 21
-    perc7 = 22
-    perc8 = 23
-    perc9 = 24
-    perc10 = 25
-    max_channels = 26   # Can be extended if more percussion tracks needed.
-    none = 99
+    none = 999
 
 def is_midi(channel: Channel) -> bool:
-    return channel < Channel.perc1
+    return channel != Channel.percussion
 
 def is_perc(channel: Channel) -> bool:
-    return channel >= Channel.perc1
+    return channel == Channel.percussion
 
 def str_to_channel(name: str) -> Channel:
     """Returns the Channel described by the string."""
