@@ -652,27 +652,25 @@ class Commands:
                         pref_type = type(prefs_dict[key])
                         if pref_type == float:
                             max_val = 1.0
-                            # get_float() max_val is exclusive, but the reverb
-                            # params are inclusive, so cheat by adding .001
+                            inc = False
                             if key.startswith('reverb'):
-                                max_val += 0.001
+                                # Max reverb values are inclusive
+                                inc = True
+                                # reverb_damp, reverb_level, reverb_roomsize
+                                # have max_val of 1.0, reverb_width is 100.0
                                 if key == 'reverb_width':
-                                    max_val = 100.001
-                            result = utils.get_float(value, 0.0, max_val)
+                                    max_val = 100.0
+                            result = utils.get_float(value, 0.0, max_val, inc)
                             if result is None:
                                 logging.warning(f'Preference out of range: "{key}={value}"')
                             else:
                                 add_to_prefs(key, result)
-                                # prefs_dict[key] = result
-                                # found[key] = 1
                         elif pref_type == int:
                             result = utils.get_int(value, 0, 4000)
                             if result is None:
                                 logging.warning(f'Preference is not a number: "{key}={value}"')
                             else:
                                 add_to_prefs(key, result)
-                                # prefs_dict[key] = result
-                                # found[key] = 1
                         else:
                             logging.error(f'Preference type {pref_type} not handled')
                     else:

@@ -8,6 +8,7 @@ def test_get_float():
     assert utils.get_float('0.11', 0.2, 1.0) == None
     assert utils.get_float('bad') == None
     assert utils.get_float('-5.4') == None
+    assert utils.get_float('1.0', inc=True) == 1.0
 
 def test_get_int():
     assert utils.get_int('11') == 11

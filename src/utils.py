@@ -19,13 +19,20 @@ def add_error(value: int, max_error: int, floor: int=0) -> int:
     value += int(err)
     return max(value, floor)
 
-def get_float(text: str, min_val: float=0.0, max_val: float=1.0) -> float | None:
+def get_float(text: str,
+              min_val: float=0.0,
+              max_val: float=1.0,
+              inc: bool=False) -> float | None:
     """Returns string as float in range or None."""
     assert text != '', f'Float number is missing'
     if re_float.match(text):
         result = float(text)
-        if min_val <= result < max_val:
-            return result 
+        if inc:
+            if min_val <= result <= max_val:
+                return result
+        else:
+            if min_val <= result < max_val:
+                return result
 
 def get_int(text: str, min_val: int=0, max_val: int=128) -> int | None:
     """Returns string as int in range or None."""
