@@ -63,7 +63,7 @@ class BarInfo:
         self.timesig: mi.TimeSig = mi.TimeSig(4, 4)
         self.bar: mi.Bar = mi.Bar([])
         self.start = 0      # start time of the current bar in ticks
-        self.position = 0   # position within the current bar in ticks
+        self.position = 0   # position within the composition in ticks
 
     @property
     def bar_position(self):
@@ -476,19 +476,28 @@ def make_midi(in_file: str, out_file: str, create: str):
         elif isinstance(item, mi.Play):
             voice = item.voice
             if voice.active and not skip:
-                position = start = bar_info.start
+                assert bar_info.start == bar_info.position
                 for note in item.notes:
+                    # Add in any transposition and make in range.
                     pitch = utils.make_in_range(note.pitch + item.trans,
                                                 128,
                                                 'Play note')
-                    volume = mtim.vol_timer.get_level(voice.track, position)
-                    position = start + note.start
-                    midi_file.addNote(0,
+                    # Each note in a tune has a start time relative to the
+                    # beginning of the tune. Add the start time of the bar
+                    # and save it in bar_info.position because add_pan uses it.
+                    bar_info.position = bar_info.start + note.start
+                    volume = mtim.vol_timer.get_level(voice.track, bar_info.position)
+                    add_pan(bar_info, voice)
+                    midi_file.addNote(voice.track,
                                       voice.channel,
                                       pitch,
-                                      utils.add_error(position, 10),
+                                      utils.add_error(bar_info.position, 10),
                                       note.duration,
                                       volume)
+                # bar_info.position has been "borrowed" to track the current
+                # position. Clean up after use.
+                bar_info.position = bar_info.start
+
 
         elif isinstance(item, mi.Repeat):
             if not loop_stack:
