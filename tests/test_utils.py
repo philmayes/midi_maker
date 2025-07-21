@@ -34,7 +34,7 @@ def test_is_name():
     assert not utils.is_name('1Fred')
     assert not utils.is_name('1fred!')
 
-def test_get_error():
+def test_add_error():
     for i in range(20):
         print(f'{i}= ', end='')
         for j in range(20):
@@ -46,3 +46,9 @@ def test_get_error():
             v2: int = utils.add_error(0, i)
             assert v2 >= 0
         print()
+
+def test_pct_to_range():
+    assert utils.pct_to_range(0) == 0
+    assert utils.pct_to_range(100) == 127
+    assert utils.pct_to_range(50) == 64
+    assert utils.pct_to_range(100) == 127

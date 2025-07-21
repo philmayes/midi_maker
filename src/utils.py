@@ -1,6 +1,7 @@
 """General utility functions."""
 
 import logging
+import math
 import random
 import re
 
@@ -84,6 +85,20 @@ def make_in_range(value: int, max_value: int, desc: str) -> int:
     elif value < 0:
         logging.warning(f'{desc} value {value} too low')
         value = 0
+    return value
+
+def pct_to_range(pct: int, min_val: int=0, max_val: int=127, desc: str='') -> int:
+    """Converts a percentage into a value within range.
+    
+    Valid range is 0 <= value < max_value.
+    """
+    if pct > 100:
+        logging.warning(f'{desc} value {pct}% too high')
+        pct = 100
+    elif pct < 0:
+        logging.warning(f'{desc} value {pct}% too low')
+        pct = 0
+    value = math.ceil((max_val - min_val) * pct / 100)
     return value
 
 def truth(text: str) -> bool | None:
