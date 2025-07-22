@@ -23,6 +23,7 @@ The bottom number tells what sort of notes each bar is going to contain,
 The top one tells how many of them there will be (or equivalent).
 e.g. for 6/8, each bar contains 6 eighth notes
 """
+import copy
 import logging
 import random
 
@@ -147,6 +148,40 @@ def add_pan(bar_info: BarInfo, voice: Voice) -> None:
     if voice.pan != new_pan:
         voice.pan = new_pan
         add_controller_event(bar_info, voice, 10, new_pan)
+
+class Tune:
+    """Play a tune on a per-bar basis."""
+    def __init__(self, item: mi.Play, start: int) -> None:
+        self.voice = item.voice
+        # Make a copy of the tune to avoid corrupting it when used elsewhere.
+        self.notes = copy.copy(item.notes)
+        # Adjust the start and pitch of all the notes.
+        for note in self.notes:
+            note.start += start
+            note.pitch = utils.make_in_range(note.pitch + item.trans,
+                                             128,
+                                            'Play note')
+
+    def play(self, bar_info: BarInfo) -> None:
+        """Play the portion of the tune that occurs within the bar."""
+        voice = self.voice
+        if voice.active:
+            # Look through all the notes to find which start in this bar.
+            # CODING NOTE: do not track which notes have been played and skip
+            # them because "loop"..."repeat" commands may play them repeatedly.
+            for note in self.notes:
+                if note.start < bar_info.start:     # Too early
+                    continue
+                if note.start >= bar_info.bar_end():# Too late
+                    break
+                volume = mtim.vol_timer.get_level(voice.track, bar_info.position)
+                add_pan(bar_info, voice)
+                bar_info.midi_file.addNote(voice.track,
+                                           voice.channel,
+                                           note.pitch,
+                                           utils.add_error(note.start, 10),
+                                           note.duration,
+                                           volume)
 
 def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
     """Assembles the components (compositions) of a work."""
@@ -373,6 +408,7 @@ def make_midi(in_file: str, out_file: str, create: str):
         lines = f_in.readlines()
     commands: midi_parse.Commands = midi_parse.Commands(lines)
     voices: Voices = commands.voices
+    tunes: list[Tune] = []
 
     # Always request at least 1 channel, otherwise MIDIFile freaks out.
     midi_file = MIDIFile(max(len(voices), 1),
@@ -413,6 +449,10 @@ def make_midi(in_file: str, out_file: str, create: str):
                             make_arpeggio_bar(bar_info, voice)
                         elif voice.style == 'improv' and voice.active:
                             make_improv_bar(bar_info, voice)
+                    # Play the portion of the tunes that occur within this bar.
+                    for tune in tunes:
+                        tune.play(bar_info)
+                    # step to next bar
                     bar_info.start += bar_info.timesig.ticks_per_bar
 
         elif isinstance(item, mi.Beat):
@@ -474,30 +514,11 @@ def make_midi(in_file: str, out_file: str, create: str):
                                          item.rate)
 
         elif isinstance(item, mi.Play):
-            voice = item.voice
-            if voice.active and not skip:
-                assert bar_info.start == bar_info.position
-                for note in item.notes:
-                    # Add in any transposition and make in range.
-                    pitch = utils.make_in_range(note.pitch + item.trans,
-                                                128,
-                                                'Play note')
-                    # Each note in a tune has a start time relative to the
-                    # beginning of the tune. Add the start time of the bar
-                    # and save it in bar_info.position because add_pan uses it.
-                    bar_info.position = bar_info.start + note.start
-                    volume = mtim.vol_timer.get_level(voice.track, bar_info.position)
-                    add_pan(bar_info, voice)
-                    midi_file.addNote(voice.track,
-                                      voice.channel,
-                                      pitch,
-                                      utils.add_error(bar_info.position, 10),
-                                      note.duration,
-                                      volume)
-                # bar_info.position has been "borrowed" to track the current
-                # position. Clean up after use.
-                bar_info.position = bar_info.start
-
+            # Of all the commands, "play" is unique in that it plays notes
+            # across a number of bars. So that other commands (volume, mute...)
+            # can interact with the output, the item is added to a list which
+            # is processed for every bar.
+            tunes.append(Tune(item, bar_info.start))
 
         elif isinstance(item, mi.Repeat):
             if not loop_stack:
