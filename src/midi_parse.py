@@ -500,8 +500,11 @@ class Commands:
                 expect(cmd, ['count'])
                 repeat = 2
                 if value := get_value(cmd, 'count'):
-                    count = utils.get_int(value, 2, 100)
+                    count = utils.get_int(value)
                     if count is not None:
+                        if count < 2:
+                            logging.warning(f'Count should be at least 2 in "{cmd[_ln]}"')
+                            count = 2
                         repeat = count
                     else:
                         logging.error(f'Bad parameter in "{cmd[_ln]}"')

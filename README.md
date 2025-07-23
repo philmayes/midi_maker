@@ -120,22 +120,19 @@ Some of the effects only apply to particular styles:
 | perc     | Y | - | - | - |
 | rhythm   | Y | Y | - | Y |
 
-### unmute
-If voices have been previously muted, turn one or more on with `unmute voices=voice1,voice2...`. Turn all voices on with `unmute voices=all`.
-
 ### loop
 Format: `loop`.
 
 Loop marks the start of a passage that is to be played more than once, see `repeat`.
 It takes no parameters.
 
-### mute
-The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `unmute`. 
+### mute and unmute
+The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`. To hear the voices again, use `unmute voices=vname1,vname2...`.
 
 ### pan
 Format: `volume voices=vname1,vname2,... position=# rate=#`
 
-Change the left-right position of one or more voices. The position ranges from left=0 to right=127. 64 is the center. Use `position=80` to set the position to 80;
+Change the left-right position of one or more voices. The position ranges from left=0 to right=127. 64 is the center. For instance, use `position=80` to set the position to 80;
 `position=+20` to increase the position by 20, and `position=-10` to decrease the position by 10.
 Use `rate` to make the change happen over a period of time.
 For example, `rate=2` will change the position by 2 per beat.
@@ -151,7 +148,7 @@ Play one or more `tunes` in turn with the specified `voice`. If `transpose` is s
 ### repeat
 Format: `repeat count=#`
 
-Repeat a section starting at the preceding `loop` command. `count` is optional; it is the total number of times the section will be played. Loops can be nested, e.g. `loop A loop B repeat C repeat` will play `A B B C A B B C`.
+Repeat a section starting at the preceding `loop` command. `count` is optional; it is the total number of times the section will be played, i.e. a bare `loop` is the same as `loop count=2`. Loops can be nested, e.g. `loop A loop B repeat C repeat` will play `A B B C A B B C`.
 
 ### rhythm
 Format: `rhythm voices=vname1,vname2... rhythms=rhythm1,rhythm2...`
