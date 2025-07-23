@@ -65,7 +65,6 @@ The commands in the input file can be:
         bar
         composition
         effects
-        hear
         loop
         mute
         opus
@@ -74,6 +73,7 @@ The commands in the input file can be:
         rhythm
         tempo
         timesig
+        unmute
         volume
 See README.md for details.
 """

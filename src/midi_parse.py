@@ -128,7 +128,6 @@ def parse_command(command: str) -> mt.CmdDict:
         'chord',
         'composition',
         'effects',
-        'hear',
         'loop',
         'mute',
         'notes',
@@ -142,6 +141,7 @@ def parse_command(command: str) -> mt.CmdDict:
         'tempo',
         'timesig',
         'tune',
+        'unmute',
         'unskip',
         'voice',
         'volume',
@@ -424,11 +424,6 @@ class Commands:
                                           reverb,
                                           chorus)
 
-            elif item == 'hear':
-                expect(cmd, ['voices'])
-                voices = self.get_voices(cmd)
-                composition += mi.Hear(voices)
-
             elif item == 'loop':
                 expect(cmd, [])
                 composition += mi.Loop()
@@ -436,7 +431,7 @@ class Commands:
             elif item == 'mute':
                 expect(cmd, ['voices'])
                 voices = self.get_voices(cmd)
-                composition += mi.Mute(voices)
+                composition += mi.Mute(voices, True)
 
             elif item == 'pan':
                 expect(cmd, ['voices', 'position', 'rate'])
@@ -535,6 +530,11 @@ class Commands:
                             composition += mi.TimeSig(top, bottom)
                             continue
                 logging.warning(f'Bad timesig in "{cmd[_ln]}"')
+
+            elif item == 'unmute':
+                expect(cmd, ['voices'])
+                voices = self.get_voices(cmd)
+                composition += mi.Mute(voices, False)
 
             elif item == 'unskip':
                 expect(cmd, [''])

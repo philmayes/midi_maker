@@ -482,11 +482,6 @@ def make_midi(in_file: str, out_file: str, create: str):
                         voice.chorus = item.chorus
                         add_controller_event(bar_info, voice, 93, voice.chorus)
 
-        elif isinstance(item, mi.Hear):
-            for voice in item.voices:
-                if voice.channel is not Channel.none:
-                    voice.active = True
-
         elif isinstance(item, mi.Loop):
                 # This is the beginning of a loop. Save the location
                 # and mark the loop as not started.
@@ -495,7 +490,7 @@ def make_midi(in_file: str, out_file: str, create: str):
         elif isinstance(item, mi.Mute):
             for voice in item.voices:
                 if voice.channel is not Channel.none:
-                    voice.active = False
+                    voice.active = not item.muted
 
         elif isinstance(item, mi.Pan):
             # midi_parse is responsible for ensuring the following.

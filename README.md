@@ -99,7 +99,7 @@ You can have one or more compositions in a file. By naming the composition on th
 ### effects
 Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=dur vibrato=# reverb=# chorus=#`
 
-This turns various effects on or off for the named voices. The `staccato` value can either be the number of ticks for which the note should be played or a decimal fraction like 0.5 meaning the note will be played for half its time.
+This turns various effects on or off for the named voices. The `staccato` value can either be the number of ticks for which the note should be played or a decimal fraction like 0.5 meaning the note will be played for half its time. Use `staccato=0` to turn it off.
 
 `overhang` takes a number of ticks or a decimal number greater than 1.0 to cause the note to play for that much longer. It will overlap any following note. For instance, an arpeggio with a large `overhang` will progressively play a chord.
 
@@ -120,8 +120,8 @@ Some of the effects only apply to particular styles:
 | perc     | Y | - | - | - |
 | rhythm   | Y | Y | - | Y |
 
-### hear
-If voices have been previously muted, turn one or more on with `hear voices=voice1,voice2...`. Turn all voices on with `hear voices=all`.
+### unmute
+If voices have been previously muted, turn one or more on with `unmute voices=voice1,voice2...`. Turn all voices on with `unmute voices=all`.
 
 ### loop
 Format: `loop`.
@@ -130,7 +130,7 @@ Loop marks the start of a passage that is to be played more than once, see `repe
 It takes no parameters.
 
 ### mute
-The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `hear`. 
+The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`.The inverse of `mute` is `unmute`. 
 
 ### pan
 Format: `volume voices=vname1,vname2,... position=# rate=#`

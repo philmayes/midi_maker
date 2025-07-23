@@ -65,11 +65,6 @@ class Effects(Item):
         self.reverb = reverb
         self.chorus = chorus
 
-class Hear(Item):
-    """Play (unmute) voice(s)."""
-    def __init__(self, voices: Voices):
-        self.voices = voices
-
 class Loop(Item):
     """Start a loop."""
     def __init__(self):
@@ -83,8 +78,9 @@ class LoopItem:
 
 class Mute(Item):
     """Mute voice(s)."""
-    def __init__(self, voices: Voices):
+    def __init__(self, voices: Voices, muted: bool):
         self.voices = voices
+        self.muted = muted
 
 class Pan(Item):
     """Adjust pan for voice(s)."""
