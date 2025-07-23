@@ -63,7 +63,7 @@ class Voice:
                  style: str,
                  min_pitch: int=0,
                  max_pitch: int=127,
-                 ) -> None:
+                 ):
         self.name = name
         self.track = track
         self.channel = channel

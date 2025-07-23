@@ -143,7 +143,7 @@ class Volume(Item):
 
 class Composition:
     """Collection of items that will generate a MIDI file."""
-    def __init__(self) -> None:
+    def __init__(self):
         self.items: list[Item] = []
 
     def __iadd__(self, thing: Item | list[Item]):
