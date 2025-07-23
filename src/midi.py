@@ -65,6 +65,8 @@ class BarInfo:
         self.bar: mi.Bar = mi.Bar([])
         self.start = 0      # start time of the current bar in ticks
         self.position = 0   # position within the composition in ticks
+                            # This is a working variable. Do not assume its
+                            # value; user should set and maintain it.
 
     @property
     def bar_position(self):
@@ -151,10 +153,10 @@ def add_pan(bar_info: BarInfo, voice: Voice) -> None:
 
 class Tune:
     """Play a tune on a per-bar basis."""
-    def __init__(self, item: mi.Play, start: int) -> None:
+    def __init__(self, item: mi.Play, start: int):
         self.voice = item.voice
         # Make a copy of the tune to avoid corrupting it when used elsewhere.
-        self.notes = copy.copy(item.notes)
+        self.notes = copy.deepcopy(item.notes)
         # Adjust the start and pitch of all the notes.
         for note in self.notes:
             note.start += start
@@ -166,6 +168,7 @@ class Tune:
         """Play the portion of the tune that occurs within the bar."""
         voice = self.voice
         if voice.active:
+            bar_info.position = bar_info.start
             # Look through all the notes to find which start in this bar.
             # CODING NOTE: do not track which notes have been played and skip
             # them because "loop"..."repeat" commands may play them repeatedly.
