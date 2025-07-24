@@ -9,7 +9,7 @@ dynamics: dict[str, int] = {
     'pp':  25,
     'p':   42,
     'mp':  59,
-    'nf':  76,
+    'mf':  76,
     'f':   93,
     'ff': 110,
     'fff':127,
