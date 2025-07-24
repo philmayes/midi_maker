@@ -16,6 +16,9 @@ class Chord:
                self.chord == other.chord and\
                self.octave == other.octave
 
+    def __str__(self):
+        return f'{self.start} {self.key} {self.chord} {self.octave}'
+
 ch1 = r'^([tseqhnd+-\.]+)*'             # duration prefix (needs validating)
 ch2 = r'([A-G][#b]*)([a-z]*)([4679]?)(@(\d))?$'  # key chord-type chord-mod
 re_chord = re.compile('^' + ch2)        # chord

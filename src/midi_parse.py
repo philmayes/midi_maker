@@ -124,6 +124,7 @@ def parse_command(command: str) -> mt.CmdDict:
     """Parse command into dictionary."""
     result: mt.CmdDict = {}
     expect = [
+        'alias',
         'bar',
         'chord',
         'composition',
@@ -268,14 +269,13 @@ class Commands:
     def __init__(self, lines: list[str]):
         self.commands: list[mt.CmdDict] = []
         for line in lines:
-            # Remove comments and whitespace.
+            # Remove comments and whitespace; skip empty lines.
             clean: str = clean_line(line)
             if not clean:
                 continue
-            # Convert the line into a dictionary.
+            # Convert the line into a dictionary & make list of all commands.
             cmd: mt.CmdDict = parse_command(clean)
             if cmd:
-                # Make a list of all commands.
                 self.commands.append(cmd)
 
         # Get preferences first because some definitions use them.
@@ -283,6 +283,8 @@ class Commands:
         # Now timers can be set up with the correct values
         mtim.vol_timer = mtim.Timer('volume', prefs.default_volume)
         mtim.pan_timer = mtim.Timer('pan', 64)
+
+        self.replace_aliases(self.get_all_aliases())
 
         # Extract all the definitions into their various types.
         self.volumes: dict[str, int] = self.get_all_volumes()
@@ -582,19 +584,31 @@ class Commands:
 
         return composition
 
-    def get_opus(self, name: str) -> str:
-        """Get parts of the named opus."""
+    def get_all_aliases(self) -> dict[str, str]:
+        """Read and set up all aliases."""
+        aliases: dict[str, str] = {}
         for cmd in self.commands:
-            if cmd['command'] == 'opus':
-                expect(cmd, ['name', 'parts'])
-                name2: str = cmd.get('name', '')
-                parts = cmd.get('parts', '')
-                if name2 and not utils.is_name(name2):
-                    logging.error(f'opus name "{name2}" is invalid')
-                    continue
-                if name == name2:
-                    return parts
-        return ''
+            if cmd['command'] == 'alias':
+                expect(cmd, ['name', 'value'])
+                name: str = cmd.get('name', '')
+                value: str = cmd.get('value', '')
+                if name and value:
+                    # Must be lowercase alpha.
+                    if not (name.isalpha() and name.islower()):
+                        logging.error(f'Alias must be lowercase alpha "{cmd[_ln]}"')
+                        continue
+                    # Must not be a style name.
+                    if name in mv.styles:
+                        logging.error(f'Alias cannot be a style name "{cmd[_ln]}"')
+                        continue
+                    # Must not be a note duration.
+                    if mn.get_duration(name, True) >= 0:
+                        logging.error(f'Alias cannot be a duration "{cmd[_ln]}"')
+                        continue
+                    aliases[name] = value
+                else:
+                    logging.error(f'Bad format for command "{cmd[_ln]}"')
+        return aliases
 
     def get_all_chords(self) -> None:
         """Read and set up non-standard chords."""
@@ -906,6 +920,20 @@ class Commands:
                         logging.error(f'volume name has no level')
         return volumes
 
+    def get_opus(self, name: str) -> str:
+        """Get parts of the named opus."""
+        for cmd in self.commands:
+            if cmd['command'] == 'opus':
+                expect(cmd, ['name', 'parts'])
+                name2: str = cmd.get('name', '')
+                parts = cmd.get('parts', '')
+                if name2 and not utils.is_name(name2):
+                    logging.error(f'opus name "{name2}" is invalid')
+                    continue
+                if name == name2:
+                    return parts
+        return ''
+
     def get_rhythms(self, value: str) -> mt.Rhythms:
         """Return a list of all the rhythms supplied in param."""
         rhythms: mt.Rhythms = []
@@ -943,3 +971,22 @@ class Commands:
                 else:
                     logging.error(f'Voice "{voice_name}" does not exist')
         return voices
+
+    def replace_aliases(self, aliases: dict[str, str]) -> None:
+        """Replace the aliases in all commands."""
+        for cmd in self.commands:
+            item: mt.Verb = cmd['command']
+            if item == 'alias':
+                continue
+            for key, value in cmd.items():
+                changed = False
+                bits = value.split(',')
+                for n in range(len(bits)):
+                    bit = bits[n]
+                    if bit in aliases:
+                        bits[n] = aliases[bit]
+                        changed = True
+                        print(f'changed {bit} to {aliases[bit]}')
+                if changed:
+                    cmd[key] = ','.join(bits)
+                    print('new-line', cmd[key])
