@@ -289,6 +289,7 @@ class Commands:
 
         # Extract all the definitions into their various types.
         self.volumes: dict[str, int] = self.get_all_volumes()
+        self.opuses: dict[str, str] = self.get_all_opuses()
         self.voices: mv.Voices = self.get_all_voices()
         self.tunes: mt.TuneDict = self.get_all_tunes()
         self.rhythms: mt.RhythmDict = self.get_all_rhythms()
@@ -648,6 +649,24 @@ class Commands:
                 else:
                     logging.error(f'Bad format for command "{cmd[_ln]}"')
 
+    def get_all_opuses(self) -> dict[str, str]:
+        """Construct opus dictionary from the list of commands."""
+        opuses: dict[str, str] = {}
+        for cmd in self.commands:
+            if cmd['command'] == 'opus':
+                expect(cmd, ['name', 'parts'])
+                name: str = cmd.get('name', '')
+                parts: str = cmd.get('parts', '')
+                if name and parts:
+                    # Should not overwrite an existing opus.
+                    if name in opuses:
+                        logging.warning(f'Opus name "{name}" is already used "{cmd[_ln]}"')
+                        continue
+                    opuses[name] = parts
+                else:
+                    logging.error(f'Bad format for command "{cmd[_ln]}"')
+        return opuses
+
     def get_all_preferences(self) -> None:
         """Get changes to global preferences."""
         prefs_dict = prefs.__dict__
@@ -926,18 +945,8 @@ class Commands:
         return volumes
 
     def get_opus(self, name: str) -> str:
-        """Get parts of the named opus."""
-        for cmd in self.commands:
-            if cmd['command'] == 'opus':
-                expect(cmd, ['name', 'parts'])
-                name2: str = cmd.get('name', '')
-                parts = cmd.get('parts', '')
-                if name2 and not utils.is_name(name2):
-                    logging.error(f'opus name "{name2}" is invalid')
-                    continue
-                if name == name2:
-                    return parts
-        return ''
+        """Get the named opus."""
+        return self.opuses.get(name, '')
 
     def get_rhythms(self, value: str) -> mt.Rhythms:
         """Return a list of all the rhythms supplied in param."""
