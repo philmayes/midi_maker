@@ -225,7 +225,7 @@ class TestPan:
     def test_pan1(self):
         lines: list[str] = [
             'voice name=bass style=bass voice=electric_bass_picked',
-            'pan voices=bass level=1',
+            'pan voices=bass position=1',
         ]
         commands = mp.Commands(lines)
         comp: mi.Composition = commands.get_composition()

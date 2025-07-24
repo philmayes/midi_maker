@@ -1,17 +1,12 @@
-import random
-
 from midiutil import MIDIFile
 
 from src import midi
 from src.midi_channels import Channel
-# from src.midi_chords import Chord
 from src import midi_chords as mc
 from src import midi_items as mi
 from src.midi_notes import Duration as dur
 from src import midi_parse as mp
-from src import midi_types as mt
 from src import midi_voice as mv
-from src import midi_volume as mvol
 
 def test_1(mocker):
     """Test note/bar clipping."""
@@ -21,9 +16,9 @@ def test_1(mocker):
     commands = mp.Commands(lines)
     channel = Channel.ch1
     track = 1
-    mvol.set_volume(channel, 0, 100, 0, 0) # channel, tick, level, delta, rate
     midi_file = MIDIFile()
     mock_add_note = mocker.patch.object(midi_file, 'addNote')
+    # mocker.patch('src.midi.add_start_error')
     bar_info: midi.BarInfo = midi.BarInfo(midi_file)
     chords: list[mc.Chord] = [mc.Chord(0, 'C', 'maj', 3)]
     # Set 3rd param to True to remove clipping.

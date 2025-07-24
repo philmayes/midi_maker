@@ -10,6 +10,16 @@ Comments start with`;`.
 Commands fall into two categories: **definitions** and **performance**.
 Some command names like `volume` or `rhythm` are used twice; e.g. to define a rhythm, and to perform a rhythm. They are distinguished by the syntax. 
 
+### Examples
+There are examples of input files in the `data/` directory.
+
+### Installation
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install midi_maker..
+
+```
+pip install midi_maker
+```
+
 ## Definition Commands
 These create the building blocks of a composition.
 With the exception of `preferences`, all **definition** commands all have a `name=xxxxx` parameter, and this name is used by the **performance** commands.
@@ -234,3 +244,5 @@ To inhibit this behavior and allow the note or chord to play for its full durati
 ### Playing
 midi_maker can play the MIDI file it has just generated. Use `-p` on the command line. You will probably need to edit `midi_play.py` for this to work on your system.
 
+## License
+TBD

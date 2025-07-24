@@ -19,11 +19,11 @@ def test_set_volume1(setup):
     channel = 0
     #            channel, tick, level, delta, rate
     mv.set_level(channel,    0,   100,  None,    0)
-    assert vlist(-1).vol == 100
+    assert vlist(-1).level == 100
     mv.set_level(channel,  500,    80,  None,    0)
-    assert vlist(-1).vol == 80
+    assert vlist(-1).level == 80
     mv.set_level(channel,  800,    60,  None,    0)
-    assert vlist(-1).vol == 60
+    assert vlist(-1).level == 60
 
 def test_set_volume2(setup):
     """Test case 2."""
@@ -34,15 +34,15 @@ def test_set_volume2(setup):
     rate = 0
     mv.set_level(channel, tick, level, delta, rate)
     # Should not start with delta. default_volume + 40 = 140, clips to 127
-    assert vlist(-1).vol == 127
+    assert vlist(-1).level == 127
     tick = 500
     delta = 20
     mv.set_level(channel, tick, level, delta, rate)
-    assert vlist(-1).vol == 127
+    assert vlist(-1).level == 127
     tick = 800
     delta = -10
     mv.set_level(channel, tick, level, delta, rate)
-    assert vlist(-1).vol == 117
+    assert vlist(-1).level == 117
 
 def test_set_volume3(setup):
     """Test case 3."""
@@ -52,7 +52,7 @@ def test_set_volume3(setup):
     delta = None
     rate = 0
     mv.set_level(channel, tick, level, delta, rate)
-    assert vlist(-1).vol == level
+    assert vlist(-1).level == level
     tick = 500
     level = 100
     delta = 20
@@ -61,10 +61,10 @@ def test_set_volume3(setup):
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == tick
-    assert prev.vol == level
+    assert prev.level == level
     assert prev.rate == 0
     assert last.tick == tick + (delta * mtim.ticks_per_rate) // rate
-    # assert last.vol == level + delta
+    # assert last.level == level + delta
     assert last.rate == rate
 
 def test_set_volume3neg(setup):
@@ -75,7 +75,7 @@ def test_set_volume3neg(setup):
     delta = None
     rate = 0
     mv.set_level(channel, tick, level, delta, rate)
-    assert vlist(-1).vol == level
+    assert vlist(-1).level == level
     tick = 500
     delta = -20
     rate = 2
@@ -83,10 +83,10 @@ def test_set_volume3neg(setup):
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == tick
-    assert prev.vol == level
+    assert prev.level == level
     assert prev.rate == 0
     assert last.tick == tick + (abs(delta) * mtim.ticks_per_rate) // rate
-    assert last.vol == level + delta
+    assert last.level == level + delta
     assert last.rate == rate
 
 def test_set_volume4(setup):
@@ -98,10 +98,10 @@ def test_set_volume4(setup):
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == 1000
-    assert prev.vol == 100
+    assert prev.level == 100
     assert prev.rate == 0
     assert last.tick == 4000
-    assert last.vol == 40
+    assert last.level == 40
     assert last.rate == 20
 
 def test_set_volume4neg(setup):
@@ -112,7 +112,7 @@ def test_set_volume4neg(setup):
     delta = None
     rate = 0
     mv.set_level(channel, tick, level1, delta, rate)
-    assert vlist(-1).vol == level1
+    assert vlist(-1).level == level1
     tick = 500
     level2 = 40
     delta = None
@@ -121,10 +121,10 @@ def test_set_volume4neg(setup):
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == tick
-    assert prev.vol == level1
+    assert prev.level == level1
     assert prev.rate == 0
     assert last.tick == tick + (abs(level2 - level1) * mtim.ticks_per_rate) // rate
-    assert last.vol == level2
+    assert last.level == level2
     assert last.rate == rate
 
 def test_set_volume1_in_change(setup):
@@ -137,7 +137,7 @@ def test_set_volume1_in_change(setup):
     mv.set_level(channel, 4000,    90,  None,    0)
     last = vlist(-1)
     assert last.tick == 4000
-    assert last.vol == 90
+    assert last.level == 90
     assert last.rate == 0
 
 def test_set_volume4_in_change(setup):
@@ -151,10 +151,10 @@ def test_set_volume4_in_change(setup):
     prev = vlist(-2)
     last = vlist(-1)
     assert prev.tick == 4000
-    assert prev.vol == 80 # NOT 1/3 between 80 and 50
+    assert prev.level == 80 # NOT 1/3 between 80 and 50
     assert prev.rate == 0
     assert last.tick == 5000
-    assert last.vol == 90
+    assert last.level == 90
     assert last.rate == 10
 
 def test_get_volume1(setup):
