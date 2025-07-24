@@ -22,7 +22,6 @@ re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_timesig = re.compile(r'(\d+)/(\d+)$')
 re_durs = re.compile(r'[tseqhnd+-\.]*$')
 re_octave = re.compile(r'@(\d)$')
-re_alias = re.compile(r'[a-z_]+$')
 
 _ln = '$line'  # Key for the original command line. Used for error reports.
 
@@ -206,7 +205,7 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
                 continue
 
         # Handle a possible tune.
-        if item.isalnum() and item.islower():
+        if utils.is_name(item):
             if item in tunes:
                 sub_tune = tunes[item]
                 for sub_note in sub_tune:
@@ -596,7 +595,7 @@ class Commands:
                 value: str = cmd.get('value', '')
                 if name and value:
                     # Must be lowercase alpha.
-                    if re_alias.match(name) is None:
+                    if utils.is_name(name):
                         logging.error(f'Alias must be lowercase alpha "{cmd[_ln]}"')
                         continue
                     # Must not be a style name.

@@ -41,8 +41,9 @@ The `voice` command is used to specify both instruments and percussion.
 The voice can also be supplied as an integer from 1-128 (or from 35-81 for percussion).
 
 Voice encompasses both midi voices and midi percussion. 
-Each voice is assigned to a separate MIDI channel. There can be a maximum of 15 voices
-and an additional 10 `perc`[ussion] styles.
+Each voice is assigned to a separate MIDI channel. There can be a maximum of 15 midi voices and no limit on `perc`[ussion] styles.
+
+The voice names are used in various performance commands. You can either name the voices individually: `[cmd] voices=vname1,vname2,...` or supply all of them: `[cmd] voices=all`.
 
 ### volume
 Format: `volume name=vname level=#`

@@ -1,9 +1,7 @@
 from typing import Any
 
-# from src.midi_chords import Chord
 import src.midi_chords as mc
 import src.midi_items as mi
-# from src.midi_items import midi_items as mi
 from src.midi_notes import Duration as dur
 import src.midi_parse as mp
 import src.midi_types as mt
@@ -634,3 +632,21 @@ class TestVoiceDefinition:
         voice: Voice = commands.voices[0]
         assert voice.min_pitch == 0
         assert voice.max_pitch == 127
+
+    def test_voice6(self):
+        """Test that no more than 15 voice styles are accepted."""
+        lines: list[str] = []
+        for n in range(20):
+            lines.append(f'voice name=lead{n} style=lead  voice={n+40}')
+
+        commands = mp.Commands(lines)
+        assert len(commands.voices) == 15
+
+    def test_voice7(self):
+        """Test that more than 16 percussion styles are accepted."""
+        lines: list[str] = []
+        for n in range(20):
+            lines.append(f'voice name=perc{n} style=perc voice={n+40}')
+
+        commands = mp.Commands(lines)
+        assert len(commands.voices) == 20
