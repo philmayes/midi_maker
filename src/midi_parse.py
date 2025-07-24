@@ -22,6 +22,7 @@ re_rhythm = re.compile(r'([a-z]+)(-?[\d]+)')
 re_timesig = re.compile(r'(\d+)/(\d+)$')
 re_durs = re.compile(r'[tseqhnd+-\.]*$')
 re_octave = re.compile(r'@(\d)$')
+re_alias = re.compile(r'[a-z_]+$')
 
 _ln = '$line'  # Key for the original command line. Used for error reports.
 
@@ -594,7 +595,7 @@ class Commands:
                 value: str = cmd.get('value', '')
                 if name and value:
                     # Must be lowercase alpha.
-                    if not (name.isalpha() and name.islower()):
+                    if re_alias.match(name) is None:
                         logging.error(f'Alias must be lowercase alpha "{cmd[_ln]}"')
                         continue
                     # Must not be a style name.
@@ -604,6 +605,10 @@ class Commands:
                     # Must not be a note duration.
                     if mn.get_duration(name, True) >= 0:
                         logging.error(f'Alias cannot be a duration "{cmd[_ln]}"')
+                        continue
+                    # Should not overwrite an existing alias.
+                    if name in aliases:
+                        logging.warning(f'Alias name "{name}" is already used "{cmd[_ln]}"')
                         continue
                     aliases[name] = value
                 else:
