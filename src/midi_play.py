@@ -41,6 +41,7 @@ def play(midi_file: str, wav_file: str='') -> None:
         params.append(midi_file)
         subprocess.run(params)
     elif not wav_file and os.path.exists(player2):
+        midi_file = os.path.abspath(midi_file)
         subprocess.run([player2, midi_file])
     else:
         logging.error('Cannot find program to play midi file')
