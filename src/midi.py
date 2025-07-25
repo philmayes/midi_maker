@@ -142,7 +142,7 @@ def add_controller_event(bar_info: BarInfo,
                                           bar_info.position,# time
                                           id,           # controller ID
                                           level)        # parameter
-    print(f'{voice.track:2} {voice.channel:2} t={bar_info.position:<5} {id:2} level={level:<3}')
+    # print(f'add_controller_event {voice.track:2} {voice.channel:2} t={bar_info.position:<5} {id:2} level={level:<3}')
 
 def add_pan(bar_info: BarInfo, voice: Voice) -> None:
     """Add a pan command if the pan position has changed."""
@@ -263,7 +263,6 @@ def make_chord(bar_info: BarInfo, voice: Voice,
                     pitches: mt.Pitches,
                     start: int,
                     duration: int):
-    start = utils.add_error(start, 10)
     for pitch in pitches:
         volume = mtim.vol_timer.get_level(voice.track, start)
         voice.add_note(bar_info.midi_file,
@@ -434,7 +433,7 @@ def make_midi(in_file: str, out_file: str, create: str):
             if not skip:
                 bar_info.bar = item
                 for _ in range(item.repeat):
-                    logging.debug(item.chords)
+                    logging.debug(','.join(f'{ch.key}{ch.chord}' for ch in item.chords))
                     for voice in voices:
                         if voice.style == 'perc' and voice.active:
                             make_percussion_bar(bar_info, voice)

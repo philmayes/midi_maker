@@ -7,7 +7,7 @@ import re
 
 re_float = re.compile(r'\d*\.?\d+$')
 
-def add_error(value: int, max_error: int, floor: int=0) -> int:
+def add_error(value: int, max_error: int, floor: int=0, ceil: int=99999999) -> int:
     """Returns a random number in the range -max_error...max_error.
     
     <floor> is the lowest number that will be returned.
@@ -18,7 +18,7 @@ def add_error(value: int, max_error: int, floor: int=0) -> int:
     elif err < -max_error:
         err = -max_error
     value += int(err)
-    return max(value, floor)
+    return min(max(value, floor), ceil)
 
 def get_float(text: str,
               min_val: float=0.0,

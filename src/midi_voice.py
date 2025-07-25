@@ -65,6 +65,7 @@ class Voice:
                  min_pitch: int=0,
                  max_pitch: int=127,
                  ):
+        assert style in styles, f'Bad style "{style}"'
         self.name = name
         self.track = track
         self.channel = channel
@@ -82,6 +83,9 @@ class Voice:
         self.rhythms: mt.Rhythms = [rhythm[style]]
         self.rhythm_index = 0
         self.pan = 64
+        self.err_tim = 10
+        self.err_dur = 10
+        self.err_vol = 5
         # staccato and overhang can be:
         # * an integer that clips a note to that duration
         # * a float that changes the duration by that factor
@@ -98,16 +102,15 @@ class Voice:
     def add_note(self,
                  midi_file,
                  pitch,
-                 position,
-                 play_time,
+                 time,
+                 duration,
                  volume) -> None:
-        midi_file.addNote(self.track,
-                          self.channel,
-                          pitch,
-                          utils.add_error(position, 10),
-                          play_time,
-                          volume)
-
+        midi_file.addNote(self.track,   # The track to which the note is added
+                          self.channel, # the MIDI channel, 0-15
+                          pitch,        # The MIDI pitch number, 0-127
+                          utils.add_error(time, self.err_tim),
+                          utils.add_error(duration, self.err_dur, floor=1),
+                          utils.add_error(volume, self.err_vol, ceil=128))
 
     def adjust_duration(self, duration: int) -> int:
         """Adjust the duration of a note by the effects command."""
