@@ -595,7 +595,7 @@ class Commands:
                 value: str = cmd.get('value', '')
                 if name and value:
                     # Must be lowercase alpha.
-                    if utils.is_name(name):
+                    if not utils.is_name(name):
                         logging.error(f'Alias must be lowercase alpha "{cmd[_ln]}"')
                         continue
                     # Must not be a style name.
@@ -1001,7 +1001,6 @@ class Commands:
                     if bit in aliases:
                         bits[n] = aliases[bit]
                         changed = True
-                        print(f'changed {bit} to {aliases[bit]}')
                 if changed:
                     cmd[key] = ','.join(bits)
-                    print('new-line', cmd[key])
+                    logging.info(f'Alias changed "{key}={value}" to "{key}={cmd[key]}"')
