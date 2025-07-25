@@ -6,6 +6,7 @@ from typing import TypeAlias
 from midi_channels import Channel
 from midi_notes import Duration as n
 import midi_types as mt
+import utils
 
 # Default values follow. Not every style needs all of these values;
 # they exist in the dictionaries for ease of coding and possible
@@ -93,6 +94,20 @@ class Voice:
         self.vibrato: int = 0
         self.reverb: int = 0
         self.chorus: int = 0
+
+    def add_note(self,
+                 midi_file,
+                 pitch,
+                 position,
+                 play_time,
+                 volume) -> None:
+        midi_file.addNote(self.track,
+                          self.channel,
+                          pitch,
+                          utils.add_error(position, 10),
+                          play_time,
+                          volume)
+
 
     def adjust_duration(self, duration: int) -> int:
         """Adjust the duration of a note by the effects command."""

@@ -179,12 +179,11 @@ class Tune:
                     break
                 volume = mtim.vol_timer.get_level(voice.track, bar_info.position)
                 add_pan(bar_info, voice)
-                bar_info.midi_file.addNote(voice.track,
-                                           voice.channel,
-                                           note.pitch,
-                                           utils.add_error(note.start, 10),
-                                           note.duration,
-                                           volume)
+                voice.add_note(bar_info.midi_file,
+                               note.pitch,
+                               note.start,
+                               note.duration,
+                               volume)
 
 def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
     """Assembles the components (compositions) of a work."""
@@ -226,12 +225,11 @@ def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         add_pan(bar_info, voice)
-        bar_info.midi_file.addNote(voice.track,
-                                   voice.channel,
-                                   pitches[pitch_index],
-                                   utils.add_error(bar_info.position, 10),
-                                   play_time,
-                                   volume)
+        voice.add_note(bar_info.midi_file,
+                       pitches[pitch_index],
+                       bar_info.position,
+                       play_time,
+                       volume)
         if pitch_index == 0 or pitch_index == len(pitches) - 1:
             step = -step
         pitch_index += step
@@ -253,12 +251,11 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         add_pan(bar_info, voice)
-        bar_info.midi_file.addNote(voice.track,
-                                   voice.channel,
-                                   pitch,
-                                   utils.add_error(bar_info.position, 10),
-                                   play_time,
-                                   volume)
+        voice.add_note(bar_info.midi_file,
+                       pitch,
+                       bar_info.position,
+                       play_time,
+                       volume)
         bar_info.position += duration
 
 def make_chord(bar_info: BarInfo, voice: Voice,
@@ -269,12 +266,11 @@ def make_chord(bar_info: BarInfo, voice: Voice,
     start = utils.add_error(start, 10)
     for pitch in pitches:
         volume = mtim.vol_timer.get_level(voice.track, start)
-        bar_info.midi_file.addNote(voice.track,
-                                   voice.channel,
-                                   pitch,
-                                   start,
-                                   duration,
-                                   volume)
+        voice.add_note(bar_info.midi_file,
+                       pitch,
+                       start,
+                       duration,
+                       volume)
 
 def make_improv_bar(bar_info: BarInfo, voice: Voice):
     bar_end = bar_info.bar_end()
@@ -350,12 +346,11 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
         volume = mtim.vol_timer.get_level(voice.track, bar_info.position)
         play_time = voice.adjust_duration(duration)
         add_pan(bar_info, voice)
-        bar_info.midi_file.addNote(voice.track,
-                                   voice.channel,
-                                   pitch,
-                                   utils.add_error(bar_info.position, 10),
-                                   play_time,
-                                   volume)
+        voice.add_note(bar_info.midi_file,
+                       pitch,
+                       bar_info.position,
+                       play_time,
+                       volume)
         bar_info.position += duration
 
 def make_percussion_bar(bar_info: BarInfo, voice: Voice):
@@ -374,12 +369,11 @@ def make_percussion_bar(bar_info: BarInfo, voice: Voice):
         duration = bar_info.adjust_note_time(voice, duration)
         play_time = bar_info.adjust_play_time(voice, duration)
         add_pan(bar_info, voice)
-        bar_info.midi_file.addNote(voice.track,
-                                   Channel.percussion,
-                                   voice.voice,
-                                   utils.add_error(bar_info.position, 10),
-                                   play_time,
-                                   volume)
+        voice.add_note(bar_info.midi_file,
+                       voice.voice,
+                       bar_info.position,
+                       play_time,
+                       volume)
         bar_info.position += duration
 
 def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
