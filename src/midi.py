@@ -205,7 +205,11 @@ def get_work(commands: midi_parse.Commands, name: str) -> mi.Composition:
     else:
         composition = commands.get_composition(name)
     if not composition.items:
-        logging.error(f'Composition "{name}" is empty or missing')
+        composition = commands.get_composition('')
+        if composition.items:
+            logging.error(f'Composition "{name}" is empty or missing; using the first composition')
+        else:
+            logging.error(f'No compositions found')
     return composition
 
 def make_arpeggio_bar(bar_info: BarInfo, voice: Voice):
