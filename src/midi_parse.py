@@ -944,7 +944,9 @@ class Commands:
         return volumes
 
     def get_opus(self, name: str) -> str:
-        """Get the named opus."""
+        """Get the named opus, or the 1st one if no name supplied."""
+        if name == '' and self.opuses:
+            return self.opuses[list(self.opuses)[0]]
         return self.opuses.get(name, '')
 
     def get_rhythms(self, value: str) -> mt.Rhythms:
