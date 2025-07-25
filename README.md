@@ -14,7 +14,7 @@ Some command names like `volume` or `rhythm` are used twice; e.g. to define a rh
 There are examples of input files in the `data/` directory.
 
 ### Installation
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install midi_maker..
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install midi_maker.
 
 ```
 pip install midi_maker
@@ -105,7 +105,8 @@ Use `repeat` to play the bar more than once. See **Discussions: Clipping** for u
 ### composition
 Format: `composition name=cname`
 
-You can have one or more compositions in a file. By naming the composition on the command line, only that composition will be played.
+You can have one or more compositions in a file. By naming the composition on the command line with the `-n=opus_or_composition` parameter, only that composition will be played.
+If no parameter is supplied, the first opus, if any, is chosen, else the first composition.
 
 ### effects
 Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=dur vibrato=# reverb=# chorus=#`
@@ -140,6 +141,21 @@ It takes no parameters.
 ### mute and unmute
 The voices created with the `voice` command are initially all audible. Turn one or more voices off with `mute voices=vname1,vname2...`. Turn all voices off with `mute voices=all`. To hear the voices again, use `unmute voices=vname1,vname2...`.
 
+### opus
+Format: `opus name=oname compositions=cname1,cname2...`
+
+An opus is a collection of compositions played in order.
+This allows you to construct a work from various compositions, e.g. intro, verse,
+chorus, verse, verse, coda. The current status (mute, volume, etc.) is
+carried forward from part to part. A composition need not even play anything;
+it can exist solely to set up voices, volume, effects, etc.
+
+You can name which opus or composition to play with the command line
+parameter "-n=opus_or_composition". If no parameter is supplied, the first opus, if any,
+is chosen, else the first composition.
+
+An opus is a way of combining You can have one or more opuses in a file. By naming the composition on the command line with the `-c` parameter, only that composition will be played.
+
 ### pan
 Format: `volume voices=vname1,vname2,... position=# rate=#`
 
@@ -147,9 +163,6 @@ Change the left-right position of one or more voices. The position ranges from l
 `position=+20` to increase the position by 20, and `position=-10` to decrease the position by 10.
 Use `rate` to make the change happen over a period of time.
 For example, `rate=2` will change the position by 2 per beat.
-
-### opus
-Format: `opus name=oname parts=cname1,cname2...`
 
 ### play
 Format: `play voice=vname tunes=tune1,tune2... transpose=#`

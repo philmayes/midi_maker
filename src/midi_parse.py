@@ -653,15 +653,15 @@ class Commands:
         opuses: dict[str, str] = {}
         for cmd in self.commands:
             if cmd['command'] == 'opus':
-                expect(cmd, ['name', 'parts'])
+                expect(cmd, ['name', 'compositions'])
                 name: str = cmd.get('name', '')
-                parts: str = cmd.get('parts', '')
-                if name and parts:
+                compositions: str = cmd.get('compositions', '')
+                if name and compositions:
                     # Should not overwrite an existing opus.
                     if name in opuses:
                         logging.warning(f'Opus name "{name}" is already used "{cmd[_ln]}"')
                         continue
-                    opuses[name] = parts
+                    opuses[name] = compositions
                 else:
                     logging.error(f'Bad format for command "{cmd[_ln]}"')
         return opuses
