@@ -377,6 +377,8 @@ class Commands:
                         clip = new_clip
                 if chords:
                     composition += mi.Bar(chords, repeat, clip)
+                else:
+                    logging.warning(f'No chords supplied in "{cmd[_ln]}"')
 
             elif item == 'effects':
                 expect(cmd, ['voices',
@@ -434,7 +436,10 @@ class Commands:
             elif item == 'mute':
                 expect(cmd, ['voices'])
                 voices = self.get_voices(cmd)
-                composition += mi.Mute(voices, True)
+                if voices:
+                    composition += mi.Mute(voices, True)
+                else:
+                    logging.warning(f'No voices supplied in "{cmd[_ln]}"')
 
             elif item == 'pan':
                 expect(cmd, ['voices', 'position', 'rate'])
@@ -468,6 +473,8 @@ class Commands:
                         composition += vol
                     else:
                         logging.warning(f'No position in "{cmd[_ln]}"')
+                else:
+                    logging.warning(f'No voices supplied in "{cmd[_ln]}"')
 
             elif item == 'play':
                 expect(cmd, ['voice', 'tunes', 'transpose'])
@@ -498,6 +505,8 @@ class Commands:
                     continue
                 if voices and rhythms:
                     composition += mi.Beat(voices, rhythms)
+                else:
+                    logging.warning(f'No voice or rhythm supplied in "{cmd[_ln]}"')
 
             elif item == 'repeat':
                 expect(cmd, ['count'])
@@ -540,7 +549,10 @@ class Commands:
             elif item == 'unmute':
                 expect(cmd, ['voices'])
                 voices = self.get_voices(cmd)
-                composition += mi.Mute(voices, False)
+                if voices:
+                    composition += mi.Mute(voices, False)
+                else:
+                    logging.warning(f'No voices supplied in "{cmd[_ln]}"')
 
             elif item == 'unskip':
                 expect(cmd, [''])
@@ -593,6 +605,8 @@ class Commands:
                         logging.warning(f'Start not allowed in "{cmd[_ln]}"')
                     else:
                         composition += vol
+                else:
+                    logging.warning(f'No voices supplied in "{cmd[_ln]}"')
 
         return composition
 
