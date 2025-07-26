@@ -1,0 +1,9 @@
+mynotes.txt
+phil*
+*.mid
+*.wav
+desktop.ini
+
+.vscode/
+__pycache__/
+temp/
