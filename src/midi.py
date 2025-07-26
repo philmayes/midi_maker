@@ -504,6 +504,7 @@ def make_midi(in_file: str, out_file: str, create: str):
             for voice in item.voices:
                 mtim.pan_timer.set_level(voice.track,
                                          bar_info.start,
+                                         None,
                                          item.position,
                                          item.delta,
                                          item.rate)
@@ -552,6 +553,7 @@ def make_midi(in_file: str, out_file: str, create: str):
             for voice in item.voices:
                 mtim.vol_timer.set_level(voice.track,
                                          bar_info.start,
+                                         item.start,
                                          item.level,
                                          item.delta,
                                          item.rate)

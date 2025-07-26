@@ -31,16 +31,18 @@ class Timer:
     def set_level(self,
                   track: int,
                   tick: int,
+                  start: int | None,
                   level: int | None,
                   delta: int | None,
                   rate:int) -> None:
         """Adjust the level of the track in various ways.
 
-        case  level  delta  rate  set level  set rate
-        1     Y      -      -     to level      -
-        2     -      Y      -     by delta      -
-        3     -      Y      Y     old level     Y
-        4     Y             Y     old level     Y
+        case  start  level  delta  rate  set level  set rate
+        1     -      Y      -      -     to level      -
+        2     -      -      Y      -     by delta      -
+        3     -      -      Y      Y     old level     Y
+        4     -      Y             Y     old level     Y
+        4s    Y      Y             Y     to start      Y
         There are only 4 cases because level or delta is a requirement
         and they may not coexist.
         """
@@ -52,6 +54,9 @@ class Timer:
         assert level is not None or delta is not None, 'one of them must exist'
         assert level is None or delta is None, 'cannot supply level AND delta'
         assert rate >= 0,'negative level rate illegal'
+        assert start is None or (level is not None and
+                                 delta is None and
+                                 rate > 0), 'start needs level and rate'
 
         if not values and level is None:
             logging.warning(f'First level command should not not have a sign')
@@ -61,7 +66,11 @@ class Timer:
         while values and values[-1].tick > tick:
             values.pop()
 
+        # Get old level for use in cases 3 and 4.
         old_level: int = values[-1].level if values else self.default
+        # Override old level when start is supplied (case 4s)
+        if start is not None:
+            old_level = start
 
         # First set the current level
         new_level: int
@@ -70,7 +79,7 @@ class Timer:
         elif delta is not None and rate == 0:
             new_level = old_level + delta   # case 2
         else:
-            new_level = old_level           # case 3 or4
+            new_level = old_level           # case 3 or 4
         new_level = utils.make_in_range(new_level,
                                         self.max_level,
                                         f'{self.name} track1')

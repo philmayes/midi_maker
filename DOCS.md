@@ -92,7 +92,9 @@ Use these rhythms in compositions with `rhythm voices=vname1,vname2... rhythms=r
 Format: `tune name=tname notes=note1,note2...`
 
 A tune is a list of notes and durations (which represent rests).
-See **Data Formats** for the syntax of notes. More than one note can be played at once; for example, `hD5+F#+A` would play a D major chord for two beats. (The `h` indicates a half note).
+See **Data Formats** for the syntax of notes. A note without a duration is a quarter note.
+
+More than one note can be played at once; for example, `hD5+F#+A` would play a D major chord for two beats. (The `h` indicates a half note).
 Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` for two beats, `F#` for one beat, and `A` for four beats.
 
 Use tunes with the `play` command. An example: `tune name=song notes=hG4,h,qA,C5` is a half note of G (4th octave), a half note of rest, two quarter notes of A and C.
@@ -203,12 +205,14 @@ Format: `tempo bpm=#` supplies the number of beats per minute. If omitted, the d
 Format: `timesig value=3/4` or any other time signature.
 
 ### volume
-Format: `volume voices=vname1,vname2,... level=# rate=#`
+Format: `volume voices=vname1,vname2,... level=# rate=# start=#`
 
 Change the volume level of one or more voices. Use `level=80` to set the level to 80;
 `level=+20` to increase the level by 20, and `level=-10` to decrease the level by 10.
+
 Use `rate` to make the change happen over a period of time.
 For example, `rate=2` will change the volume level by 2 per beat.
+Use `start` along with `rate` and `level` to set the starting level of a rate change. When omitted, the starting level is the previous level value.
 
 ## Data Formats
 These describe the format of the notes, chords and durations that are used in commands.

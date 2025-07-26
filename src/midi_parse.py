@@ -547,12 +547,18 @@ class Commands:
                 composition += mi.Skip(False)
 
             elif item == 'volume':
-                expect(cmd, ['voices', 'level', 'rate'])
+                expect(cmd, ['voices', 'start', 'level', 'rate'])
                 voices = self.get_voices(cmd)
                 if voices:
-                    vol = mi.Volume(None, None, 0, voices)
+                    vol = mi.Volume(None, None, None, 0, voices)
+                    start = get_value(cmd, 'start')
                     level = get_value(cmd, 'level')
                     rate2 = get_value(cmd, 'rate')
+                    if start is not None:
+                        if start.isdigit():
+                            vol.start = int(start)
+                        else:
+                            logging.warning(f'Bad start in "{cmd[_ln]}"')
                     if level is not None:
                         # Might be a previously-defined volume name
                         if level in self.volumes:
@@ -573,15 +579,20 @@ class Commands:
                                     vol.level = level
                             else:
                                 logging.warning(f'Bad level in "{cmd[_ln]}"')
-                    if rate2 is not None: # value := get_value(cmd, 'rate'):
+                    if rate2 is not None:
                         if rate2.isdigit():
                             vol.rate = int(rate2)
                         else:
                             logging.warning(f'Bad rate in "{cmd[_ln]}"')
-                    if vol.delta is not None or vol.level is not None:
-                        composition += vol
-                    else:
+                    if vol.delta is None and vol.level is None:
                         logging.warning(f'No level in "{cmd[_ln]}"')
+                    elif vol.start is not None and\
+                         (vol.level is None or\
+                          vol.delta is not None or\
+                          vol.rate == 0):
+                        logging.warning(f'Start not allowed in "{cmd[_ln]}"')
+                    else:
+                        composition += vol
 
         return composition
 

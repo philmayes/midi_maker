@@ -132,10 +132,12 @@ class TimeSig(Item):
 class Volume(Item):
     """Adjust volume for voice(s)."""
     def __init__(self,
+                 start: int | None,
                  delta: int | None,
                  level: int | None,
                  rate: int,
                  voices: Voices):
+        self.start = start  # Starting point for volume change
         self.delta = delta  # Amount by which to adjust volume
         self.level = level  # New setting for volume
         self.rate = rate    # Rate change per quarter note
