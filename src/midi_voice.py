@@ -6,6 +6,7 @@ from typing import TypeAlias
 from midi_channels import Channel
 from midi_notes import Duration as n
 import midi_types as mt
+from preferences import prefs
 import utils
 
 # Default values follow. Not every style needs all of these values;
@@ -83,9 +84,9 @@ class Voice:
         self.rhythms: mt.Rhythms = [rhythm[style]]
         self.rhythm_index = 0
         self.pan = 64
-        self.err_tim = 10
-        self.err_dur = 10
-        self.err_vol = 5
+        self.err_tim = prefs.err_tim
+        self.err_dur = prefs.err_dur
+        self.err_vol = prefs.err_vol
         # staccato and overhang can be:
         # * an integer that clips a note to that duration
         # * a float that changes the duration by that factor

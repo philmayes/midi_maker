@@ -100,9 +100,23 @@ Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` 
 Use tunes with the `play` command. An example: `tune name=song notes=hG4,h,qA,C5` is a half note of G (4th octave), a half note of rest, two quarter notes of A and C.
 
 ### preferences
-Format: `preferences improv_repeat=p rhythm_repeat=p rhythm_rest=p default_volume=# reverb_damp=p reverb_level=p reverb_roomsize=p reverb_width=%`
+Format: `preferences
+improv_repeat=p
+rhythm_repeat=p
+rhythm_rest=p
+default_volume=#
+reverb_damp=p
+reverb_level=p
+reverb_roomsize=p
+reverb_width=%
+err_tim=#
+err_dur=#
+err_vol=#`
 
 Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
+
+`err_tim`, `err_dur` and `err_vol` are the maximum number of ticks by which the start, duration and volume of notes are adjusted.
+This adds variety to the performance. (A future possibility is to also supply these values on a per-voice basis.)
 
 ## Performance Commands
 These generate the actual MIDI output using the **definition** commands that have been created.
