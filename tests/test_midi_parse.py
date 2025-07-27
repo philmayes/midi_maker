@@ -422,6 +422,20 @@ class TestStrToNotes:
         assert tune[6] == mt.Note(10*dur.q, dur.q, 'G',  7, 5, 67)
         assert tune[7] == mt.Note(11*dur.q, dur.q, 'A',  9, 5, 69)
 
+    def test_str_to_notes11(self):
+        """Test that tune durations are not inherited from prev entry."""
+        notes = 'C,hEm,G,hA,B'
+        tune: mt.Tune = mp.str_to_notes(notes, {})
+        assert len(tune) == 7
+        #                            start    dur name int oct pitch
+        assert tune[0] == mt.Note(       0, dur.q, 'C',  0, 5, 60)
+        assert tune[1] == mt.Note( 1*dur.q, dur.h, 'E',  4, 5, 64)
+        assert tune[2] == mt.Note( 1*dur.q, dur.h, 'G',  7, 5, 67)
+        assert tune[3] == mt.Note( 1*dur.q, dur.h, 'B', 11, 5, 71)
+        assert tune[4] == mt.Note( 3*dur.q, dur.q, 'G',  7, 5, 67) # dur==q
+        assert tune[5] == mt.Note( 4*dur.q, dur.h, 'A',  9, 5, 69)
+        assert tune[6] == mt.Note( 6*dur.q, dur.q, 'B', 11, 5, 71) # dur==q
+
 class TestTune:
     def test_tune1(self):
         """Test that a rest is handled & durations are not inherited."""

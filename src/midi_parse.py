@@ -251,7 +251,7 @@ def str_to_notes(notes: str, tunes: mt.TuneDict) -> mt.Tune:
                     tune.extend(note_list)
                     new_duration = note_list[0].duration
                 else:
-                    logging.error(f'Bad note: "{item}"')
+                    logging.error(f'Bad note "{item}" in "{notes}"')
                     continue
 
             if first:   # First in the sub-item, not the whole tune!
@@ -826,7 +826,7 @@ class Commands:
                         tune = str_to_notes(notes, tunes)
                         tunes[name] = tune
                         total = sum(note.duration for note in tune)
-                        logging.debug(f'Tune {name} has duration {total:5}')
+                        logging.debug(f'Tune {name} has duration {total:5} = {total/960} beats')
 
         return tunes
 

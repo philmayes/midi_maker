@@ -26,6 +26,5 @@ Full details in the [docs](DOCS.md) file.
 ### Examples
 There are examples of input files in the `data/` directory.
 
-
 ## License
-TBD
+[MIT](LICENSE.txt)

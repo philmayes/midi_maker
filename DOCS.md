@@ -94,10 +94,17 @@ Format: `tune name=tname notes=note1,note2...`
 A tune is a list of notes and durations (which represent rests).
 See **Data Formats** for the syntax of notes. A note without a duration is a quarter note.
 
-More than one note can be played at once; for example, `hD5+F#+A` would play a D major chord for two beats. (The `h` indicates a half note).
-Not all those notes have to play for the same time: `hD5+qF#+nA` will play `D5` for two beats, `F#` for one beat, and `A` for four beats.
+More than one note can be played at once; for example, `D+F#+A` would play a D major chord for one beat.
+Not all those notes have to play for the same time: `hD@5+F#+nA` will play `D` for two beats (the `h` indicates a half note), `F#` for one beat, and `A` for four beats.
 
-Use tunes with the `play` command. An example: `tune name=song notes=hG4,h,qA,C5` is a half note of G (4th octave), a half note of rest, two quarter notes of A and C.
+An example: `tune name=song notes=hG@4,h,A,C@5` is a half note of G (4th octave), a half note of rest, two quarter notes of A and C.
+
+A couple of hints:
+* Use tunes with the `play` command. Break a tune up into pieces and play them together, e.g. in *example1.ini*: `play voice=vocal tune=tune1,tune2,tune3`.
+* When you use **--log=DEBUG** on the command line, you can see the duration of the tunes, e.g. in *example1.ini*:\
+Tune tune1 has duration 15360 = 16.0 beats\
+Tune tune2 has duration 15360 = 16.0 beats\
+Tune tune3 has duration 18240 = 19.0 beats
 
 ### preferences
 Format: `preferences
@@ -233,14 +240,13 @@ These describe the format of the notes, chords and durations that are used in co
 This table describes where each format can be used.
 
 | format | `tune` | `rhythm` | `bar` | `chord` |
-| :---- | :-- | :---- | :-- | :-- |
-| notes     | Y `+` | - | - | Y |
+| :-------- | :---- | :- | :--- | :- |
+| notes     | Y `+` | - | -     | Y  |
 | chords    | Y `+` | - | Y `+` | -  |
-| durations | Y      | Y | - | -  |
+| durations | Y `+` | Y | -     | -  |
 
 Y = format is used in command\
-`+` = format can take an extra duration prefix and/or an @octave suffix. if no octave is supplied, uses previous octave.
-<!-- d = if no duration supplied, uses previous duration -->
+`+` = format can take an extra duration prefix and/or an @octave suffix. if no octave is supplied, uses previous octave. If no duration supplied, it is a quarter note.
 
 ### durations
 
@@ -259,11 +265,12 @@ These are used alone in the  `tune` and `rhythm` commands, and as prefixes for n
 ### notes
 Format: `duration note @octave`.
 * `duration` is one of the above abbreviations such as `q` for quarter (a quarter note). It can be dotted to make it 50% longer. A duration can be assembled from multiple parts, e.g. `q.+n` is 5½ beats; `n-q` is 3 beats.
+If the duration is not supplied, it will be a quarter note.
 * `note` is A-G with possible # or b e.g. `Eb`.
 * `octave` is 1-10.
 
 When supplying multiple notes, the octave can be omitted if it matches the previous note. e.g. a scale of G is `qG@5,A,B,C@6,D,E,F#,G`. Note that the `C` must be declared as being in octave 6, otherwise the C below G5 will play.
-If the duration is not supplied, it will be a quarter note.
+
 
 For example, `q.F#@4` will play a dotted quarter F# note in the 4th octave.
 

@@ -10,6 +10,28 @@ from src import midi_voice as mv
 
 def test_1(mocker):
     """Test note/bar clipping."""
+    def test(clip: bool):
+        bar_info.start = 0
+        bar_info.bar = mi.Bar(chords, 1, clip)
+        midi.make_bass_bar(bar_info, voice)
+        # Check all calls to addNote
+        # time     = args[3]
+        # duration = args[4]
+        calls = mock_add_note.call_args_list
+        # Use "-n" indexing because mock accumulates all the calls to it.
+        assert calls[-4].args[3] == 0
+        assert calls[-4].args[4] == 1000
+        assert calls[-3].args[3] == 1000
+        assert calls[-3].args[4] == 1000
+        assert calls[-2].args[3] == 2000
+        assert calls[-2].args[4] == 1000
+        assert calls[-1].args[3] == 3000
+        last = calls[-1].args[4]
+        if clip:
+            assert last == 840  # last note has been truncated
+        else:
+            assert last == 1000 # last note has not been truncated
+
     lines: list[str] = [
         'voice name=lead1 style=lead voice=rock_organ',
     ]
@@ -18,33 +40,18 @@ def test_1(mocker):
     track = 1
     midi_file = MIDIFile()
     mock_add_note = mocker.patch.object(midi_file, 'addNote')
-    # mocker.patch('src.midi.add_start_error')
+    voice: mv.Voice = mv.Voice('vtest', track, channel, 30, 'bass')
+     # Use rhythms that extend past the end of the bar:
+    voice.rhythms = [[1000,1000,1000,1000,]]
+   # Set error values to 0 so time and duration checks do not fail
+    # because they have been adjusted by a small error,
+    voice.err_dur = 0
+    voice.err_tim = 0
+    voice.err_vol = 0
     bar_info: midi.BarInfo = midi.BarInfo(midi_file)
     chords: list[mc.Chord] = [mc.Chord(0, 'C', 'maj', 3)]
-    # Set 3rd param to True to remove clipping.
-    # This will make the last assertion 1000, not 840.
-    bar_info.bar = mi.Bar(chords, 1)
-    voice: mv.Voice = mv.Voice('vtest', track, channel, 30, 'bass')
-    # Use rhythms that extend past the end of the bar:
-    voice.rhythms = [[1000,1000,1000,1000,]]
-    midi.make_bass_bar(bar_info, voice)
-    # Now you can assert addNote was called, e.g.:
-    assert mock_add_note.called
-
-    # Check all calls to addNote
-    # time = args[3]
-    # duration = args[4]
-    # The time values fail because start_time is supplied by
-    # add_error(bar_info.position) and mock cannot handle this.
-    calls = mock_add_note.call_args_list
-    # assert calls[0].args[3] == 0
-    assert calls[0].args[4] == 1000
-    # assert calls[1].args[3] == 1000
-    assert calls[1].args[4] == 1000
-    # assert calls[2].args[3] == 2000
-    assert calls[2].args[4] == 1000
-    # assert calls[3].args[3] == 3000
-    assert calls[3].args[4] == 840  # last note has been truncated
+    test(False)
+    test(True)
 
 class TestBarInfo:
     def test_barinfo1(self):
