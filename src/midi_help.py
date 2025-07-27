@@ -2,6 +2,8 @@ import argparse
 
 import midi_chords as mc
 import midi_notes as mn
+from midi_parse import definition_commands, performance_commands
+
 import midi_percussion as mp
 import midi_voice as mv
 import midi_voices
@@ -15,37 +17,12 @@ commands
 styles
 volumes
 """
-commands = """\
-The commands in the input file can be:
-    Definition Commands
-        chord
-        preferences
-        rhythm
-        tune
-        voice
-        volume
-    Performance Commands
-        bar
-        composition
-        effects
-        loop
-        mute
-        opus
-        play
-        repeat
-        rhythm
-        tempo
-        timesig
-        unmute
-        volume
-See README.md for details.\
-"""
 chord_help = """\
 A missing chord is a major: "C" is "Cmaj".
 A missing chord with the 7th is a dominant: "D7" is "Ddom7".
 You can create your own chord with a command in the .ini file like
     "chord name=pairs notes=C,D,E,F#"
-The chord is in the key of C. You can create an inversion thus:
+The chord is always given for the key of C. You can create an inversion thus:
     "chord name=inv notes=E,G,C"\
 """
 vol_help = """\
@@ -70,6 +47,16 @@ def print_2cols(items: dict[str, int], by8: bool=False):
         if n + row_count < len(names):
             print(voice_str(items, names[n + row_count], 1))
 
+def commands():
+    print('The commands in the input file can be:')
+    print('    Definition Commands')
+    for cmd in definition_commands:
+        print(f'        {cmd}')
+    print('    Performance Commands')
+    for cmd in performance_commands:
+        print(f'        {cmd}')
+    print('    See DOCS.md for details.')
+
 def chords():
     print('The following chords are available:')
     for name, intervals in mc.chords.items():
@@ -89,8 +76,6 @@ def percussion():
 
 def styles():
     print("""The following styles are available for voices:""")
-    for name, level in mvol.dynamics.items():
-        print(f'    {name:10} = {level:>4}')
     for name in mv.styles.keys():
         print(f'    {name}')
 

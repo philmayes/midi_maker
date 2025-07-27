@@ -25,6 +25,34 @@ re_octave = re.compile(r'@(\d)$')
 
 _ln = '$line'  # Key for the original command line. Used for error reports.
 
+definition_commands = [
+    'chord',
+    'preferences',
+    'rhythm',
+    'tune',
+    'voice',
+    'volume',
+]
+performance_commands = [
+    'alias',
+    'bar',
+    'composition',
+    'effects',
+    'loop',
+    'mute',
+    'opus',
+    'pan',
+    'play',
+    'repeat',
+    'rhythm',
+    'skip',
+    'tempo',
+    'timesig',
+    'unmute',
+    'unskip',
+    'volume',
+]
+
 def clean_line(line: str) -> str:
     """Remove comments and whitespace."""
     max_len = 250
@@ -123,36 +151,12 @@ def get_value(cmd: mt.CmdDict, param: str, default: str | None=None) -> str | No
 def parse_command(command: str) -> mt.CmdDict:
     """Parse command into dictionary."""
     result: mt.CmdDict = {}
-    expect = [
-        'alias',
-        'bar',
-        'chord',
-        'composition',
-        'effects',
-        'loop',
-        'mute',
-        'notes',
-        'opus',
-        'pan',
-        'play',
-        'preferences',
-        'repeat',
-        'rhythm',
-        'skip',
-        'tempo',
-        'timesig',
-        'tune',
-        'unmute',
-        'unskip',
-        'voice',
-        'volume',
-    ]
     error: str = ''
     # parse parameters into the default values
     for index, word in enumerate(command.split()):
         if index == 0:
             # First word should be the command.
-            if word in expect:
+            if word in definition_commands or word in performance_commands:
                 result['command'] = word
             else:
                 error = f'Bad command of "{command}"'
