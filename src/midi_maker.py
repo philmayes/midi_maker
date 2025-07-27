@@ -60,13 +60,10 @@ def run(args:argparse.Namespace):
         fname, _ = os.path.splitext(base)
         out_file = os.path.join(out_file, fname + '.mid')
 
+    # Make the MIDI file.
     make_midi(in_file, out_file, args.name)
-
-    if args.wave:
-        midi_play.play(out_file, out_file.replace('.mid', '.wav'))
-
-    if args.play:
-        midi_play.play(out_file)
+    # Play MIDI file or make wav file if requested.
+    midi_play.play(out_file, args)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Create MIDI file',
@@ -74,8 +71,9 @@ if __name__=='__main__':
     parser.add_argument('input', nargs='?', default='', help=f'Data to create MIDI file')
     parser.add_argument('output', nargs='?', default='', help=f'Output file or folder (defaults to input filename & location)')
     parser.add_argument('-n', '--name', default='', help='use the named composition or opus from the input file')
-    parser.add_argument('-p', '--play', action="store_true", default=False, help='play the generated midi file')
-    parser.add_argument('-w', '--wave', action="store_true", default=False, help='create a wav file')
+    parser.add_argument('-p', '--play', nargs='?', const='bare', default='none', help='play the generated midi file [with program]')
+    parser.add_argument('-s', '--sf2', help='sound file to use')
+    parser.add_argument('-w', '--wav', action="store_true", default=False, help='create a wav file')
     parser.add_argument('-l', '--log', default=default_log_level, help='logging level')
     parser.add_argument('-v', '--version', action="store_true", help='version')
     args = parser.parse_args()
