@@ -13,9 +13,12 @@ if sys.platform == 'win32':
     player1 = r"E:\devtools\FluidSynth\bin\fluidsynth.exe"
     sound_file1 = r"E:\devtools\MIDISoundFiles\FluidR3 GM.sf2"
     player2 = r"C:\Program Files (x86)\Windows Media Player\wmplayer.exe"
-else:   # 'linux' or 'darwin'
+elif sys.platform == 'darwin':
     player1 = '/opt/homebrew/bin/fluidsynth'
     sound_file1 = "/Users/philmayes/Library/Audio/Sounds/Banks/FluidR3 GM.sf2"
+else:   # 'linux'
+    player1 = '/usr/bin/fluidsynth'
+    sound_file1 = "/usr/share/sounds/sf2/FluidR3_GM.sf2"
 
 def play(midi_file: str, wav_file: str='') -> None:
     """Plays a midi file or creates a wav file."""
