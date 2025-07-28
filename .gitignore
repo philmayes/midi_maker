@@ -3,7 +3,7 @@ phil*
 *.mid
 *.wav
 desktop.ini
-
+.DS_Store
 .vscode/
 __pycache__/
 temp/
