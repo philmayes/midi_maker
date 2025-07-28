@@ -53,17 +53,12 @@ def get_player(args:argparse.Namespace) -> str:
         if lower in known_programs:
             for player in players:
                 if lower in player.lower() and os.path.exists(player):
-                    return space_quote(player)
-        # lower = args.play.lower()
-        # if lower in known_programs:
-        #     for player in players:
-        #         if lower in player and os.path.exists(player):
-        #             return space_quote(player)
+                    return player
         logging.warning(f'program "{args.play}" does not exist')
     # Look through all the programs we know about.
     for player in players:
         if os.path.exists(player):
-            return space_quote(player)
+            return player
     return ''
 
 def get_soundfont(args:argparse.Namespace) -> str:
