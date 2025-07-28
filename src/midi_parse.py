@@ -768,8 +768,8 @@ class Commands:
             if name in rhythms:
                 logging.error(f'Rhythm "{name}" replaces earlier instance')
             rhythms[name] = rhythm
-            total = sum(rhythm)
-            logging.debug(f'rhythm "{name}" has duration {total} ticks = {total/mn.Duration.quarter} beats')
+            total = sum(abs(r) for r in rhythm)
+            logging.debug(f'rhythm "{name}" has duration {total} ticks = {total/mn.Duration.quarter:.3} beats')
 
         for cmd in self.commands:
             if cmd['command'] == 'rhythm':
@@ -844,8 +844,8 @@ class Commands:
                     else:
                         tune = str_to_notes(notes, tunes)
                         tunes[name] = tune
-                        total = sum(note.duration for note in tune)
-                        logging.debug(f'Tune {name} has duration {total:5} = {total/960} beats')
+                        total = sum(abs(note.duration) for note in tune)
+                        logging.debug(f'Tune {name} has duration {total:5} = {total/960:.3} beats')
 
         return tunes
 
