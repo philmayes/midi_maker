@@ -1,7 +1,7 @@
 # Midi Maker Documentation
 
 ## Overview
-`midi_maker` interprets a text file (by convention using a .ini extension) and generates a midi file from it with the same filename in the same directory.
+**midi_maker** interprets a text file (by convention using a .ini extension) and generates a midi file from it with the same filename in the same directory.
 ### Syntax
 The text file syntax is a list of commands with the format: `command param1=value1 param2=value2,value3...`. Values are case-sensitive. 
 By convention, a parameter name is plural when it can take multiple values separated by commas.
@@ -47,7 +47,7 @@ The `voice` command is used to specify both instruments and percussion.
   - `arpeggio` Plays chord as arpeggio.
   - `improv` Improvises based on the chord. Can take extra parameters `min_pitch=# max_pitch=#`.
   - `lead` Plays a supplied note list
-* `voice` is the [General MIDI](https://en.wikipedia.org/wiki/General_MIDI) name. If the style is `perc`, the voice should be a percussion name. You can find all names with`midi_maker.py help voices` or `midi_maker help percussion` or by looking in `midi_voices.py` and `midi_percussion.py`.\
+* `voice` is the [General MIDI](https://en.wikipedia.org/wiki/General_MIDI) name. If the style is `perc`, the voice should be a percussion name. You can find all names with`midi_maker.py help voices` or `midi_maker.py help percussion` or by looking in `midi_voices.py` and `midi_percussion.py`.\
 The voice can also be supplied as an integer from 1-128 (or from 35-81 for percussion).
 
 Voice encompasses both midi voices and midi percussion. 
@@ -65,12 +65,11 @@ You can override or add to the existing volume names+values.
 ### chord
 Format: `chord name=cname notes=C,E,G,Bb`
 
-midi_maker recognizes major, minor, augmented, diminished, 7th and 9th chord names.
-Use `midi_maker help chords` to see what is available.
+**midi_maker** recognizes major, minor, augmented, diminished, 7th and 9th chord names.
+Use `midi_maker.py help chords` to see what is available.
 You can create your own chord with a command in the .ini file like
 `chord name=pairs notes=C,D,E,F#`.
-The chord is taken to be in the key of C, thus you can create an inversion with
-`chord name=inv notes=E,G,C`
+The chord is always in the key of C, so `chord name=inv notes=E,G,C` is taken to be the [first inversion](https://en.wikipedia.org/wiki/First_inversion) of C major.
 
 ### rhythm
 This can take either of two formats:
@@ -86,6 +85,8 @@ Format 2 generates a random rhythm using:
 * `repeat`: a decimal number less than 1; the chance of repeating the previous note.
 * `durations`: a list of durations from which to pick. Each duration is followed by an integer probability, e.g. `q4,h1` means a quarter note is 4 times more likely than a half note.
 
+You can also use longform variants, e.g. `quarter` instead of `q`. See **Data Formats** : **Durations**. 
+The default rhythm for all styles is `q,q,q,q`.
 Use these rhythms in compositions with `rhythm voices=vname1,vname2... rhythms=rname1,rname2...`
 
 ### tune
@@ -122,7 +123,7 @@ errvol=#`
 
 Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
 
-`errtim`, `errdur` and `errvol` are the maximum number of ticks by which the start, duration and volume of notes are adjusted.
+`errtim`, `errdur` and `errvol` are the maximum number of ticks by which the start, duration and volume of notes are adjusted. They are the outer limits of a bell curve.
 These add variety to the performance. These values can be adjusted dynamically with the `effects` command.
 
 ## Performance Commands
@@ -306,4 +307,4 @@ To inhibit this behavior and allow the note or chord to play for its full durati
 * an `effects` command, which will apply to the named voices until countermanded.
 
 ### Playing
-midi_maker can play the MIDI file it has just generated. Use `-p` on the command line. You will probably need to edit `midi_play.py` for this to work on your system.
+Playing the MIDI file that **midi_maker** has just generated needs an external program and maybe a [SoundFont](https://en.wikipedia.org/wiki/SoundFont) file. Use `-p=program -s=soundfont` on the command line. Program and soundfont locations are also built into **midi_maker** so you can just use `-p`, but you will probably need to edit `midi_play.py` for this to work on your system. There are also shortcuts to pick a specific player: `-p=fluidsynth`, `-p=vlc`, `-p=wmplayer`.

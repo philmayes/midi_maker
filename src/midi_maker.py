@@ -7,7 +7,7 @@ import midi_help
 import midi_play
 
 major = 0
-minor = 0
+minor = 9
 patch = 0
 version = f'{major}.{minor}.{patch}'
 
