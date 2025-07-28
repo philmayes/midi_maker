@@ -481,6 +481,12 @@ def make_midi(in_file: str, out_file: str, create: str):
                     if voice.chorus != item.chorus:
                         voice.chorus = item.chorus
                         add_controller_event(bar_info, voice, 93, voice.chorus)
+                if item.errtim is not None:
+                    voice.errtim = item.errtim
+                if item.errdur is not None:
+                    voice.errdur = item.errdur
+                if item.errvol is not None:
+                    voice.errvol = item.errvol
 
         elif isinstance(item, mi.Loop):
                 # This is the beginning of a loop. Save the location

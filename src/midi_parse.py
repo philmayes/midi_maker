@@ -394,6 +394,9 @@ class Commands:
                              'vibrato',
                              'reverb',
                              'chorus',
+                             'errtim',
+                             'errdur',
+                             'errvol',
                              ])
                 voices = self.get_voices(cmd)
                 staccato: int | float | None = None
@@ -404,6 +407,9 @@ class Commands:
                 vibrato: int | None = None
                 reverb: int | None = None
                 chorus: int | None = None
+                errtim: int | None = None
+                errdur: int | None = None
+                errvol: int | None = None
                 if value := get_value(cmd, 'staccato'):
                     staccato = get_effect(value, 0.0, 1.0)
                 if value := get_value(cmd, 'overhang'):
@@ -420,6 +426,12 @@ class Commands:
                     reverb = mn.str_to_duration(value)
                 if value := get_value(cmd, 'chorus'):
                     chorus = mn.str_to_duration(value)
+                if value := get_value(cmd, 'errtim'):
+                    errtim = utils.get_int(value, 0, mn.ticks_per_beat)
+                if value := get_value(cmd, 'errdur'):
+                    errdur = utils.get_int(value, 0, mn.ticks_per_beat)
+                if value := get_value(cmd, 'errvol'):
+                    errvol = utils.get_int(value, 0, 120)
                 if staccato and overhang:
                     logging.warning(f'Cannot use both staccato and overhang together; staccato takes preference')
                     overhang = None
@@ -431,7 +443,10 @@ class Commands:
                                           rate,
                                           vibrato,
                                           reverb,
-                                          chorus)
+                                          chorus,
+                                          errtim,
+                                          errdur,
+                                          errvol)
 
             elif item == 'loop':
                 expect(cmd, [])

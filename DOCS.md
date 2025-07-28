@@ -123,7 +123,7 @@ errvol=#`
 Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
 
 `errtim`, `errdur` and `errvol` are the maximum number of ticks by which the start, duration and volume of notes are adjusted.
-This adds variety to the performance. (A future possibility is to also supply these values on a per-voice basis.)
+These add variety to the performance. These values can be adjusted dynamically with the `effects` command.
 
 ## Performance Commands
 These generate the actual MIDI output using the **definition** commands that have been created.
@@ -142,11 +142,26 @@ You can have one or more compositions in a file. By naming the composition on th
 If no parameter is supplied, the first opus, if any, is chosen, else the first composition.
 
 ### effects
-Format: `effects voices=v1,v2... staccato=# overhang=# clip=no octave=# rate=dur vibrato=# reverb=# chorus=#`
+Format: `effects
+voices=v1,v2...
+staccato=#
+overhang=#
+clip=no
+octave=#
+rate=dur
+vibrato=#
+reverb=#
+chorus=#
+errtim=#
+errdur=#
+errvol=#`
 
 This turns various effects on or off for the named voices. The `staccato` value can either be the number of ticks for which the note should be played or a decimal fraction like 0.5 meaning the note will be played for half its time. Use `staccato=0` to turn it off.
 
 `overhang` takes a number of ticks or a decimal number greater than 1.0 to cause the note to play for that much longer. It will overlap any following note. For instance, an arpeggio with a large `overhang` will progressively play a chord.
+
+`errtim`, `errdur` and `errvol` are the maximum number of ticks by which the start, duration and volume of notes are adjusted.
+These add variety to the performance. The default values are set in the `preferences` command.
 
 See **Discussions: Clipping** for use of the `clip` parameter.
 

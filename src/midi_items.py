@@ -54,7 +54,10 @@ class Effects(Item):
                  rate: int | None,
                  vibrato: int | None,
                  reverb: int | None,
-                 chorus: int | None):
+                 chorus: int | None,
+                 errtim: int | None,
+                 errdur: int | None,
+                 errvol: int | None):
         self.voices = voices
         self.staccato = staccato
         self.overhang = overhang
@@ -64,6 +67,9 @@ class Effects(Item):
         self.vibrato = vibrato
         self.reverb = reverb
         self.chorus = chorus
+        self.errtim = errtim
+        self.errdur = errdur
+        self.errvol = errvol
 
 class Loop(Item):
     """Start a loop."""
