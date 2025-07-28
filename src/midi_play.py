@@ -25,6 +25,7 @@ if sys.platform == 'win32':
 elif sys.platform == 'darwin':
     players = [
         '/opt/homebrew/bin/fluidsynth',
+        '/Applications/VLC.app',
     ]
     soundfont1 = "/Users/philmayes/Library/Audio/Sounds/Banks/FluidR3 GM.sf2"
 else:   # 'linux'
@@ -110,7 +111,8 @@ def play(midi_file: str, args:argparse.Namespace) -> None:
 
     params: list[str] = []
     params.append(program)
-    if 'fluidsynth' in program:
+    lowercase_program = program.lower()
+    if 'fluidsynth' in lowercase_program:
         sf2 = get_soundfont(args)
         if not sf2:
             logging.warning(f'Cannot find soundfont')
@@ -140,13 +142,14 @@ def play(midi_file: str, args:argparse.Namespace) -> None:
         params.append(midi_file)
         subprocess.run(params)
 
-    elif 'vlc' in program:
+    elif 'vlc' in lowercase_program:
         sf2 = get_soundfont(args)
         params.append('-I')     # Run VLC in...
         params.append('dummy')  # ...headless mode
         params.append(midi_file)
         if sf2:
             # This may not be necessary; a soundfont file can be preset in VLC.
+            # On Linux, this parameter is not recognized.
             params.append('--soundfont')
             params.append(sf2)
         if args.wav:
