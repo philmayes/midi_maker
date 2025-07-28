@@ -45,9 +45,9 @@ def test_1(mocker):
     voice.rhythms = [[1000,1000,1000,1000,]]
    # Set error values to 0 so time and duration checks do not fail
     # because they have been adjusted by a small error,
-    voice.err_dur = 0
-    voice.err_tim = 0
-    voice.err_vol = 0
+    voice.errdur = 0
+    voice.errtim = 0
+    voice.errvol = 0
     bar_info: midi.BarInfo = midi.BarInfo(midi_file)
     chords: list[mc.Chord] = [mc.Chord(0, 'C', 'maj', 3)]
     test(False)

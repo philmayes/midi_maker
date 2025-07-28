@@ -84,9 +84,9 @@ class Voice:
         self.rhythms: mt.Rhythms = [rhythm[style]]
         self.rhythm_index = 0
         self.pan = 64
-        self.err_tim = prefs.err_tim
-        self.err_dur = prefs.err_dur
-        self.err_vol = prefs.err_vol
+        self.errtim = prefs.errtim
+        self.errdur = prefs.errdur
+        self.errvol = prefs.errvol
         # staccato and overhang can be:
         # * an integer that clips a note to that duration
         # * a float that changes the duration by that factor
@@ -109,9 +109,9 @@ class Voice:
         midi_file.addNote(self.track,   # The track to which the note is added
                           self.channel, # the MIDI channel, 0-15
                           pitch,        # The MIDI pitch number, 0-127
-                          utils.add_error(time, self.err_tim),
-                          utils.add_error(duration, self.err_dur, floor=1),
-                          utils.add_error(volume, self.err_vol, ceil=128))
+                          utils.add_error(time, self.errtim),
+                          utils.add_error(duration, self.errdur, floor=1),
+                          utils.add_error(volume, self.errvol, ceil=128))
 
     def adjust_duration(self, duration: int) -> int:
         """Adjust the duration of a note by the effects command."""

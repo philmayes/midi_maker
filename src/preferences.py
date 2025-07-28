@@ -24,8 +24,8 @@ class Preferences:
 
         # Max values of error added to start time, duration and volume.
         # utils.add_error() uses these to generate a gaussian distribution.
-        self.err_tim = 10
-        self.err_dur = 10
-        self.err_vol = 5
+        self.errtim = 10
+        self.errdur = 10
+        self.errvol = 5
 
 prefs = Preferences()

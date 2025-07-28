@@ -116,13 +116,13 @@ reverb_damp=p
 reverb_level=p
 reverb_roomsize=p
 reverb_width=%
-err_tim=#
-err_dur=#
-err_vol=#`
+errtim=#
+errdur=#
+errvol=#`
 
 Adjust various settings. `p`, the probability, is a decimal number less than 1.0. `reverb_width` is 0.0-100.0.
 
-`err_tim`, `err_dur` and `err_vol` are the maximum number of ticks by which the start, duration and volume of notes are adjusted.
+`errtim`, `errdur` and `errvol` are the maximum number of ticks by which the start, duration and volume of notes are adjusted.
 This adds variety to the performance. (A future possibility is to also supply these values on a per-voice basis.)
 
 ## Performance Commands
