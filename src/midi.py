@@ -404,6 +404,8 @@ def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
         bar_info.position += duration
 
 def make_midi(in_file: str, out_file: str, create: str):
+    # Make improv and rhythm perform the same on repeated executions.
+    random.seed(12345)
     with open(in_file, "r") as f_in:
         lines = f_in.readlines()
     commands: midi_parse.Commands = midi_parse.Commands(lines)
