@@ -1,3 +1,7 @@
+"""Make a MIDI file from a text description."""
+
+# Hosted at https://github.com/philmayes/midi_maker
+
 import argparse
 import logging
 import os
@@ -8,7 +12,7 @@ import midi_play
 
 major = 0
 minor = 9
-patch = 0
+patch = 1
 version = f'{major}.{minor}.{patch}'
 
 log_levels = (
