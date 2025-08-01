@@ -1,6 +1,6 @@
 """This module generates a .mid file from a text description.
 
-See README.md for details."""
+See DOC.md for details."""
 
 """ References
 https://medium.com/@stevehiehn/how-to-generate-music-with-python-the-basics-62e8ea9b99a5
