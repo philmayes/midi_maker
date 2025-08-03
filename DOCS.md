@@ -136,6 +136,8 @@ The chords can be preceded by a duration; if not, a quarter note is assumed. For
 
 Use `repeat` to play the bar more than once. See **Discussions: Clipping** for use of the `clip` parameter.
 
+**Experimental:** Use `chords=improv` to choose a random chord. Use `repeat=#` for a number of random chords. Use `-l=DEBUG` on the command line to see what chords have been generated.
+
 ### composition
 Format: `composition name=cname`
 

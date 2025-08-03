@@ -6,6 +6,7 @@ import re
 
 from midi_channels import Channel, str_to_channel
 import midi_chords as mc
+import midi_improv as mimp
 import midi_items as mi
 import midi_notes as mn
 import midi_percussion
@@ -349,26 +350,7 @@ class Commands:
                 chords: list[mc.Chord] = []
                 repeat = 1
                 clip = True
-                if value := get_value(cmd, 'chords'):
-                    tick = 0
-                    last_octave = mc.Chord.no_octave
-                    for chord in value.split(','):
-                        # Parse the chord.
-                        duration, chord  = mc.get_chord(chord)
-                        if duration >= 0:
-                            # If no duration supplied, use the default.
-                            if duration == 0:
-                                duration = mn.Duration.default
-                            # If no octave supplied, use the previous one.
-                            if chord.octave == mc.Chord.no_octave:
-                                chord.octave = last_octave
-                            else:
-                                last_octave = chord.octave
-                            chord.start = tick
-                            chords.append(chord)
-                            tick += duration
-                        else:
-                            logging.error(f'Bad bar chord "{chord}"')
+                improv = False
                 if value := get_value(cmd, 'repeat'):
                     repeat2 = utils.get_int(value)
                     if repeat2 is None:
@@ -379,10 +361,45 @@ class Commands:
                     new_clip = utils.truth(value)
                     if new_clip is not None:
                         clip = new_clip
-                if chords:
-                    composition += mi.Bar(chords, repeat, clip)
-                else:
-                    logging.warning(f'No chords supplied in "{cmd[_ln]}"')
+                if value := get_value(cmd, 'chords'):
+                    tick = 0
+                    last_octave = mc.Chord.no_octave
+                    if value == 'improv':
+                        improv = True
+                        for _ in range(repeat):
+                            # Get last bar.
+                            for i in reversed(composition.items):
+                                if isinstance(i, mi.Bar):
+                                    break
+                            else:
+                                # No preceding bar; make one up
+                                i = mi.Bar([mi.Chord(0, 'C', 'maj', -1)])
+                            bar = mimp.make_bar(i)
+                            bar.clip = clip
+                            composition += bar
+                    else:
+                        for chord in value.split(','):
+                            # Parse the chord.
+                            duration, chord  = mc.get_chord(chord)
+                            if duration >= 0:
+                                # If no duration supplied, use the default.
+                                if duration == 0:
+                                    duration = mn.Duration.default
+                                # If no octave supplied, use the previous one.
+                                if chord.octave == mc.Chord.no_octave:
+                                    chord.octave = last_octave
+                                else:
+                                    last_octave = chord.octave
+                                chord.start = tick
+                                chords.append(chord)
+                                tick += duration
+                            else:
+                                logging.error(f'Bad bar chord "{chord}"')
+                if not improv:
+                    if chords:
+                        composition += mi.Bar(chords, repeat, clip)
+                    else:
+                        logging.warning(f'No chords supplied in "{cmd[_ln]}"')
 
             elif item == 'effects':
                 expect(cmd, ['voices',

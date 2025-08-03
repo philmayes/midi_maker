@@ -112,6 +112,22 @@ class TestBar:
         assert chords[1] == mc.Chord(1*dur.e, 'G', 'maj', mc.Chord.no_octave)
         assert chords[2] == mc.Chord(3*dur.e, 'F', 'maj', mc.Chord.no_octave)
 
+    def test_bar6(self):
+        """Test bar with improv."""
+        lines: list[str] = [
+            'bar chords=Cmaj',
+            'bar chords=improv repeat=3',
+        ]
+        commands = mp.Commands(lines)
+        comp: mi.Composition = commands.get_composition()
+        assert len(comp.items) == 4
+        item: mi.Item = comp.items[0]
+        assert same_name(item, mi.Bar)
+        chords: list[mc.Chord] = item.chords
+        #                              start  key   chord  octave
+        assert chords[0] == mc.Chord(      0, 'C', 'maj', mc.Chord.no_octave)
+        assert comp.items[1].chords[0].start == 0
+
 class TestComposition:
     lines1: list[str] = [
         'voice name=bass style=bass voice=electric_bass_picked',

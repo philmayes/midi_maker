@@ -15,6 +15,7 @@ note_to_interval: dict[str, int] = {
     'Bb':10, 'B': 11, 'B#':12,
 }
 interval_to_note: list[str] = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
+fifths: list[str] = ['C','F','Bb','Eb','Ab','C#','F#','B','E','A','D','G',]
 # Format of a note as supplied by tune command. Takes the format:
 # duration note octave. Succeeding notes can omit the duration
 # or octave; they will be picked up from the preceding note.
