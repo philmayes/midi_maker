@@ -1,4 +1,4 @@
-from midi_chords import Chord
+import midi_chords as mc
 import midi_types as mt
 import midi_notes as mn
 from midi_voice import Voice, Voices
@@ -10,8 +10,8 @@ class Item:
 
 class Bar(Item):
     """Bar description of a composition."""
-    def __init__(self, chords: list[Chord]=[], repeat: int=1, clip: bool=True):
-        self.chords: list[Chord] = chords
+    def __init__(self, chords: list[mc.Chord]=[], repeat: int=1, clip: bool=True):
+        self.chords: list[mc.Chord] = chords
         self.repeat = repeat
         self.clip = clip
 
@@ -27,7 +27,7 @@ class Bar(Item):
             if at >= chord.start:
                 return chord.octave
         assert 0, 'octave lookup failed'
-        return Chord.no_octave
+        return mc.Chord.no_octave
 
     def get_tonic(self, at: int) -> str:
         for chord in reversed(self.chords):
