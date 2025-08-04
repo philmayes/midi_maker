@@ -49,7 +49,13 @@ def pick_two(notes: NoteList) -> NoteList:
         n2 = random.choice(notes)
     return [n1, n2]
 
-def make_bar(bar: mi.Bar) -> mi.Bar:
+def make_bars(bar: mi.Bar, repeat: int, clip: bool=True) -> list[mi.Bar]:
+    bars: list[mi.Bar] = [bar]
+    for _ in range(repeat):
+        bars.append(make_bar(bars[-1]))
+    return bars[1:]
+
+def make_bar(bar: mi.Bar, clip: bool=True) -> mi.Bar:
     # Construct a dictionary of all known chords.
     global all
     if not all:
@@ -92,4 +98,4 @@ def make_bar(bar: mi.Bar) -> mi.Bar:
     random.seed()
     x = random.choice(picks)
 
-    return mi.Bar([mi.Chord(0, x.key, x.name, -1)])
+    return mi.Bar([mi.Chord(0, x.key, x.name, clip)])

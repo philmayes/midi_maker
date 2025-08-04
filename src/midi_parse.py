@@ -3,6 +3,7 @@
 import copy
 import logging
 import re
+from typing import cast
 
 from midi_channels import Channel, str_to_channel
 import midi_chords as mc
@@ -366,17 +367,16 @@ class Commands:
                     last_octave = mc.Chord.no_octave
                     if value == 'improv':
                         improv = True
-                        for _ in range(repeat):
-                            # Get last bar.
-                            for i in reversed(composition.items):
-                                if isinstance(i, mi.Bar):
-                                    break
-                            else:
-                                # No preceding bar; make one up
-                                i = mi.Bar([mi.Chord(0, 'C', 'maj', -1)])
-                            bar = mimp.make_bar(i)
-                            bar.clip = clip
-                            composition += bar
+                        # Get last bar.
+                        for i in reversed(composition.items):
+                            if isinstance(i, mi.Bar):
+                                break
+                        else:
+                            # No preceding bar; make one up
+                            i = mi.Bar([mi.Chord(0, 'C', 'maj', -1)])
+                        bars: list[mi.Bar] = mimp.make_bars(i, repeat, clip)
+                        # bar.clip = clip
+                        composition += cast(list[mi.Item], bars)
                     else:
                         for chord in value.split(','):
                             # Parse the chord.
@@ -927,11 +927,6 @@ class Commands:
                     else:
                         logging.warning(f'Bad voice in "{cmd[_ln]}"')
                         continue
-                    # if next_perc_channel >= 10:
-                    #     logging.warning(f'Too many percussion channels')
-                    #     continue
-                    # channel = str_to_channel(f'perc{next_perc_channel}')
-                    # next_perc_channel += 1
                     channel = Channel.percussion
                 else:
                     assert style
