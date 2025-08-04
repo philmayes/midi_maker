@@ -1,9 +1,9 @@
-import random
 from typing import NamedTuple, TypeAlias
 
 import midi_chords as mc
 import midi_items as mi
 import midi_notes as mn
+import rando
 
 NoteList: TypeAlias = list[str]
 class KeyChord(NamedTuple):
@@ -42,33 +42,38 @@ def get_close(key: str, center: int=0):
         close.append(key_offset(key, offset))
     return close
 
-def pick_two(notes: NoteList) -> NoteList:
-    n1 = random.choice(notes)
+def pick_two(notes: NoteList, rgen: rando.Rando) -> NoteList:
+    n1 = rgen.choice(notes)
     n2 = n1
     while n2 == n1:
-        n2 = random.choice(notes)
+        n2 = rgen.choice(notes)
     return [n1, n2]
 
-def make_bars(bar: mi.Bar, repeat: int, clip: bool=True) -> list[mi.Bar]:
-    bars: list[mi.Bar] = [bar]
+def make_bars(prev: mi.Bar, repeat: int, clip: bool, seed: int) -> list[mi.Bar]:
+    """Return a list of improvised Bars."""
+    # Make a pseudo-random number generator that will be the same for a
+    # particular seed.
+    rgen: rando.Rando = rando.Rando(seed)
+    bars: list[mi.Bar] = [prev]
     for _ in range(repeat):
-        bars.append(make_bar(bars[-1]))
+        bars.append(make_bar(bars[-1], clip, rgen))
     return bars[1:]
 
-def make_bar(bar: mi.Bar, clip: bool=True) -> mi.Bar:
-    # Construct a dictionary of all known chords.
+def make_bar(prev: mi.Bar, clip: bool, rgen: rando.Rando) -> mi.Bar:
+
+    # Construct a dictionary of all known chords once only.
     global all
     if not all:
         all = get_all()
 
     # Start with the last one picked.
     # Get its notes.
-    last_chord: mc.Chord = bar.chords[-1]
+    last_chord: mc.Chord = prev.chords[-1]
     ints = mc.chords[last_chord.chord]
     n = mn.note_to_interval[last_chord.key]
     cnotes: NoteList = [mn.interval_to_note[(n + i) % 12] for i in ints]
     # Pick two of them.
-    two: NoteList = pick_two(cnotes)
+    two: NoteList = pick_two(cnotes, rgen)
     # Find all the closely-related chords that share these two notes.
     #   New chord x must be within 2 mn.fifths away of:
     #   existing major (M) or minor (m):
@@ -95,7 +100,5 @@ def make_bar(bar: mi.Bar, clip: bool=True) -> mi.Bar:
         if two[0] in key_chord.notes and two[1] in key_chord.notes:
             picks.append(key_chord)
     # Pick one of those chords at random.
-    random.seed()
-    x = random.choice(picks)
-
-    return mi.Bar([mi.Chord(0, x.key, x.name, clip)])
+    x = rgen.choice(picks)
+    return mi.Bar([mc.Chord(0, x.key, x.name, last_chord.octave)], 1, clip)

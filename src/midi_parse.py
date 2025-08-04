@@ -347,7 +347,7 @@ class Commands:
                 continue
 
             if item == 'bar':
-                expect(cmd, ['chords', 'repeat', 'clip'])
+                expect(cmd, ['chords', 'repeat', 'clip', 'seed', 'end',])
                 chords: list[mc.Chord] = []
                 repeat = 1
                 clip = True
@@ -362,20 +362,20 @@ class Commands:
                     new_clip = utils.truth(value)
                     if new_clip is not None:
                         clip = new_clip
+                seed = get_signed_int(cmd, 'seed', 0)
                 if value := get_value(cmd, 'chords'):
                     tick = 0
                     last_octave = mc.Chord.no_octave
                     if value == 'improv':
                         improv = True
                         # Get last bar.
-                        for i in reversed(composition.items):
-                            if isinstance(i, mi.Bar):
+                        for prev in reversed(composition.items):
+                            if isinstance(prev, mi.Bar):
                                 break
                         else:
                             # No preceding bar; make one up
-                            i = mi.Bar([mi.Chord(0, 'C', 'maj', -1)])
-                        bars: list[mi.Bar] = mimp.make_bars(i, repeat, clip)
-                        # bar.clip = clip
+                            prev = mi.Bar([mc.Chord(0, 'C', 'maj', -1)])
+                        bars: list[mi.Bar] = mimp.make_bars(prev, repeat, clip, seed)
                         composition += cast(list[mi.Item], bars)
                     else:
                         for chord in value.split(','):
