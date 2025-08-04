@@ -1,4 +1,6 @@
+import math
 import random
+import typing
 
 MAX_RANDOM = 10000
 table = [0.0] * MAX_RANDOM
@@ -20,8 +22,14 @@ class Rando:
         assert 0 <= seed < MAX_RANDOM
         if seed == 0:
             # Special case: seed == 0 is truly random.
+            random.seed()
             seed = random.randrange(len(table))
         self.index = seed
+
+    def choice(self, items: list[typing.Any]) -> typing.Any:
+        n = len(items) * self.number
+        ndx = math.floor(n)
+        return items[ndx]
 
     @property
     def number(self) -> float:
