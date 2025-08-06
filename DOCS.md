@@ -109,6 +109,18 @@ Tune tune1 has duration 15360 = 16.0 beats\
 Tune tune2 has duration 15360 = 16.0 beats\
 Tune tune3 has duration 18240 = 19.0 beats
 
+### alias
+Format: `alias name=value [name=value...]`
+
+Name the value(s) supplied to improve readability. For example:
+```
+alias  loud=120
+voice  name=dave  style=rhythm  voice=cello
+; Performance
+rhythm voice=dave volume=loud
+bar    chords=Am
+```
+
 ### preferences
 Format: `preferences
 improv_repeat=p

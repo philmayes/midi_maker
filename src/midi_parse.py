@@ -651,10 +651,9 @@ class Commands:
         aliases: dict[str, str] = {}
         for cmd in self.commands:
             if cmd['command'] == 'alias':
-                expect(cmd, ['name', 'value'])
-                name: str = cmd.get('name', '')
-                value: str = cmd.get('value', '')
-                if name and value:
+                for name, value in cmd.items():
+                    if name == 'command' or name == _ln:
+                        continue
                     # Must be lowercase alpha.
                     if not utils.is_name(name):
                         logging.error(f'Alias must be lowercase alpha "{cmd[_ln]}"')
@@ -672,8 +671,6 @@ class Commands:
                         logging.warning(f'Alias name "{name}" is already used "{cmd[_ln]}"')
                         continue
                     aliases[name] = value
-                else:
-                    logging.error(f'Bad format for command "{cmd[_ln]}"')
         return aliases
 
     def get_all_chords(self) -> None:
