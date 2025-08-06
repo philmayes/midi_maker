@@ -908,7 +908,7 @@ class Commands:
                 value = cmd['style']
                 if value in mv.styles:
                     style = value
-                    if seed != -1:
+                    if style != 'improv' and seed != -1:
                         logging.warning(f'Seed invalid for style "{style}" in "{cmd[_ln]}"')
                 else:
                     style = 'bass'
@@ -1057,14 +1057,19 @@ class Commands:
             item: mt.Verb = cmd['command']
             if item == 'alias':
                 continue
-            for key, value in cmd.items():
+            for key, old_value in cmd.items():
                 changed = False
-                bits = value.split(',')
+                bits = old_value.split(',')
                 for n in range(len(bits)):
                     bit = bits[n]
                     if bit in aliases:
                         bits[n] = aliases[bit]
                         changed = True
                 if changed:
+                    # new_value = ','.join(bits)
+                    # cmd[key] = new_value
                     cmd[key] = ','.join(bits)
-                    logging.info(f'Alias changed "{key}={value}" to "{key}={cmd[key]}"')
+                    old_kv = f'{key}={old_value}'
+                    new_kv = f'{key}={cmd[key]}'
+                    logging.info(f'Alias changed "{old_kv}" to "{new_kv}"')
+                    cmd[_ln] = cmd[_ln].replace(old_kv, new_kv)
