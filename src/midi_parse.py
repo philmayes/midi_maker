@@ -824,7 +824,7 @@ class Commands:
                         else:
                             rhythm.append(dur)
                         tick += dur
-                    logging.debug(f'random rhythm {rhythm}')
+                    logging.debug(f'random rhythm created {mn.durations_to_text(rhythm)}')
                     add_to_rhythms(name, rhythm)
                 elif name and durations:
                     rhythm = mn.str_to_durations(durations)
@@ -1058,18 +1058,22 @@ class Commands:
             if item == 'alias':
                 continue
             for key, old_value in cmd.items():
+                # Look in every command for a value that natches this alias.
                 changed = False
+                # Values can be a comma-separated list, so disassemble it...
                 bits = old_value.split(',')
                 for n in range(len(bits)):
                     bit = bits[n]
                     if bit in aliases:
+                        # Replace it when found.
                         bits[n] = aliases[bit]
                         changed = True
                 if changed:
-                    # new_value = ','.join(bits)
-                    # cmd[key] = new_value
+                    # Reassemble it.
                     cmd[key] = ','.join(bits)
+                    # Replace the change in the raw string because otherwise,
+                    # error messages are less comprehensible.
                     old_kv = f'{key}={old_value}'
                     new_kv = f'{key}={cmd[key]}'
-                    logging.info(f'Alias changed "{old_kv}" to "{new_kv}"')
                     cmd[_ln] = cmd[_ln].replace(old_kv, new_kv)
+                    logging.debug(f'Alias changed "{old_kv}" to "{new_kv}"')

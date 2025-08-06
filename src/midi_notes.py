@@ -78,6 +78,76 @@ class Duration:
     dd = d_doublenote
     default = quarter  # used when duration is not supplied
 
+tick_to_name = (
+    (999999, 'bad'),
+    (11520, 'd.'),
+    (7680, 'd'),
+
+    (5760, 'n.'),
+    (5120, 'dd'),
+    (3840, 'n'),
+
+    (2880, 'h.'),
+    (2560, 'td'),   # (2560, 'dn'),
+    (1920, 'h'),
+
+    (1440, 'q.'),
+    (1280, 'tn'),   # (1280, 'dh'),
+    (960, 'q'),
+
+    (720, 'e.'),
+    (640, 'th'),    # (640, 'dq'),
+    (480, 'e'),
+
+    (360, 's.'),
+    (320, 'tq'),    # (320, 'de'),
+    (240, 's'),
+
+    (180, 't.'),
+    (160, 'te'),    # (160, 'ds'),
+    (120, 't'),
+
+    (80, 'ts'),     # (80, 'dt'),
+    (40, 'tt'),
+)
+
+def duration_to_text(dur: int) -> str:
+    neg = '-' if dur < 0 else ''
+    dur = abs(dur)
+    bits = []
+    remaining = round_d(dur)
+    table_index = 0
+    last_dur = 98765
+    while remaining > 0:
+        dur, name = tick_to_name[table_index]
+        while remaining >= dur:
+            remaining -= dur
+            half_dur = dur // 2
+            if remaining >= half_dur:
+                bits.append(name + '.')
+                remaining -= half_dur
+            else:
+                bits.append(name)
+        table_index += 1
+    return neg + '+'.join(bits)
+
+def durations_to_text(durs: list[int]) -> str:
+    bits: list[str] = []
+    for dur in durs:
+        bits.append(duration_to_text(dur))
+    return ','.join(bits)
+
+def round_d(number: int) -> int:
+    """Round a duration."""
+    min_err = 99999
+    val = 99999
+    for dur, name in tick_to_name:
+        error = abs(number - dur)
+        if error < min_err:
+            min_err = error
+            val = dur
+    return val
+
 def get_sub_duration(text: str, silent=False) -> int:
     """Translates the duration string into ticks.
 
