@@ -362,7 +362,7 @@ class Commands:
                     new_clip = utils.truth(value)
                     if new_clip is not None:
                         clip = new_clip
-                seed = get_signed_int(cmd, 'seed', 0)
+                seed = get_signed_int(cmd, 'seed', -1)
                 if value := get_value(cmd, 'chords'):
                     tick = 0
                     last_octave = mc.Chord.no_octave
@@ -876,7 +876,7 @@ class Commands:
             if cmd['command'] != 'voice':
                 continue
 
-            expect(cmd, ['name', 'style', 'voice', 'min_pitch', 'max_pitch'])
+            expect(cmd, ['name', 'style', 'voice', 'min_pitch', 'max_pitch', 'seed'])
             # Set up default values
             name: str = ''
             channel: Channel = Channel.none
@@ -884,6 +884,7 @@ class Commands:
             style: str = ''
             min_pitch: int = 0
             max_pitch: int = 127
+            seed = get_signed_int(cmd, 'seed', -1)
 
             if 'name' in cmd:
                 name = cmd['name']
@@ -910,6 +911,8 @@ class Commands:
                 value = cmd['style']
                 if value in mv.styles:
                     style = value
+                    if seed != -1:
+                        logging.warning(f'Seed invalid for style "{style}" in "{cmd[_ln]}"')
                 else:
                     style = 'bass'
                     logging.warning(f'Bad style in "{cmd[_ln]}", using {style}')
@@ -955,7 +958,15 @@ class Commands:
             for v_check in voices:
                 if v_check.name == name:
                     logging.error(f'Voice "{name}" replaces earlier instance')
-            voices.append(mv.Voice(name, track, channel, voice, style, min_pitch, max_pitch))
+            voices.append(mv.Voice(name,
+                                   track,
+                                   channel,
+                                   voice,
+                                   style,
+                                   min_pitch,
+                                   max_pitch,
+                                   seed,
+                                   ))
             track += 1
         return voices
 

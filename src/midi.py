@@ -25,7 +25,6 @@ e.g. for 6/8, each bar contains 6 eighth notes
 """
 import copy
 import logging
-import random
 
 from midiutil import MIDIFile
 
@@ -325,10 +324,10 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
         voice.prev_pitch = pitch
 
         # Choose a duration
-        if voice.prev_duration and random.random() < prefs.improv_repeat:
+        if voice.prev_duration and voice.rando.number < prefs.improv_repeat:
             duration = voice.prev_duration
         else:
-            duration = random.choice(durations1)
+            duration = voice.rando.choice(durations1)
             if duration < 0:
                 # A negative note length is a rest.
                 bar_info.position -= duration
@@ -404,8 +403,6 @@ def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
         bar_info.position += duration
 
 def make_midi(in_file: str, out_file: str, create: str):
-    # Make improv and rhythm perform the same on repeated executions.
-    random.seed(12345)
     with open(in_file, "r") as f_in:
         lines = f_in.readlines()
     commands: midi_parse.Commands = midi_parse.Commands(lines)

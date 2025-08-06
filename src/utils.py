@@ -2,22 +2,27 @@
 
 import logging
 import math
-import random
 import re
 
+import rando
+
 re_float = re.compile(r'\d*\.?\d+$')
+re_text = re.compile('[a-z_][a-z0-9_]*$')
+
+error_tables = {}
+random = rando.Rando(1)
 
 def add_error(value: int, max_error: int, floor: int=0, ceil: int=99999999) -> int:
     """Returns a random number in the range -max_error...max_error.
     
     <floor> is the lowest number that will be returned.
     """
-    err = random.gauss(0.0, max_error / 2)  # mu, sigma
-    if err > max_error:
-        err = max_error
-    elif err < -max_error:
-        err = -max_error
-    value += int(err)
+    if max_error not in error_tables:
+        error_tables[max_error] = make_error_table(max_error)
+    errs = error_tables[max_error]
+
+    err = random.choice(errs)
+    value += err
     return min(max(value, floor), ceil)
 
 def get_float(text: str,
@@ -56,7 +61,6 @@ def get_signed_int(text: str) -> int | None:
             number = -number
         return number
 
-re_text = re.compile('[a-z_][a-z0-9_]*$')
 def is_name(text: str) -> bool:
     return re_text.match(text) is not None
 

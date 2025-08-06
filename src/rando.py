@@ -19,12 +19,11 @@ class Rando:
     would vary depending on how much it had been called elsewhere.
     """
     def __init__(self, seed: int):
-        assert 0 <= seed < MAX_RANDOM
-        if seed == 0:
-            # Special case: seed == 0 is truly random.
+        if seed < 0:
+            # Special case: seed < 0 is truly random.
             random.seed()
             seed = random.randrange(len(table))
-        self.index = seed
+        self.index = seed % MAX_RANDOM
 
     def choice(self, items: list[typing.Any]) -> typing.Any:
         n = len(items) * self.number

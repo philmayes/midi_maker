@@ -7,6 +7,7 @@ from midi_channels import Channel
 from midi_notes import Duration as n
 import midi_types as mt
 from preferences import prefs
+import rando
 import utils
 
 # Default values follow. Not every style needs all of these values;
@@ -65,6 +66,7 @@ class Voice:
                  style: str,
                  min_pitch: int=0,
                  max_pitch: int=127,
+                 seed:int = -1,
                  ):
         assert style in styles, f'Bad style "{style}"'
         self.name = name
@@ -74,6 +76,7 @@ class Voice:
         self.style = style
         self.min_pitch = min_pitch
         self.max_pitch = max_pitch
+        self.rando = rando.Rando(seed)
         # The following 3 are used by improv to improve the melody lines.
         self.prev_pitch = -1    # pitch of the last note played
         self.prev_duration = 0  # duration of the last note played

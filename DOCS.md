@@ -45,7 +45,7 @@ The `voice` command is used to specify both instruments and percussion.
   - `rhythm` Plays entire chord
   - `bass` Plays tonic
   - `arpeggio` Plays chord as arpeggio.
-  - `improv` Improvises based on the chord. Can take extra parameters `min_pitch=# max_pitch=#`.
+  - `improv` Improvises based on the chord. Can take extra parameters `min_pitch=# max_pitch=# seed=#`. See **Discussions: seed** for details about the seed parameter.
   - `lead` Plays a supplied note list
 * `voice` is the [General MIDI](https://en.wikipedia.org/wiki/General_MIDI) name. If the style is `perc`, the voice should be a percussion name. You can find all names with`midi_maker.py help voices` or `midi_maker.py help percussion` or by looking in `midi_voices.py` and `midi_percussion.py`.\
 The voice can also be supplied as an integer from 1-128 (or from 35-81 for percussion).
@@ -75,7 +75,7 @@ The chord is always in the key of C, so `chord name=inv notes=E,G,C` is taken to
 This can take either of two formats:
 
 * Format 1: `rhythm name=rname durations=d1,d2,d3,...`
-* Format 2: `rhythm name=rname seed=integer rest=float repeat=float durations=d1,d2,d3...`
+* Format 2: `rhythm name=rname seed=# rest=float repeat=float durations=d1,d2,d3...`
 
 Rhythms are of two sorts: for format 1, durations are a list of note durations or integers. Integers are a duration in ticks. 960 ticks = a quarter note. The durations can be negative to indicate a rest. For example, `q.,q.,q` is a calypso rhythm; `-q,q,-q,q` is an offbeat rhythm.
 
@@ -88,6 +88,8 @@ Format 2 generates a random rhythm using:
 You can also use longform variants, e.g. `quarter` instead of `q`. See **Data Formats** : **Durations**. 
 The default rhythm for all styles is `q,q,q,q`.
 Use these rhythms in compositions with `rhythm voices=vname1,vname2... rhythms=rname1,rname2...`
+
+A `rhythm` definition is used by the `rhythm` performance commnd, see below.
 
 ### tune
 Format: `tune name=tname notes=note1,note2...`
@@ -130,13 +132,13 @@ These add variety to the performance. These values can be adjusted dynamically w
 These generate the actual MIDI output using the **definition** commands that have been created.
 
 ### bar
-Format: `bar chords=chord1,chord2... repeat=# clip=false`
+Format: `bar chords=chord1,chord2... repeat=# clip=false seed=#`
 
 The chords can be preceded by a duration; if not, a quarter note is assumed. For example, `bar chords=C` is a C major bar; `bar chords=hC,Am,F` has two beats of C major, one beat of A minor and one beat of F major.
 
 Use `repeat` to play the bar more than once. See **Discussions: Clipping** for use of the `clip` parameter.
 
-**Experimental:** Use `chords=improv` to choose a random chord. Use `repeat=#` for a number of random chords. Use `-l=DEBUG` on the command line to see what chords have been generated.
+**Experimental:** Use `chords=improv` to choose a random chord. Use `repeat=#` for a number of random chords. Use `-l=DEBUG` on the command line to see what chords have been generated. See **Discussions: seed** for details about the seed parameter.
 
 ### composition
 Format: `composition name=cname`
@@ -310,3 +312,6 @@ To inhibit this behavior and allow the note or chord to play for its full durati
 
 ### Playing
 Playing the MIDI file that **midi_maker** has just generated needs an external program and maybe a [SoundFont](https://en.wikipedia.org/wiki/SoundFont) file. Use `-p=program -s=soundfont` on the command line. Program and soundfont locations are also built into **midi_maker** so you can just use `-p`, but you will probably need to edit `midi_play.py` for this to work on your system. There are also shortcuts to pick a specific player: `-p=fluidsynth`, `-p=vlc`, `-p=wmplayer`.
+
+### seed
+The commands `voice...style=improv`, `rhythm` and `bar chords=improv` can take a `seed=#` parameter which will make the `play`, `rhythm` and `bar` generate the same results each time the MIDI file is generated. A different number will create a different set of consistent results.
