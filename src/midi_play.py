@@ -1,8 +1,12 @@
 """Play the MIDI file or create a .wav file."""
 
-""" Command line information for supporting programs:
+"""
+Command line information for supporting programs:
     https://www.mankier.com/1/fluidsynth
     https://wiki.videolan.org/VLC_command-line_help
+SoundFont specs and sources:
+    https://en.wikipedia.org/wiki/SoundFont
+    https://github.com/FluidSynth/fluidsynth/wiki/SoundFont
 """
 import argparse
 import logging
@@ -15,24 +19,25 @@ from preferences import prefs
 # Shortcuts for the -p parameter
 known_programs = ('fluidsynth', 'vlc', 'wmplayer')
 
+sf2_default = "FluidR3"
 if sys.platform == 'win32':
     players = [
         r"E:\devtools\FluidSynth\bin\fluidsynth.exe",
         r"C:\Program Files\VideoLAN\VLC\vlc.exe",
         r"C:\Program Files (x86)\Windows Media Player\wmplayer.exe",
     ]
-    soundfont1 = r"E:\devtools\MIDISoundFiles\FluidR3 GM.sf2"
+    sf_dir = r"E:\devtools\MIDISoundFiles"
 elif sys.platform == 'darwin':
     players = [
         '/opt/homebrew/bin/fluidsynth',
         '/Applications/VLC.app',
     ]
-    soundfont1 = "/Users/philmayes/Library/Audio/Sounds/Banks/FluidR3 GM.sf2"
+    sf_dir = "/Users/philmayes/Library/Audio/Sounds/Banks"
 else:   # 'linux'
     players = [
         '/usr/bin/fluidsynth',
     ]
-    soundfont1 = "/usr/share/sounds/sf2/FluidR3_GM.sf2"
+    sf_dir = "/usr/share/sounds/sf2"
 
 def space_quote(filename: str) -> str:
     """If filename contains spaces, ensure it is quoted."""
@@ -62,12 +67,30 @@ def get_player(args:argparse.Namespace) -> str:
     return ''
 
 def get_soundfont(args:argparse.Namespace) -> str:
-    if args.sf2:
-        if os.path.exists(args.sf2):
-            return args.sf2
-        logging.warning(f'sound file "{args.sf2}" does not exist')
-    if os.path.exists(soundfont1):
-        return soundfont1
+    target = args.sf2
+    if not target:
+        target = sf2_default
+
+    # Maybe user supplied complete soundfont path
+    if target.endswith('sf2'):
+        if os.path.exists(target):
+            return target
+        logging.warning(f'soundfont "{target}" does not exist')
+        return ''
+
+    # If the soundfont name alone (or some of it) has been supplied,
+    # see if we can find it. NOTE: case-sensitive.
+    found = ''
+    for fname in os.listdir(sf_dir):
+        if fname.endswith('sf2'):
+            if target in fname:
+                if found:
+                    logging.warning(f'soundfont abbreviation "{target}" is not unique; using {found}')
+                    break
+                else:
+                    found = fname
+    if found:
+        return os.path.join(sf_dir, found)
     return ''
 
 def play(midi_file: str, args:argparse.Namespace) -> None:

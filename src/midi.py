@@ -25,14 +25,14 @@ e.g. for 6/8, each bar contains 6 eighth notes
 """
 import copy
 import logging
-import random
 
 from midiutil import MIDIFile
 
 from midi_channels import Channel
 import midi_chords as mc
 import midi_items as mi
-from midi_notes import Duration as n, note_to_interval
+import midi_notes as mn
+from midi_notes import Duration as n
 import midi_parse
 import midi_types as mt
 from midi_voice import Voice, Voices
@@ -127,7 +127,7 @@ class BarInfo:
 
     def get_tonic_offset(self) -> int:
         """Returns the tonic offset (0-11) at current time within the bar."""
-        return note_to_interval[self.get_tonic()]
+        return mn.note_to_interval[self.get_tonic()]
 
     def in_bar(self) -> bool:
         return not self.bar_ended()
@@ -244,7 +244,7 @@ def make_bass_bar(bar_info: BarInfo, voice: Voice):
     rhythm = voice.get_rhythm()
     for duration in rhythm:
         tonic: str = bar_info.get_tonic()
-        pitch = note_to_interval[tonic] + voice.octave * 12
+        pitch = mn.note_to_interval[tonic] + voice.octave * 12
         if bar_info.bar_ended():
             break
         if duration < 0:
@@ -325,13 +325,14 @@ def make_improv_bar(bar_info: BarInfo, voice: Voice):
         voice.prev_pitch = pitch
 
         # Choose a duration
-        if voice.prev_duration and random.random() < prefs.improv_repeat:
+        if voice.prev_duration and voice.rando.number < prefs.improv_repeat:
             duration = voice.prev_duration
         else:
-            duration = random.choice(durations1)
+            duration = voice.rando.choice(durations1)
             if duration < 0:
                 # A negative note length is a rest.
                 bar_info.position -= duration
+                voice.improv.append(mn.duration_to_text(duration))
                 continue
         voice.prev_duration = duration
 
@@ -404,8 +405,6 @@ def make_rhythm_bar(bar_info: BarInfo, voice: Voice):
         bar_info.position += duration
 
 def make_midi(in_file: str, out_file: str, create: str):
-    # Make improv and rhythm perform the same on repeated executions.
-    random.seed(12345)
     with open(in_file, "r") as f_in:
         lines = f_in.readlines()
     commands: midi_parse.Commands = midi_parse.Commands(lines)
@@ -571,6 +570,11 @@ def make_midi(in_file: str, out_file: str, create: str):
 
         # After processing the item, step to the next one.
         item_number += 1
+
+    # After all processing, dump any improv tunes that may have been played.
+    for voice in voices:
+        if voice.improv:
+            logging.debug(f'Voice "{voice.name}" played {','.join(voice.improv)}')
 
     with open(out_file, "wb") as f_out:
         midi_file.writeFile(f_out)

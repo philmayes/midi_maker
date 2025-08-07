@@ -3,9 +3,11 @@
 import copy
 import logging
 import re
+from typing import cast
 
 from midi_channels import Channel, str_to_channel
 import midi_chords as mc
+import midi_improv as mimp
 import midi_items as mi
 import midi_notes as mn
 import midi_percussion
@@ -345,30 +347,11 @@ class Commands:
                 continue
 
             if item == 'bar':
-                expect(cmd, ['chords', 'repeat', 'clip'])
+                expect(cmd, ['chords', 'repeat', 'clip', 'seed', 'end',])
                 chords: list[mc.Chord] = []
                 repeat = 1
                 clip = True
-                if value := get_value(cmd, 'chords'):
-                    tick = 0
-                    last_octave = mc.Chord.no_octave
-                    for chord in value.split(','):
-                        # Parse the chord.
-                        duration, chord  = mc.get_chord(chord)
-                        if duration >= 0:
-                            # If no duration supplied, use the default.
-                            if duration == 0:
-                                duration = mn.Duration.default
-                            # If no octave supplied, use the previous one.
-                            if chord.octave == mc.Chord.no_octave:
-                                chord.octave = last_octave
-                            else:
-                                last_octave = chord.octave
-                            chord.start = tick
-                            chords.append(chord)
-                            tick += duration
-                        else:
-                            logging.error(f'Bad bar chord "{chord}"')
+                improv = False
                 if value := get_value(cmd, 'repeat'):
                     repeat2 = utils.get_int(value)
                     if repeat2 is None:
@@ -379,10 +362,44 @@ class Commands:
                     new_clip = utils.truth(value)
                     if new_clip is not None:
                         clip = new_clip
-                if chords:
-                    composition += mi.Bar(chords, repeat, clip)
-                else:
-                    logging.warning(f'No chords supplied in "{cmd[_ln]}"')
+                seed = get_signed_int(cmd, 'seed', -1)
+                if value := get_value(cmd, 'chords'):
+                    tick = 0
+                    last_octave = mc.Chord.no_octave
+                    if value == 'improv':
+                        improv = True
+                        # Get last bar.
+                        for prev in reversed(composition.items):
+                            if isinstance(prev, mi.Bar):
+                                break
+                        else:
+                            # No preceding bar; make one up
+                            prev = mi.Bar([mc.Chord(0, 'C', 'maj', -1)])
+                        bars: list[mi.Bar] = mimp.make_bars(prev, repeat, clip, seed)
+                        composition += cast(list[mi.Item], bars)
+                    else:
+                        for chord in value.split(','):
+                            # Parse the chord.
+                            duration, chord  = mc.get_chord(chord)
+                            if duration >= 0:
+                                # If no duration supplied, use the default.
+                                if duration == 0:
+                                    duration = mn.Duration.default
+                                # If no octave supplied, use the previous one.
+                                if chord.octave == mc.Chord.no_octave:
+                                    chord.octave = last_octave
+                                else:
+                                    last_octave = chord.octave
+                                chord.start = tick
+                                chords.append(chord)
+                                tick += duration
+                            else:
+                                logging.error(f'Bad bar chord "{chord}"')
+                if not improv:
+                    if chords:
+                        composition += mi.Bar(chords, repeat, clip)
+                    else:
+                        logging.warning(f'No chords supplied in "{cmd[_ln]}"')
 
             elif item == 'effects':
                 expect(cmd, ['voices',
@@ -634,10 +651,9 @@ class Commands:
         aliases: dict[str, str] = {}
         for cmd in self.commands:
             if cmd['command'] == 'alias':
-                expect(cmd, ['name', 'value'])
-                name: str = cmd.get('name', '')
-                value: str = cmd.get('value', '')
-                if name and value:
+                for name, value in cmd.items():
+                    if name == 'command' or name == _ln:
+                        continue
                     # Must be lowercase alpha.
                     if not utils.is_name(name):
                         logging.error(f'Alias must be lowercase alpha "{cmd[_ln]}"')
@@ -655,8 +671,6 @@ class Commands:
                         logging.warning(f'Alias name "{name}" is already used "{cmd[_ln]}"')
                         continue
                     aliases[name] = value
-                else:
-                    logging.error(f'Bad format for command "{cmd[_ln]}"')
         return aliases
 
     def get_all_chords(self) -> None:
@@ -810,7 +824,7 @@ class Commands:
                         else:
                             rhythm.append(dur)
                         tick += dur
-                    logging.debug(f'random rhythm {rhythm}')
+                    logging.debug(f'random rhythm created {mn.durations_to_text(rhythm)}')
                     add_to_rhythms(name, rhythm)
                 elif name and durations:
                     rhythm = mn.str_to_durations(durations)
@@ -859,7 +873,7 @@ class Commands:
             if cmd['command'] != 'voice':
                 continue
 
-            expect(cmd, ['name', 'style', 'voice', 'min_pitch', 'max_pitch'])
+            expect(cmd, ['name', 'style', 'voice', 'min_pitch', 'max_pitch', 'seed'])
             # Set up default values
             name: str = ''
             channel: Channel = Channel.none
@@ -867,6 +881,7 @@ class Commands:
             style: str = ''
             min_pitch: int = 0
             max_pitch: int = 127
+            seed = get_signed_int(cmd, 'seed', -1)
 
             if 'name' in cmd:
                 name = cmd['name']
@@ -893,6 +908,8 @@ class Commands:
                 value = cmd['style']
                 if value in mv.styles:
                     style = value
+                    if style != 'improv' and seed != -1:
+                        logging.warning(f'Seed invalid for style "{style}" in "{cmd[_ln]}"')
                 else:
                     style = 'bass'
                     logging.warning(f'Bad style in "{cmd[_ln]}", using {style}')
@@ -910,11 +927,6 @@ class Commands:
                     else:
                         logging.warning(f'Bad voice in "{cmd[_ln]}"')
                         continue
-                    # if next_perc_channel >= 10:
-                    #     logging.warning(f'Too many percussion channels')
-                    #     continue
-                    # channel = str_to_channel(f'perc{next_perc_channel}')
-                    # next_perc_channel += 1
                     channel = Channel.percussion
                 else:
                     assert style
@@ -943,7 +955,15 @@ class Commands:
             for v_check in voices:
                 if v_check.name == name:
                     logging.error(f'Voice "{name}" replaces earlier instance')
-            voices.append(mv.Voice(name, track, channel, voice, style, min_pitch, max_pitch))
+            voices.append(mv.Voice(name,
+                                   track,
+                                   channel,
+                                   voice,
+                                   style,
+                                   min_pitch,
+                                   max_pitch,
+                                   seed,
+                                   ))
             track += 1
         return voices
 
@@ -1037,14 +1057,23 @@ class Commands:
             item: mt.Verb = cmd['command']
             if item == 'alias':
                 continue
-            for key, value in cmd.items():
+            for key, old_value in cmd.items():
+                # Look in every command for a value that natches this alias.
                 changed = False
-                bits = value.split(',')
+                # Values can be a comma-separated list, so disassemble it...
+                bits = old_value.split(',')
                 for n in range(len(bits)):
                     bit = bits[n]
                     if bit in aliases:
+                        # Replace it when found.
                         bits[n] = aliases[bit]
                         changed = True
                 if changed:
+                    # Reassemble it.
                     cmd[key] = ','.join(bits)
-                    logging.info(f'Alias changed "{key}={value}" to "{key}={cmd[key]}"')
+                    # Replace the change in the raw string because otherwise,
+                    # error messages are less comprehensible.
+                    old_kv = f'{key}={old_value}'
+                    new_kv = f'{key}={cmd[key]}'
+                    cmd[_ln] = cmd[_ln].replace(old_kv, new_kv)
+                    logging.debug(f'Alias changed "{old_kv}" to "{new_kv}"')
